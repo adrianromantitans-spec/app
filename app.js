@@ -4,7 +4,7 @@ import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
 import {Cloud} from './cloud.js?v=ocr-18';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=ocr-18';
+import {welcomePage,socialButtons} from './auth-ui.js?v=entry-19';
 
 initializeLanguage();
 
