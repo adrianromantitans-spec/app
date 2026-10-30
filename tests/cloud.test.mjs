@@ -211,3 +211,17 @@ test('receipt links stay on the configured storage origin and wrong-group paths 
  assert.equal(await c.receiptURL(g,path),config.url+'/storage/v1/object/sign/divzplit-receipts/'+path+'?token=fixture');
  await assert.rejects(()=>c.receiptURL(u,path));assert.equal(calls,1);
 });
+
+test('RON cannot be silently discarded by a server without currency support',async()=>{
+ let creates=0;
+ const c=authed(async(url)=>{if(url.includes('currency_support'))return response({code:'PGRST202'},404);creates++;return response({});});
+ const g={...seed().groups[0],currency:'RON'};
+ await assert.rejects(()=>c.createGroup(g),e=>e.message.includes('activar las monedas'));
+ assert.equal(creates,0);
+});
+test('RON group creation sends a supported currency after capability verification',async()=>{
+ let fields;
+ const c=authed(async(url,options)=>{if(url.includes('currency_support'))return response(true);fields=JSON.parse(options.body).p_fields;return response({document:{...mapGroup(seed().groups[0],actor,true),currency:fields.currency},owner_id:actor,version:1});});
+ await c.createGroup({...seed().groups[0],currency:'RON'});
+ assert.equal(fields.currency,'RON');
+});

@@ -1,0 +1,47 @@
+"""Two languages, one RON ledger, actual PostgreSQL RPCs with fake local Auth."""
+from pathlib import Path
+exec(Path('tests/shared_browser.py').read_text().split('try:\n    with sync_playwright()')[0])
+try:
+ with sync_playwright() as p:
+  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+  en=context(b,locale='en-GB');ro=context(b,locale='ro-RO')
+  owner=en.new_page();friend=ro.new_page()
+  owner.goto(BASE+'#acceso')
+  owner.get_by_label('Email address',exact=True).fill('ana@example.test')
+  owner.get_by_label('Password',exact=True).fill('fixture-password')
+  owner.get_by_role('button',name='Sign in',exact=False).click()
+  owner.get_by_role('button',name='Create my first group',exact=True).click()
+  form=owner.locator('#group-form');form.get_by_label('Group name',exact=True).fill('Vacanță împreună')
+  form.get_by_label('Group currency',exact=False).select_option('RON')
+  form.get_by_label('Total group budget (RON)',exact=True).fill('500')
+  form.get_by_role('button',name='Create group',exact=True).click()
+  expect(owner.get_by_role('heading',name='Vacanță împreună')).to_be_visible()
+  owner.get_by_role('button',name='Invite',exact=True).click()
+  owner.get_by_role('button',name='Generate invitation link').click()
+  link=owner.get_by_label('Invitation link').input_value()
+  owner.keyboard.press('Escape')
+  friend.goto(link);friend.locator('.entry-login').click()
+  friend.get_by_label('Adresă de e-mail',exact=True).fill('luis@example.test')
+  friend.get_by_label('Parolă',exact=True).fill('fixture-password')
+  friend.get_by_role('button',name='Autentificare',exact=False).click()
+  friend.get_by_role('button',name='Acceptă invitația').click()
+  expect(friend.get_by_role('heading',name='Vacanță împreună')).to_be_visible()
+  owner.get_by_role('button',name='Refresh',exact=True).click()
+  owner.get_by_role('button',name='Add expense',exact=True).first.click()
+  form=owner.locator('#expense-form');form.get_by_label('What did you pay for?',exact=True).fill('Cină București')
+  form.get_by_label('Amount (RON)',exact=True).fill('10.01')
+  form.get_by_label('Category',exact=False).select_option(label='Food')
+  form.get_by_role('button',name='Save expense').click()
+  friend.get_by_role('button',name='Actualizează',exact=True).click()
+  expect(friend.get_by_text('Cină București',exact=True)).to_be_visible()
+  assert 'RON' in friend.locator('body').inner_text()
+  friend.get_by_role('button',name='Vezi detaliile pentru Cină București').click()
+  expect(friend.get_by_text('Mâncare',exact=False)).to_be_visible()
+  doc=json.loads(sql('select document from public.nexo_groups where id='+quote(created[0])+';',OWNER).stdout)
+  assert doc['currency']=='RON' and doc['type']=='Viaje'
+  assert doc['expenses'][0]['category']=='Comida' and doc['expenses'][0]['amount']==1001
+  assert errors==[],errors
+  b.close()
+  print('PASS: English and Romanian members share the same RON ledger and canonical category values')
+finally:
+ for gid in created:sql('delete from public.nexo_groups where id='+quote(gid)+';',admin=True)

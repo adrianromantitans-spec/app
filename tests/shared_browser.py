@@ -66,10 +66,11 @@ def api(route):
         elif name=='nexo_save_group': args=[quote(data['p_id'])+'::uuid',str(int(data['p_version'])),quote(json.dumps(data['p_document']))+'::jsonb']
         elif name in ['nexo_create_invite','nexo_revoke_invites']: args=[quote(data['p_id'])+'::uuid']
         elif name=='nexo_join_group': args=[quote(data['p_token'])]
+        elif name=='divzplit_currency_support': args=[]
         else: fulfill(route,{},404);return
-        result=sql('select public.'+name+'('+','.join(args)+');',user['id'])
+        result=sql('select '+('to_json(public.divzplit_currency_support())' if name=='divzplit_currency_support' else 'public.'+name+'('+','.join(args)+')')+';',user['id'])
     if result.returncode:
-        code=next((c for c in ['NEXO_CONFLICT','NEXO_INVITE','NEXO_OWNER','NEXO_FORBIDDEN'] if c in result.stderr),'22023')
+        code=next((c for c in ['NEXO_CURRENCY_LOCKED','NEXO_CURRENCY','NEXO_CONFLICT','NEXO_INVITE','NEXO_OWNER','NEXO_FORBIDDEN'] if c in result.stderr),'22023')
         fulfill(route,{'code':'P0001','message':code},400);return
     value=json.loads(result.stdout.strip() or 'null')
     if path.endswith('/nexo_create_group'):created.append(value['id'])
@@ -79,8 +80,8 @@ def api(route):
         return
     fulfill(route,value)
 
-def context(browser):
-    c=browser.new_context(viewport={'width':1440,'height':1000})
+def context(browser,locale='es-ES'):
+    c=browser.new_context(locale=locale,viewport={'width':1440,'height':1000})
     c.route('**/config.js',lambda route:route.fulfill(content_type='text/javascript',
         body="export const cloudConfig={url:'https://nexo-test.supabase.co',publishableKey:'sb_publishable_fixture'};"))
     # Keep all fixture transport on localhost. The managed browser may block

@@ -100,3 +100,39 @@ datos únicamente en el navegador de cada persona.
 Recuperación de contraseña, invitaciones por WhatsApp, fotos de tickets y gastos
 recurrentes: consulta [la guía de activación y uso](docs/NEW-FEATURES.md).
 Las fotos de grupos compartidos requieren ejecutar `supabase/receipts.sql` una vez.
+
+## Idioma automático
+
+La interfaz usa el primer idioma compatible de `navigator.languages`: español,
+inglés o rumano (incluidas variantes como `es-MX` o `ro-RO`). Si ninguno coincide,
+usa inglés. Cambiar la preferencia del navegador y recargar actualiza la interfaz.
+Las fechas y los importes usan la variante regional seleccionada; la moneda
+es la del grupo (EUR o RON). No se traducen los nombres, conceptos ni otros datos escritos
+por los miembros. Las categorías y tipos mantienen sus valores internos para
+que todos los idiomas puedan trabajar sobre el mismo grupo. No requiere SQL.
+
+Los textos están en `translations.js`; `tr()` traduce mensajes y `ui` traduce
+solo las partes estáticas de las plantillas, antes de interpolar datos. Al añadir
+una pantalla, usa estos helpers y conserva los valores de formularios, claves
+y datos de usuario sin traducir. `tests/i18n_browser.py` comprueba los tres idiomas,
+el fallback y que cambiar de idioma conserve los datos existentes.
+
+## Monedas por grupo
+
+Se puede elegir euro (EUR) o leu rumano (RON) al crear un grupo. La moneda es
+compartida por todos sus miembros y no depende del idioma. Los importes se guardan
+en unidades menores enteras (céntimos/bani), sin conversiones automáticas.
+
+Para grupos compartidos existentes, ejecutar una sola vez el contenido completo
+de `supabase/currencies.sql` en el SQL Editor de Supabase. Se puede repetir y no
+reescribe los grupos ni convierte sus importes. Los grupos sin moneda conservan
+EUR. Una base nueva puede ejecutar directamente `supabase/schema.sql`.
+
+Hasta aplicar la actualización, EUR sigue funcionando. Crear o guardar un grupo
+RON muestra un mensaje explicativo y no lo convierte silenciosamente a euros.
+Solo el propietario puede cambiar la moneda de un grupo vacío. Cuando ya existen
+gastos o pagos, la moneda se bloquea tanto en la interfaz como en el servidor.
+Para otra moneda, crear otro grupo. La actualización no cambia Storage ni tickets.
+
+Pruebas adicionales: `tests/currency_browser.py` y, después de las pruebas de base
+de datos en un contenedor desechable, `tests/currency_database.py`.

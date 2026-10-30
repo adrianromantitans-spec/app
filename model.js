@@ -1,9 +1,25 @@
-export const money = (cents) => new Intl.NumberFormat('es-ES', {style:'currency', currency:'EUR', maximumFractionDigits:2}).format(cents / 100);
+import {locale,tr} from './i18n.js?v=languages-6';
+export const currencies = ['EUR','RON'];
+export function currencyOf(group) {
+  const currency=group?.currency??'EUR';
+  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige EUR o RON.'));
+  return currency;
+}
+export const currencyUnit = group => currencyOf(group)==='RON'?'RON':'€';
+export const canChangeCurrency = group => !group?.expenses?.length&&!group?.payments?.length;
+export function checkCurrencyChange(group,currency) {
+  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige EUR o RON.'));
+  if(currency!==currencyOf(group)&&!canChangeCurrency(group))throw new Error(tr('La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.'));
+}
+export const money = (cents,currency='EUR') => {
+  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige EUR o RON.'));
+  return new Intl.NumberFormat(locale,{style:'currency',currency,maximumFractionDigits:2}).format(cents/100);
+};
 export const uid = () => globalThis.crypto.randomUUID();
 export const totalSpent = (group) => group.expenses.reduce((sum, item) => sum + item.amount, 0);
 
 export function splitAmount(amount, participants) {
-  if (!Number.isSafeInteger(amount) || amount <= 0 || !participants.length || new Set(participants).size !== participants.length) throw new Error('Importe o participantes no válidos');
+  if (!Number.isSafeInteger(amount) || amount <= 0 || !participants.length || new Set(participants).size !== participants.length) throw new Error(tr('Importe o participantes no válidos'));
   const base = Math.floor(amount / participants.length);
   return Object.fromEntries(participants.map((id, i) => [id, base + (i < amount % participants.length ? 1 : 0)]));
 }
@@ -38,7 +54,7 @@ export function settlements(group) {
 
 export function addExpense(group, {title, amount, payer, participants, category, date}) {
   const ids = group.members.map(m => m.id);
-  if (!title?.trim() || title.length > 100 || !ids.includes(payer) || !participants.every(id => ids.includes(id)) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Revisa los datos del gasto');
+  if (!title?.trim() || title.length > 100 || !ids.includes(payer) || !participants.every(id => ids.includes(id)) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(tr('Revisa los datos del gasto'));
   splitAmount(amount, participants);
   const expense = {id:uid(), title:title.trim(), amount, payer, participants, category, date};
   group.expenses.unshift(expense);

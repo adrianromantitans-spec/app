@@ -6,7 +6,7 @@ exec(Path('tests/auth_browser.py').read_text().split('with sync_playwright() as 
 
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
- page=b.new_page(viewport={'width':390,'height':844})
+ page=b.new_page(locale='es-ES',viewport={'width':390,'height':844})
  page.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
  page.goto(BASE);page.get_by_role('button',name='Explorar una demo').click()
  page.get_by_role('button',name='Añadir gasto',exact=True).first.click()

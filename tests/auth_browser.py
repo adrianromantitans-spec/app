@@ -14,7 +14,7 @@ USER={'id':'11111111-1111-4111-8111-111111111111','email':'ana@example.test',
       'user_metadata':{'display_name':'Ana'}}
 
 def context(browser,enabled=False,hold_settings=False):
-    c=browser.new_context(viewport={'width':1440,'height':1000})
+    c=browser.new_context(locale='es-ES',viewport={'width':1440,'height':1000})
     seen={'settings':[],'oauth':[],'exchange':[],'signup':[],'tokens':0,'hold':hold_settings}
     c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',
         body="export const cloudConfig={url:'https://nexo-test.supabase.co',publishableKey:'sb_publishable_fixture'};"))

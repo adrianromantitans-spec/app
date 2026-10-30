@@ -58,6 +58,9 @@ declare
   ids text[]; e jsonb; p jsonb; t jsonb; m jsonb; o jsonb; k text; v text;
   collection text;
 begin
+  if d?'currency' and (jsonb_typeof(d->'currency') is distinct from 'string' or (d->>'currency' in ('EUR','RON')) is not true) then
+    raise exception 'NEXO_CURRENCY';
+  end if;
   if jsonb_typeof(d) is distinct from 'object' or octet_length(d::text)>250000 then
     raise exception using errcode='22023',message='Invalid group document';
   end if;
@@ -178,6 +181,7 @@ begin
   d=jsonb_build_object('id',gid::text,'name',p_fields->>'name','emoji',p_fields->>'emoji',
     'type',p_fields->>'type','place',coalesce(p_fields->>'place',''),'date',coalesce(p_fields->>'date',''),
     'endDate',coalesce(p_fields->>'endDate',''),'budget',p_fields->'budget',
+    'currency',coalesce(p_fields->>'currency','EUR'),
     'members',jsonb_build_array(public.nexo_member_document()),'expenses','[]'::jsonb,
     'payments','[]'::jsonb,'tasks','[]'::jsonb,'polls','[]'::jsonb);
   perform public.nexo_assert_document(d);
@@ -194,6 +198,12 @@ begin
   if not public.nexo_is_member(p_id) then raise exception 'NEXO_FORBIDDEN'; end if;
   select * into g from public.nexo_groups where id=p_id for update;
   if g.version<>p_version then raise exception 'NEXO_CONFLICT'; end if;
+  if coalesce(p_document->>'currency','EUR') is distinct from coalesce(g.document->>'currency','EUR') then
+    if actor<>g.owner_id::text then raise exception 'NEXO_OWNER'; end if;
+    if jsonb_array_length(g.document->'expenses')>0 or jsonb_array_length(g.document->'payments')>0 then
+      raise exception 'NEXO_CURRENCY_LOCKED';
+    end if;
+  end if;
   perform public.nexo_assert_document(p_document);
   if p_document->'members' is distinct from g.document->'members'
     or p_document->>'id' is distinct from p_id::text then raise exception 'NEXO_FORBIDDEN'; end if;
@@ -291,6 +301,11 @@ begin
   return to_jsonb(g);
 end;
 $$;
+
+create or replace function public.divzplit_currency_support() returns boolean
+language sql stable as $$select true;$$;
+revoke all on function public.divzplit_currency_support() from public,anon;
+grant execute on function public.divzplit_currency_support() to authenticated;
 
 -- Functions default to PUBLIC execute in PostgreSQL: remove it explicitly.
 revoke all on function public.nexo_is_member(uuid), public.nexo_member_document(),

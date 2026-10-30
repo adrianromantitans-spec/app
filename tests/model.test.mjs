@@ -52,3 +52,14 @@ test('voting, changing and withdrawing a vote never duplicates it', () => {
   vote(poll,'o2','you');assert.equal(poll.votes.you,undefined);
   vote(poll,'invalid','you');assert.equal(poll.votes.you,undefined);
 });
+
+test('currency defaults to EUR and supports RON without changing minor-unit calculations',async()=>{
+ const {currencyOf,money,checkCurrencyChange}=await import('../model.js');
+ const g=seed().groups[0];assert.equal(currencyOf(g),'EUR');
+ const before=balances(g);g.currency='RON';assert.deepEqual(balances(g),before);
+ assert.equal(money(1001,'RON'),new Intl.NumberFormat('es-ES',{style:'currency',currency:'RON',maximumFractionDigits:2}).format(10.01));
+ assert.throws(()=>checkCurrencyChange(g,'EUR'));
+ assert.throws(()=>checkCurrencyChange({expenses:[],payments:[{}]},'RON'));
+ assert.doesNotThrow(()=>checkCurrencyChange({expenses:[],payments:[]},'RON'));
+ assert.throws(()=>checkCurrencyChange(null,'USD'));
+});
