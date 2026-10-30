@@ -13,7 +13,7 @@ with sync_playwright() as p:
  page=c.new_page();page.goto(BASE);page.locator('[data-action=demo]').click()
  def open_photo():
   page.locator('[data-action=new-expense]:visible').first.click()
-  f=page.locator('#expense-form');f.locator('[name=receipt]').set_input_files({'name':'receipt.png','mimeType':'image/png','buffer':receipt(fixtures['es-ES'][0])})
+  f=page.locator('#expense-form');f.locator('[name=amount]').fill('9.99');f.locator('[name=receipt]').set_input_files({'name':'receipt.png','mimeType':'image/png','buffer':receipt(fixtures['es-ES'][0])})
   expect(f.locator('.receipt-preview img')).to_be_visible();return f
  f=open_photo()
  f.locator('[data-receipt-action=read]').click();f.locator('[data-receipt-action=cancel]').click()

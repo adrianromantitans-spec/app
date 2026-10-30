@@ -1,4 +1,4 @@
-import {prepareOCRImage} from './receipt-image.js?v=ocr-16';
+import {prepareOCRImage} from './receipt-image.js?v=ocr-17';
 // The pinned Tesseract 6 worker and language models are hosted with the app.
 // Only image bytes are sent to this local worker; OCR text is never persisted.
 export async function readReceipt(blob,{signal,onProgress=()=>{},rotation=0,crop=null}={}) {
@@ -96,7 +96,7 @@ export function parseReceipt(text='') {
     const line=plain(lines[index]).replace(/\bT[O0]TA[L1I]\b/g,'TOTAL');
     // Taxes, subtotals and cash/change are never treated as the final bill.
     if(!/\bTOTAL\b|\bAMOUNT\s+DUE\b|\bIMPORTE\s+A\s+PAGAR\b|\bDE\s+PLATA\b/.test(line))continue;
-    if(/SUB\s*TOTAL|\b(?:TVA|IVA|VAT|TAX|AHORRO|SAVINGS|ARTICOLE|ITEMS|PRODUSE|DESCUENTO|DISCOUNT)\b|\bTOTAL\s+(?:CASH|CARD|EFECTIVO|TARJETA|NUMERAR|REST|CHANGE)\b/.test(line))continue;
+    if(/SUB\s*TOTAL|\b(?:TVA|IVA|VAT|TAX|AHORRO|SAVINGS|ARTICOLE|ARTICULOS|ARTICLES|PRODUCTOS|UNIDADES|UNITATI|BUCATI|POZITII|PUNTOS|POINTS|PUNCTE|ITEMS|PRODUSE|DESCUENTO|DISCOUNT)\b|\bTOTAL\s+(?:CASH|CARD|EFECTIVO|TARJETA|NUMERAR|REST|CHANGE)\b/.test(line))continue;
     const tail=line.replace(/^.*?(?:\bTOTAL\b|\bAMOUNT\s+DUE\b|\bIMPORTE\s+A\s+PAGAR\b|\bDE\s+PLATA\b)/,'');
     const next=plain(lines[index+1]||'');
     const source=(/\d/.test(tail)?tail:/^(?:(?:EUR|RON|LEI|€)\s*)?\d[\d\s.,]*(?:\s*(?:EUR|RON|LEI|€))?$/.test(next)?next:'').replace(/(\d)\s*([.,])\s*(?=\d)/g,'$1$2');

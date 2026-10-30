@@ -1,5 +1,14 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Leyendo el importe del ticket…": {"en": "Reading the receipt amount…", "ro": "Se citește suma de pe bon…"},
+  "Importe rellenado: {0}. Revísalo antes de guardar.": {"en": "Amount filled in: {0}. Check it before saving.", "ro": "Sumă completată: {0}. Verific-o înainte de a salva."},
+  "Importe leído del ticket. Puedes corregirlo antes de guardar.": {"en": "Amount read from the receipt. You can correct it before saving.", "ro": "Suma a fost citită de pe bon. O poți corecta înainte de a salva."},
+  "La moneda del ticket no coincide con la del grupo. Introduce el importe en la moneda del grupo.": {"en": "The receipt currency differs from the group currency. Enter the amount in the group currency.", "ro": "Moneda bonului diferă de moneda grupului. Introdu suma în moneda grupului."},
+  "No se ha detectado el total. Puedes escribirlo o recortar la foto del ticket.": {"en": "The total was not detected. You can enter it or crop the receipt photo.", "ro": "Totalul nu a fost detectat. Îl poți introduce sau poți decupa fotografia bonului."},
+  "Se conserva el importe que has escrito. Puedes revisar el total detectado junto al ticket.": {"en": "The amount you entered is kept. You can review the detected total next to the receipt.", "ro": "Suma introdusă este păstrată. Poți verifica totalul detectat lângă bon."},
+  "Revisa el total detectado junto al ticket y pulsa «Usar datos seleccionados».": {"en": "Review the detected total next to the receipt and tap “Use selected details”.", "ro": "Verifică totalul detectat lângă bon și apasă „Folosește datele selectate”."},
+  "Revisar datos detectados": {"en": "Review detected details", "ro": "Verifică datele detectate"},
+
   "Recortar para leer": {"en": "Crop for reading", "ro": "Decupează pentru citire"},
   "Girar foto": {"en": "Rotate photo", "ro": "Rotește fotografia"},
   "Preparando la foto para recortar…": {"en": "Preparing the photo for cropping…", "ro": "Se pregătește fotografia pentru decupare…"},

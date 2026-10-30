@@ -34,3 +34,9 @@ test('symbol noise is not a merchant, while OCR total labels and spaced decimals
  assert.equal(parseReceipt('TOTA1\n24. 90 RON').amount,2490);
  assert.equal(parseReceipt('T0TAL\n24,90').title,null);
 });
+
+test('item counts, units and loyalty points never replace the actual total',()=>{
+ for(const label of ['ARTICULOS','UNIDADES','PRODUCTOS','UNITATI','BUCATI','PUNTOS','POINTS']){
+  assert.equal(parseReceipt('TOTAL 24,90 EUR\nTOTAL '+label+' 8').amount,2490,label);
+ }
+});

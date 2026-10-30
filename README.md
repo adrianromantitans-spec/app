@@ -161,14 +161,18 @@ presupuesto y tamaños de pantalla en los tres idiomas. No requiere SQL adiciona
 
 ### Lectura de tickets
 
-En un gasto, elige una foto y pulsa **Leer ticket**. El OCR propone comercio,
-importe y fecha; permite revisar el texto y editar/seleccionar cada sugerencia
-antes de copiarla al formulario. Guardar el gasto sigue siendo una acción aparte.
-No reemplaza campos ya escritos sin seleccionarlos y no convierte monedas.
+En un gasto nuevo con el importe vacío, adjuntar una foto inicia la lectura.
+Si detecta un total fiable y la moneda es compatible, rellena el importe y los
+campos vacíos de comercio/fecha. Puedes corregirlos antes de guardar. El gasto
+solo se guarda al pulsar Guardar. **Leer ticket** permite repetir la lectura y
+**Revisar datos detectados** permite usar otras sugerencias explícitamente.
+No sobrescribe datos escritos a mano, tampoco durante la lectura; no convierte
+monedas. Al sustituir la foto elimina solo los datos que había rellenado el OCR
+y vuelve a leer. En gastos existentes no modifica campos automáticamente.
 
 El reconocimiento se ejecuta en un Web Worker del dispositivo con Tesseract 6,
 modelos en español, inglés y rumano, y archivos alojados en esta misma web.
-Solo se cargan al solicitar la lectura; la primera vez requiere descargar los
+Solo se cargan al iniciar una lectura; la primera vez requiere descargar los
 modelos y puede tardar. La foto solo se comparte al guardar según el flujo de
 tickets existente. El texto OCR completo no se almacena ni se comparte.
 Si la lectura falla, siempre se puede introducir el gasto a mano. La calidad de
@@ -206,3 +210,7 @@ operaciones conservan la foto adjunta y no guardan un gasto automáticamente.
 `tests/receipt_photo_browser.py` reproduce una foto grande con un ticket pequeño,
 texto tenue y mucho fondo, el recorte táctil y por teclado, la orientación lateral
 y el resultado con símbolos ilegibles. Usa `OCR_URL` para seleccionar el servidor.
+
+`tests/receipt_autofill_browser.py` verifica que adjuntar una foto rellena el
+importe sin pasos adicionales, admite correcciones antes del guardado y protege
+datos manuales, moneda incompatible y sustitución de la foto.

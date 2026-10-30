@@ -22,7 +22,7 @@ with sync_playwright() as p:
   page.locator('[data-action=new-expense]:visible').first.click();f=page.locator('#expense-form')
   f.locator('[name=receipt]').set_input_files({'name':'photo.jpg','mimeType':'image/jpeg','buffer':photo(rotation)})
   expect(f.locator('.receipt-preview img')).to_be_visible();return f
- f=upload();f.locator('[data-receipt-action=read]').click()
+ f=upload()
  expect(f.locator('[data-ocr-value=amount]')).to_have_value('74.50',timeout=90000)
  expect(f.locator('[data-ocr-value=date]')).to_have_value('2026-10-30')
  print('PASS: real OCR reads a small faded receipt surrounded by a large dark desk',flush=True)
@@ -41,11 +41,11 @@ with sync_playwright() as p:
  f.locator('[data-receipt-action=read-crop]').click()
  expect(f.locator('[data-ocr-value=amount]')).to_have_value('74.50',timeout=90000)
  assert f.locator('.receipt-preview img').get_attribute('src')==preview
- assert f.locator('[name=amount]').input_value()==''
+ assert f.locator('[name=amount]').input_value()=='74.50'
  assert not page.workers
  page.keyboard.press('Escape')
- print('PASS: touch crop and keyboard adjustment read the selected area without changing attachment or amount',flush=True)
- f=upload(90);f.locator('[data-receipt-action=read]').click()
+ print('PASS: touch crop and keyboard adjustment read the selected area without changing attachment or saving the expense',flush=True)
+ f=upload(90)
  expect(f.locator('[data-ocr-value=amount]')).to_have_value('74.50',timeout=90000)
  print('PASS: sideways photo is retried in the correct orientation',flush=True)
  page.keyboard.press('Escape');f=upload(90)

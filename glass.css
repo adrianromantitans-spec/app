@@ -74,3 +74,8 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 .receipt-crop-editor>p{font-size:11px;line-height:1.6;color:#79648d;margin-bottom:10px}
 .receipt-crop-editor canvas{display:block;max-width:100%;max-height:360px;width:auto;height:auto;margin:0 auto;border-radius:8px;touch-action:none;cursor:crosshair;background:#ece5f4}
 .receipt-crop-editor canvas:focus-visible{outline:3px solid #8052df;outline-offset:3px}
+
+.receipt-amount-status:empty{display:none}
+.receipt-amount-status{margin:-4px 0 16px;color:#765198}
+.receipt-detected-review{margin-top:12px;font-size:11px;color:#79648d}
+.receipt-detected-review summary{cursor:pointer;line-height:1.6}

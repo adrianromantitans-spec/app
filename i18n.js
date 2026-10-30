@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=ocr-16';
+import {translations} from './translations.js?v=ocr-17';
 
 const supported=new Set(['es','en','ro']);
 export function detectLanguage(preferences=[]) {
