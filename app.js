@@ -25,6 +25,7 @@ let inviteError='';
 const remoteBaseline=new Map();
 
 const icons = {
+  refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7A7 7 0 0 1 18 5l2 2M4 17l2 2A7 7 0 0 0 17.9 17"/>',
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
   person:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
@@ -128,7 +129,7 @@ function render() {
     <div class="sidebar-bottom"><div class="together-card"><span class="little-spark">✳</span><h3>Menos líos.<br>Más buenos momentos.</h3><p>Lo mejor de hacer planes<br>es hacerlos juntos.</p><button data-action="new-group">Empieza algo bonito ${icon('arrow')}</button></div>
     <button class="profile" data-action="settings">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${accountUser?tr('Tu cuenta compartida'):tr('Tu espacio de demo')}</small></span>${icon('settings')}</button></div>
   </aside>
-  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right"><span class="local-label ${accountUser&&syncMessage&&syncMessage!==tr('Actualizado')?'sync-attention':''}" role="status"><span></span>${esc(authLoading?tr('Conectando…'):accountUser?(syncMessage || tr('Actualizado')):tr('Demo local'))}</span>${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
+  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right"><span class="local-label ${accountUser&&syncMessage&&syncMessage!==tr('Actualizado')?'sync-attention':''}" role="status"><span></span>${esc(authLoading?tr('Conectando…'):accountUser?(syncMessage || tr('Actualizado')):tr('Demo local'))}</span>${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}${accountUser?`<button class="icon-button" data-action="refresh-shared" aria-label="${tr('Actualizar')}">${icon('refresh')}</button>`:''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
   <main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>
   <footer class="page-footer"><span>Hecho para compartir algo más que gastos.</span><span>DivZplit ${icon('heart')}</span></footer>
   <nav class="mobile-nav" aria-label="Navegación móvil">${mobileNavigation.map(([id,ic,label],index)=>`${index===2?ui`<div class="nav-add-slot"><button class="nav-add" data-action="quick-add" aria-label="Añadir" aria-haspopup="dialog" aria-expanded="false">${icon('plus')}</button></div>`:''}<button class="mobile-nav-item ${mobileActive===id?'active':''}" data-page="${id}" ${mobileActive===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
@@ -509,7 +510,6 @@ function accountBanner() {
   if (authLoading) return tr('<div class="account-banner" role="status">Estamos conectando con tu cuenta…</div>');
   if (pendingInvite) return ui`<div class="account-banner invite-banner"><div><strong>Un buen plan te está esperando.</strong><p>${accountUser?tr('Acepta la invitación para unirte al grupo.'):tr('Entra o crea una cuenta para aceptar la invitación.')}</p></div><button class="button primary" data-action="${accountUser?'accept-invite':'account'}">${accountUser?tr('Aceptar invitación'):tr('Entrar y unirme')}</button><button class="icon-button" data-action="dismiss-invite" aria-label="Descartar invitación">${icon('close')}</button></div>`;
   if (inviteError) return `<div class="account-banner" role="alert">${esc(inviteError)}</div>`;
-  if (accountUser) return ui`<div class="account-banner shared-banner"><div>${icon('users')} <span>Tu cuenta está conectada. Solo ves los grupos a los que perteneces.</span></div><button class="text-button" data-action="refresh-shared">Actualizar ${icon('arrow')}</button></div>`;
   return '';
 }
 function accountForm() {
