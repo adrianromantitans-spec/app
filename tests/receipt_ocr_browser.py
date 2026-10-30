@@ -1,5 +1,6 @@
 """Real OCR in the browser using generated receipts, without accounts or external OCR."""
 import io,json,os
+from urllib.parse import urlsplit
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
 from playwright.sync_api import sync_playwright,expect
@@ -49,7 +50,7 @@ with sync_playwright() as p:
   expect(f.locator('[name=title]')).to_have_value('Mi concepto')
   expect(f.locator('[name=date]')).to_have_value('2026-10-30')
   assert not page.workers
-  assert all(method=='GET' and ('127.0.0.1:3001' in url or 'adrianromantitans-spec.github.io' in url or url.startswith('data:') or url.startswith('blob:')) for method,url in requests),requests
+  assert all(method=='GET' and (urlsplit(url).netloc==urlsplit(BASE).netloc or url.startswith('data:') or url.startswith('blob:')) for method,url in requests),requests
   if lang=='es-ES':
    page.screenshot(path='work/ocr-form.png',full_page=True)
    f.locator('[type=submit]').click();expect(f).to_have_count(0)

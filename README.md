@@ -190,3 +190,19 @@ El primer test cubre los tres idiomas, ambos motores SIMD/no SIMD, revisión,
 moneda diferente y guardado. El segundo cubre cancelación, cierre, cambio de
 foto, fallo del lector e inclusión segura del texto reconocido. Los casos del
 analizador de importes y fechas se ejecutan también con `npm test`.
+
+
+El lector usa ahora la foto original de la selección, separada de la versión
+comprimida que se adjunta al gasto. Conserva más detalle, localiza el papel cuando
+se distingue del fondo y reintenta con más contraste, otras distribuciones del
+texto y orientación. Si el total no se reconoce, se pide recortar en lugar de
+presentar símbolos como un comercio.
+
+**Recortar para leer** permite marcar el ticket con el dedo o el ratón; las
+flechas y +/− ajustan también el recorte con teclado. **Girar foto** cambia su
+orientación para la lectura. **Leer esta zona** reconoce solo el recorte; estas
+operaciones conservan la foto adjunta y no guardan un gasto automáticamente.
+
+`tests/receipt_photo_browser.py` reproduce una foto grande con un ticket pequeño,
+texto tenue y mucho fondo, el recorte táctil y por teclado, la orientación lateral
+y el resultado con símbolos ilegibles. Usa `OCR_URL` para seleccionar el servidor.

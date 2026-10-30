@@ -27,3 +27,10 @@ test('currency mismatch and multiple currencies remain explicit for the UI to ha
  assert.equal(parseReceipt('TOTAL 50,00').currency,null);
  assert.equal(parseReceipt('TOTAL EUR 20,00\nECHIVALENT LEI 100,00').currencyAmbiguous,true);
 });
+
+test('symbol noise is not a merchant, while OCR total labels and spaced decimals are supported',()=>{
+ assert.equal(parseReceipt('e+e=$=AE').title,null);
+ assert.equal(parseReceipt('T0TAL A PAGAR 24 , 90 EUR').amount,2490);
+ assert.equal(parseReceipt('TOTA1\n24. 90 RON').amount,2490);
+ assert.equal(parseReceipt('T0TAL\n24,90').title,null);
+});

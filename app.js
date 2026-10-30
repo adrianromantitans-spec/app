@@ -1,10 +1,10 @@
-import {receiptTools,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-15';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=ocr-15';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-15';
-import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-15';
-import {Cloud} from './cloud.js?v=ocr-15';
+import {receiptTools,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-16';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=ocr-16';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-16';
+import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-16';
+import {Cloud} from './cloud.js?v=ocr-16';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=ocr-15';
+import {welcomePage,socialButtons} from './auth-ui.js?v=ocr-16';
 
 initializeLanguage();
 
@@ -462,7 +462,7 @@ async function processRecurrences() {
 }
 async function receiptChanged(input) {
   const form=input.form;const attempt={};form.receiptAttempt=attempt;
-  form.receiptBlob=null;form.uploadedReceipt=null;form.receiptUploadId=uid();
+  form.receiptBlob=null;form.receiptOCRSource=null;form.uploadedReceipt=null;form.receiptUploadId=uid();
   resetReceiptReader(form);
   if(input.files[0]?.size&&form.elements.removeReceipt)form.elements.removeReceipt.checked=false;
   const preview=form.querySelector('.receipt-preview');preview.replaceChildren();
@@ -470,7 +470,7 @@ async function receiptChanged(input) {
   try {
     form.receiptPending=prepareReceipt(input.files[0]);const blob=await form.receiptPending;
     if(form.receiptAttempt!==attempt||!form.isConnected)return;
-    if(blob){form.receiptBlob=blob;form.receiptPreviewURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=form.receiptPreviewURL;img.alt=tr('Vista previa del ticket');preview.append(img);resetReceiptReader(form);}
+    if(blob){form.receiptBlob=blob;form.receiptOCRSource=input.files[0];form.receiptPreviewURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=form.receiptPreviewURL;img.alt=tr('Vista previa del ticket');preview.append(img);resetReceiptReader(form);}
   }catch(error){if(form.receiptAttempt===attempt){input.value='';toast(error.message);}}
   finally{if(form.receiptAttempt===attempt)form.receiptPending=null;}
 }

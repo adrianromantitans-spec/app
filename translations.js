@@ -1,5 +1,17 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Recortar para leer": {"en": "Crop for reading", "ro": "Decupează pentru citire"},
+  "Girar foto": {"en": "Rotate photo", "ro": "Rotește fotografia"},
+  "Preparando la foto para recortar…": {"en": "Preparing the photo for cropping…", "ro": "Se pregătește fotografia pentru decupare…"},
+  "Arrastra sobre la foto para marcar solo el ticket. Con el teclado, usa las flechas para mover el recorte y + o − para ajustar su tamaño.": {"en": "Drag over the photo to select only the receipt. With a keyboard, use the arrows to move the selection and + or − to adjust its size.", "ro": "Trage pe fotografie pentru a selecta doar bonul. Cu tastatura, folosește săgețile pentru a muta selecția și + sau − pentru a-i ajusta dimensiunea."},
+  "Seleccionar la zona del ticket": {"en": "Select the receipt area", "ro": "Selectează zona bonului"},
+  "El recorte solo se usa para leer; se conserva la foto adjunta.": {"en": "The crop is used only for reading; the attached photo is kept.", "ro": "Decuparea este folosită doar pentru citire; fotografia atașată este păstrată."},
+  "Leer esta zona": {"en": "Read this area", "ro": "Citește această zonă"},
+  "Volver": {"en": "Back", "ro": "Înapoi"},
+  "No se ha podido preparar la foto. Prueba con otra imagen.": {"en": "The photo could not be prepared. Try another image.", "ro": "Fotografia nu a putut fi pregătită. Încearcă altă imagine."},
+  "Mejorando la lectura del ticket…": {"en": "Improving receipt reading…", "ro": "Se îmbunătățește citirea bonului…"},
+  "No se ha podido identificar el total. Pulsa «Recortar para leer» y marca solo el ticket, sin el fondo.": {"en": "The total could not be identified. Tap “Crop for reading” and select just the receipt, without the background.", "ro": "Totalul nu a putut fi identificat. Apasă „Decupează pentru citire” și selectează doar bonul, fără fundal."},
+
   "Leer ticket": {"en": "Read receipt", "ro": "Citește bonul"},
   "Extrae el importe, la fecha y el comercio. La lectura se hace en tu dispositivo.": {"en": "Extract the amount, date and merchant. Reading takes place on your device.", "ro": "Extrage suma, data și comerciantul. Citirea se face pe dispozitivul tău."},
   "Cancelar lectura": {"en": "Cancel reading", "ro": "Anulează citirea"},

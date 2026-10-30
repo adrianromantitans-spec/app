@@ -68,3 +68,9 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 .receipt-detected-value{width:100%;max-width:100%;min-width:0;min-height:44px;background:white;border:1px solid #ded3eb;border-radius:10px;padding:10px;font:inherit;font-size:16px;color:#392447}
 .receipt-detected-value:disabled{opacity:.6}.receipt-currency-warning{color:#965526}
 .receipt-ocr-text{margin-top:13px}.receipt-ocr-text summary{cursor:pointer}.receipt-ocr-text pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;margin-top:9px;font-size:11px}
+
+.receipt-crop-editor[hidden]{display:none!important}
+.receipt-crop-editor{margin-top:14px;padding-top:14px;border-top:1px solid #e5daef}
+.receipt-crop-editor>p{font-size:11px;line-height:1.6;color:#79648d;margin-bottom:10px}
+.receipt-crop-editor canvas{display:block;max-width:100%;max-height:360px;width:auto;height:auto;margin:0 auto;border-radius:8px;touch-action:none;cursor:crosshair;background:#ece5f4}
+.receipt-crop-editor canvas:focus-visible{outline:3px solid #8052df;outline-offset:3px}
