@@ -1,4 +1,4 @@
-import {locale,tr} from './i18n.js?v=expenses-7';
+import {locale,tr} from './i18n.js?v=glass-8';
 export const currencies = ['EUR','RON'];
 export function currencyOf(group) {
   const currency=group?.currency??'EUR';

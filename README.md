@@ -142,3 +142,18 @@ de datos en un contenedor desechable, `tests/currency_database.py`.
 Consulta [la guía de estas funciones](docs/EXPENSE-TOOLS.md). Para activarlas en
 grupos compartidos existentes, ejecutar una vez `supabase/expense-tools.sql`.
 Los importes, participantes y monedas existentes se conservan.
+
+## Interfaz de cristal suave
+
+`glass.css` aplica superficies claras y sombras suaves a las tarjetas, formularios,
+perfil y navegación. La barra móvil tiene Inicio, Grupos, +, Actividad y Perfil.
+El + abre acciones rápidas y permite elegir el grupo antes de añadir un gasto,
+tarea o votación. El presupuesto sigue accesible desde el resumen del grupo y
+la navegación de escritorio. El perfil también tiene una página propia.
+
+La ilustración local `assets/lisbon.png` se usa solo en la tarjeta de Lisboa;
+los demás grupos muestran su icono sobre un fondo suave. Los nombres y cantidades
+siguen siendo datos reales, no textos incrustados en una imagen. Hay estilos sin
+transparencia para navegadores sin backdrop-filter y preferencias de movimiento
+reducido. `tests/glass_browser.py` verifica navegación, grupo de destino, perfil,
+presupuesto y tamaños de pantalla en los tres idiomas. No requiere SQL adicional.

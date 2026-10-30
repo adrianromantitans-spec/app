@@ -2007,5 +2007,73 @@ export const translations = {
   "Los cambios solo afectan a este gasto.": {
     "en": "Changes affect only this expense.",
     "ro": "Modificările afectează doar această cheltuială."
+  },
+  "Inicio": {
+    "en": "Home",
+    "ro": "Acasă"
+  },
+  "Grupos": {
+    "en": "Groups",
+    "ro": "Grupuri"
+  },
+  "Perfil": {
+    "en": "Profile",
+    "ro": "Profil"
+  },
+  "Crear": {
+    "en": "Create",
+    "ro": "Creează"
+  },
+  "Añadir": {
+    "en": "Add",
+    "ro": "Adaugă"
+  },
+  "Hola, {0}": {
+    "en": "Hi, {0}",
+    "ro": "Salut, {0}"
+  },
+  "Tus planes, en un mismo lugar.": {
+    "en": "Your plans, all in one place.",
+    "ro": "Planurile tale, într-un singur loc."
+  },
+  "TU ESPACIO": {
+    "en": "YOUR SPACE",
+    "ro": "SPAȚIUL TĂU"
+  },
+  "Tu perfil, a tu manera.": {
+    "en": "Your profile, your way.",
+    "ro": "Profilul tău, așa cum îți place."
+  },
+  "Tu cuenta y tus datos, siempre a mano.": {
+    "en": "Your account and data, always at hand.",
+    "ro": "Contul și datele tale, mereu la îndemână."
+  },
+  "¿Qué quieres añadir?": {
+    "en": "What would you like to add?",
+    "ro": "Ce vrei să adaugi?"
+  },
+  "En el grupo:": {
+    "en": "In the group:",
+    "ro": "În grupul:"
+  },
+  "Reparte una cuenta con tu grupo.": {
+    "en": "Split a bill with your group.",
+    "ro": "Împarte o notă de plată cu grupul tău."
+  },
+  "Que no se os quede nada pendiente.": {
+    "en": "Keep track of the little things.",
+    "ro": "Nu lăsați nimic nefăcut."
+  },
+  "Decidid juntos el próximo plan.": {
+    "en": "Choose your next plan together.",
+    "ro": "Alegeți împreună următorul plan."
+  },
+  "Crea un grupo para empezar a compartir gastos y planes.": {
+    "en": "Create a group to start sharing expenses and plans.",
+    "ro": "Creează un grup pentru a împărți cheltuieli și planuri."
+  },
+  "Todo empieza con tu gente.": {
+    "en": "It all starts with your people.",
+    "ro": "Totul începe cu oamenii tăi."
   }
 };

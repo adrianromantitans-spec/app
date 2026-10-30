@@ -1,9 +1,9 @@
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=expenses-7';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=expenses-7';
-import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=expenses-7';
-import {Cloud} from './cloud.js?v=expenses-7';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=glass-8';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=glass-8';
+import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=glass-8';
+import {Cloud} from './cloud.js?v=glass-8';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=expenses-7';
+import {welcomePage,socialButtons} from './auth-ui.js?v=glass-8';
 
 initializeLanguage();
 
@@ -25,6 +25,8 @@ let inviteError='';
 const remoteBaseline=new Map();
 
 const icons = {
+  home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
+  person:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M15 3.13a4 4 0 0 1 0 7.75"/><circle cx="9" cy="7" r="4"/>',
   chart:'<path d="M3 3v18h18M7 14l4-4 4 3 6-8"/>',
@@ -114,37 +116,38 @@ function render() {
   if(cloud.recovering){renderRecovery(true);return;}
   if (!accountUser&&!demoMode) {if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
   const g = group();
-  const navigation = [['home','grid',tr('Mi espacio')],['groups','users',tr('Mis grupos')],['activity','chart',tr('Actividad')],['budget','wallet',tr('Presupuestos')]];
+  const navigation = [['home','home',tr('Inicio')],['groups','users',tr('Grupos')],['activity','chart',tr('Actividad')],['budget','wallet',tr('Presupuestos')],['profile','person',tr('Perfil')]];
+  const mobileNavigation=navigation.filter(([id])=>id!=='budget');
+  const mobileActive=page==='budget'?'home':page;
   root.innerHTML = ui`<aside class="sidebar" aria-label="Navegación principal">
-    <a class="brand" href="#" data-page="home"><span class="brand-symbol" aria-hidden="true">D</span>DivZplit<span class="brand-dot">.</span></a>
-    <div class="workspace-label">TU PEQUEÑO UNIVERSO</div>
+    <a class="brand" href="#" data-page="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>
+    <button class="button primary sidebar-create" data-action="quick-add">${icon('plus')} ${tr('Crear')}</button><div class="workspace-label">TU PEQUEÑO UNIVERSO</div>
     <nav>${navigation.map(([id,ic,label])=>`<button class="nav-item ${page===id?'active':''}" data-page="${id}" ${page===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span>${id==='groups'?`<span class="nav-count">${state.groups.length}</span>`:''}</button>`).join('')}</nav>
     <div class="sidebar-group-label">TUS GRUPOS <button class="icon-button" data-action="new-group" aria-label="Crear un grupo">${icon('plus')}</button></div>
     <div class="sidebar-groups">${state.groups.map(item=>`<button class="group-nav ${item.id===g?.id?'selected':''}" data-group="${esc(item.id)}"><span class="group-emoji">${esc(item.emoji)}</span><span>${esc(item.name)}</span>${item.id===g?.id?'<span class="selected-dot"></span>':''}</button>`).join('')}</div>
     <div class="sidebar-bottom"><div class="together-card"><span class="little-spark">✳</span><h3>Menos líos.<br>Más buenos momentos.</h3><p>Lo mejor de hacer planes<br>es hacerlos juntos.</p><button data-action="new-group">Empieza algo bonito ${icon('arrow')}</button></div>
     <button class="profile" data-action="settings">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${accountUser?tr('Tu cuenta compartida'):tr('Tu espacio de demo')}</small></span>${icon('settings')}</button></div>
   </aside>
-  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo">DivZplit.</span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right"><span class="local-label" role="status"><span></span>${esc(authLoading?tr('Conectando…'):accountUser?(syncMessage || tr('Actualizado')):tr('Demo local'))}</span>${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
-  <main id="main" tabindex="-1">${accountBanner()}${!state.groups.length?emptyAccount():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>
+  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right"><span class="local-label ${accountUser&&syncMessage&&syncMessage!==tr('Actualizado')?'sync-attention':''}" role="status"><span></span>${esc(authLoading?tr('Conectando…'):accountUser?(syncMessage || tr('Actualizado')):tr('Demo local'))}</span>${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
+  <main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>
   <footer class="page-footer"><span>Hecho para compartir algo más que gastos.</span><span>DivZplit ${icon('heart')}</span></footer>
-  <nav class="mobile-nav" aria-label="Navegación móvil">${navigation.map(([id,ic,label])=>`<button class="${page===id?'active':''}" data-page="${id}" ${page===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
+  <nav class="mobile-nav" aria-label="Navegación móvil">${mobileNavigation.map(([id,ic,label],index)=>`${index===2?ui`<div class="nav-add-slot"><button class="nav-add" data-action="quick-add" aria-label="Añadir" aria-haspopup="dialog" aria-expanded="false">${icon('plus')}</button></div>`:''}<button class="mobile-nav-item ${mobileActive===id?'active':''}" data-page="${id}" ${mobileActive===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
   root.inert=authLoading || !!modalRoot.firstElementChild;
 }
 
 function homeView() {
   const g = group(); const spent = totalSpent(g); const ownBalance = balances(g).you || 0;
   const ownShare = g.expenses.reduce((sum,e)=>sum+(expenseShares(e).you||0),0);
-  return ui`<div class="welcome-row"><div><div class="eyebrow">UN LUGAR PARA LO QUE COMPARTÍS</div><h1>Los buenos planes empiezan aquí<span class="purple-text">.</span></h1><p>Las cuentas claras. Los planes en marcha. Y tú, a disfrutar.</p></div><button class="button secondary" data-action="new-group">${icon('plus')} Crear grupo</button></div>
-  <section class="trip-hero"><div class="hero-content"><div class="trip-badge"><span></span>${esc(tr(g.type).toUpperCase())} EN GRUPO</div><h2>${esc(g.name)}</h2><div class="trip-meta"><span>${icon('pin')}${esc(g.place || tr('Un plan por descubrir'))}</span>${g.date?`<span>${icon('calendar')}${dateLabel(g.date)}${g.endDate?` — ${dateLabel(g.endDate)}`:''} ${g.date.slice(0,4)}</span>`:''}</div><div class="hero-bottom">${avatars(g.members)}<span>${g.members.length} personas, un gran plan</span>${canManage()?ui`<button class="hero-edit" data-action="edit-group" aria-label="Editar detalles del grupo">${icon('settings')}</button>`:''}${accountUser&&canManage()?ui`<button class="button secondary invite-button" data-action="invite">${icon('users')} Invitar</button>`:''}</div></div><div class="hero-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><span class="art-star star-one">✦</span><span class="art-star star-two">✳</span><div class="postcard back"><span>LET’S GO</span><div class="sun"></div><div class="hill"></div><div class="hill second"></div></div><div class="postcard front"><div class="postcard-image"><span class="art-cloud">☁</span><div class="tram"><div class="tram-roof"></div><div class="tram-windows"><i></i><i></i><i></i></div><div class="tram-line"></div><div class="tram-lights"><i></i><i></i></div><span>28</span></div><div class="street-line"></div></div><span>next stop: buenos momentos ♡</span></div><div class="floating-sticker">${esc(g.emoji)}</div></div></section>
-  <section class="stats-grid" aria-label="Resumen del grupo"><article class="stat-card"><div class="stat-top"><span>Gastos del grupo</span><span class="stat-icon lavender">${icon('wallet')}</span></div><strong>${money(spent)}</strong><small>${g.expenses.length} gastos compartidos <span class="stat-detail">Entre todos, todo es más fácil</span></small></article>
-  <article class="stat-card"><div class="stat-top"><span>Tu parte del plan</span><span class="stat-icon peach">${icon('receipt')}</span></div><strong>${money(ownShare)}</strong><small>Según los gastos en los que participas</small></article>
-  <article class="stat-card"><div class="stat-top"><span>${ownBalance>0?tr('Te deben'):ownBalance<0?tr('Tienes pendiente'):tr('Todo en equilibrio')}</span><span class="stat-icon mint">${icon('chart')}</span></div><strong class="${ownBalance>=0?'green-text':''}">${money(Math.abs(ownBalance))}</strong><button class="text-button" data-action="settlements">${ownBalance===0?tr('Ver saldos del grupo'):tr('Vamos a dejarlo a cero')} ${icon('arrow')}</button></article></section>
+  return ui`<div class="welcome-row"><div><div class="eyebrow">UN LUGAR PARA LO QUE COMPARTÍS</div><h1>${ui`Hola, ${esc(currentProfile().name)}`}</h1><p>Tus planes, en un mismo lugar.</p></div><button class="button secondary" data-action="new-group">${icon('plus')} Crear grupo</button></div>
+  <section class="trip-hero"><div class="hero-content"><div class="trip-badge"><span></span>${esc(tr(g.type).toUpperCase())} EN GRUPO</div><h2>${esc(g.name)}</h2><div class="trip-meta"><span>${icon('pin')}${esc(g.place || tr('Un plan por descubrir'))}</span>${g.date?`<span>${icon('calendar')}${dateLabel(g.date)}${g.endDate?` — ${dateLabel(g.endDate)}`:''} ${g.date.slice(0,4)}</span>`:''}</div><div class="hero-bottom">${avatars(g.members)}<span>${g.members.length} personas, un gran plan</span>${canManage()?ui`<button class="hero-edit" data-action="edit-group" aria-label="Editar detalles del grupo">${icon('settings')}</button>`:''}${accountUser&&canManage()?ui`<button class="button secondary invite-button" data-action="invite">${icon('users')} Invitar</button>`:''}</div></div><div class="hero-art" aria-hidden="true">${g.emoji==='🚋'||/lisboa|lisbon/i.test(g.place||'')?'<img class="hero-destination-image" src="./assets/lisbon.png" width="1536" height="1024" alt="" decoding="async" fetchpriority="low">':`<div class="hero-generic-scene"><span class="scene-circle"></span><span class="scene-group-emoji">${esc(g.emoji)}</span><span class="scene-little-star">✳</span></div>`}</div></section>
+  <section class="stats-grid" aria-label="Resumen del grupo"><article class="stat-card spent-stat"><span class="stat-icon lavender">${icon('wallet')}</span><div class="stat-copy"><span class="stat-label">Gastos del grupo</span><strong>${money(spent)}</strong><small>${ui`${g.expenses.length} gastos compartidos`}</small></div></article><article class="stat-card balance-stat"><span class="stat-icon mint">${icon('arrow')}</span><div class="stat-copy"><span class="stat-label">${ownBalance>0?tr('Te deben'):ownBalance<0?tr('Tienes pendiente'):tr('Todo en equilibrio')}</span><strong class="${ownBalance>=0?'green-text':''}">${money(Math.abs(ownBalance))}</strong><button class="text-button" data-action="settlements">${ownBalance===0?tr('Ver saldos del grupo'):tr('Vamos a dejarlo a cero')}</button></div></article></section>
+  <div class="stats-context"><span>${tr('Tu parte del plan')}: <strong>${money(ownShare)}</strong></span><button class="text-button" data-page="budget">${tr('Presupuestos')} ${icon('arrow')}</button></div>
   <div class="group-toolbar" data-label="${tr('EL PLAN, EN MARCHA')}"><div class="tabs" role="tablist" aria-label="Secciones del grupo">${[['summary',tr('Resumen')],['expenses',tr('Gastos')],['plans',tr('Planes y votaciones')],['tasks',tr('Tareas')]].map(([id,label])=>`<button role="tab" aria-selected="${tab===id}" class="${tab===id?'active':''}" data-tab="${id}">${label}${id==='tasks'?`<span>${g.tasks.filter(t=>!t.done).length}</span>`:''}</button>`).join('')}</div><button class="button primary" data-action="new-expense">${icon('plus')} Añadir gasto</button></div>
   <div class="tab-content" role="tabpanel">${tab==='summary'?summaryView():tab==='expenses'?expensesView():tab==='plans'?plansView():tasksView()}</div>`;
 }
 
 function summaryView() {
-  return ui`<div class="dashboard-grid"><div class="dashboard-main"><section class="panel expenses-panel">${sectionTitle(tr('Los últimos gastos'),tr('Cada cuenta, en su sitio.'),ui`<button class="text-button" data-tab="expenses">Ver todos ${icon('arrow')}</button>`)}${expenseList(group().expenses.slice(0,4))}</section><section class="panel">${sectionTitle(tr('Lo próximo que decidimos'),tr('Porque el mejor plan se elige entre todos.'),ui`<span class="tiny-pill lavender">${icon('vote')} A votación</span>`)}${group().polls.length?pollCard(group().polls[0]):empty(tr('¿Por dónde empezamos?'),tr('Propón un plan y deja que el grupo decida.'),'new-poll',tr('Crear votación'))}</section></div><div class="dashboard-side">${budgetCard()}<section class="panel task-panel">${sectionTitle(tr('Pequeñas cosas por hacer'),tr('Un poco de cada uno, mucho de todos.'),ui`<button class="icon-button" data-action="new-task" aria-label="Añadir tarea">${icon('plus')}</button>`)}${taskList(group().tasks.slice(0,4))}<button class="text-button full-width" data-tab="tasks">Ver todas las tareas ${icon('arrow')}</button></section><div class="tip-card"><span>✧</span><p><strong>El plan es disfrutar.</strong> DivZplit se encarga de que nada se quede en el aire.</p></div></div></div>`;
+  return ui`<div class="dashboard-grid"><div class="dashboard-main"><section class="panel expenses-panel">${sectionTitle(tr('Los últimos gastos'),tr('Cada cuenta, en su sitio.'),ui`<div class="section-actions"><button class="text-button" data-tab="expenses">Ver todos ${icon('arrow')}</button><button class="icon-button expense-add-inline" data-action="new-expense" aria-label="Añadir gasto">${icon('plus')}</button></div>`)}${expenseList(group().expenses.slice(0,4))}</section><section class="panel">${sectionTitle(tr('Lo próximo que decidimos'),tr('Porque el mejor plan se elige entre todos.'),ui`<span class="tiny-pill lavender">${icon('vote')} A votación</span>`)}${group().polls.length?pollCard(group().polls[0]):empty(tr('¿Por dónde empezamos?'),tr('Propón un plan y deja que el grupo decida.'),'new-poll',tr('Crear votación'))}</section></div><div class="dashboard-side">${budgetCard()}<section class="panel task-panel">${sectionTitle(tr('Pequeñas cosas por hacer'),tr('Un poco de cada uno, mucho de todos.'),ui`<button class="icon-button" data-action="new-task" aria-label="Añadir tarea">${icon('plus')}</button>`)}${taskList(group().tasks.slice(0,4))}<button class="text-button full-width" data-tab="tasks">Ver todas las tareas ${icon('arrow')}</button></section><div class="tip-card"><span>✧</span><p><strong>El plan es disfrutar.</strong> DivZplit se encarga de que nada se quede en el aire.</p></div></div></div>`;
 }
 
 function expenseList(items) {
@@ -178,12 +181,13 @@ function budgetView() {const g=group(); const spent=totalSpent(g); const categor
 
 function openModal(title, content, subtitle='') {
   if (!modalRoot.contains(document.activeElement)) modalOpener = document.activeElement;
+  root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');
   modalRoot.innerHTML=ui`<div class="modal-overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-heading"><div><div class="eyebrow">TODO CONECTADO</div><h2 id="modal-title">${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div><button class="icon-button" data-action="close-modal" aria-label="Cerrar">${icon('close')}</button></div>${content}</section></div>`;
   document.body.classList.add('modal-open');
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
 }
-function closeModal() {const previewForm=modalRoot.querySelector('#expense-form');if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
+function closeModal() {root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
 const actions = label => ui`<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" type="submit">${label}${icon('arrow')}</button></div>`;
 const memberOptions = () => group().members.map(m=>`<option value="${esc(m.id)}">${esc(memberName(m))}</option>`).join('');
 function canEditExpense(e) {return !!e&&(!accountUser||canManage()||e.createdBy===accountUser.id);}
@@ -245,9 +249,18 @@ function expenseDetails(id) {
   const shares=expenseShares(e);
   openModal(esc(e.title),ui`<div class="expense-detail-total">${money(e.amount)}<span>${esc(tr(e.category))} · ${dateLabel(e.date)}</span></div><p class="detail-payer">Pagado por <strong>${esc(member(e.payer).name)}</strong></p>${e.receipt?ui`<button class="button secondary full-width" data-view-receipt="${esc(e.id)}">${icon('receipt')} Ver foto del ticket</button>`:''}${e.recurrence?`<div class="recurrence-info"><strong>${({weekly:tr('Cada semana'),monthly:tr('Cada mes'),yearly:tr('Cada año')})[e.recurrence.frequency]||tr('Recurrente')}</strong><p>${e.recurrence.active?tr('Próximo gasto: ')+dateLabel(e.recurrence.nextDate):tr('Repetición detenida')}</p>${e.recurrence.active&&(!accountUser||canManage()||e.createdBy===accountUser.id)?ui`<button class="text-button" data-stop-recurrence="${esc(e.id)}">Detener repetición</button>`:''}</div>`:e.seriesId?tr('<p class="form-note">Generado a partir de un gasto recurrente.</p>'):''}<h3 class="detail-subtitle">Así se reparte</h3>${e.participants.map((id,i)=>`<div class="share-row">${avatar(member(id),true)}<span>${esc(member(id).name)}</span><strong>${money(shares[id])}</strong></div>`).join('')}<div class="modal-actions">${canEditExpense(e)?ui`<button class="button secondary" data-edit-expense="${esc(e.id)}">Editar gasto</button><button class="button danger" data-delete-expense="${esc(e.id)}">Eliminar gasto</button>`:''}<button class="button primary" data-action="close-modal">Entendido</button></div>`);
 }
-function settingsModal() {
+function profileContent() {
   const profile=currentProfile();
-  openModal(tr('Tu espacio, a tu manera'),ui`<div class="profile-detail">${avatar(profile)}<div><h3>${esc(profile.name)}${accountUser?'':tr(' · Tu perfil de demo')}</h3><p>${accountUser?esc(accountUser.email):tr('Moneda:')+' '+tr(currencyOf(group())==='RON'?'Leu rumano (RON)':'Euro (€)')+' · '+tr('Idioma:')+' '+languageName}</p></div></div><div class="privacy-note"><h3>${accountUser?tr('Vuestros planes, en el mismo sitio'):tr('Explora DivZplit a tu ritmo')}</h3><p>${accountUser?tr('Tus grupos se guardan en tu cuenta. Los cambios se comprueban cada ocho segundos mientras usas DivZplit. Solo sus miembros pueden acceder. Los grupos de ejemplo de la demo no se suben a tu cuenta.'):tr('Esta demo guarda los cambios en este navegador. Entra o crea una cuenta para organizar grupos compartidos con otras personas.')}</p></div>${accountUser?ui`<button class="button secondary full-width" data-action="signout">Cerrar sesión</button>`:ui`<button class="button primary full-width" data-action="account">Entrar o crear una cuenta</button>`}<button class="button secondary full-width export-account" data-action="export">${icon('logout')} Exportar mis datos (JSON)</button>${!accountUser?ui`<button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`:''}`);
+  return ui`<div class="profile-detail">${avatar(profile)}<div><h3>${esc(profile.name)}${accountUser?'':tr(' · Tu perfil de demo')}</h3><p>${accountUser?esc(accountUser.email):tr('Moneda:')+' '+tr(currencyOf(group())==='RON'?'Leu rumano (RON)':'Euro (€)')+' · '+tr('Idioma:')+' '+languageName}</p></div></div><div class="privacy-note"><h3>${accountUser?tr('Vuestros planes, en el mismo sitio'):tr('Explora DivZplit a tu ritmo')}</h3><p>${accountUser?tr('Tus grupos se guardan en tu cuenta. Los cambios se comprueban cada ocho segundos mientras usas DivZplit. Solo sus miembros pueden acceder. Los grupos de ejemplo de la demo no se suben a tu cuenta.'):tr('Esta demo guarda los cambios en este navegador. Entra o crea una cuenta para organizar grupos compartidos con otras personas.')}</p></div>${accountUser?ui`<button class="button secondary full-width" data-action="signout">Cerrar sesión</button>`:ui`<button class="button primary full-width" data-action="account">Entrar o crear una cuenta</button>`}<button class="button secondary full-width export-account" data-action="export">${icon('logout')} Exportar mis datos (JSON)</button>${!accountUser?ui`<button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`:''}`;
+}
+function settingsModal() {openModal(tr('Tu espacio, a tu manera'),profileContent());}
+function profileView() {
+  return ui`<div class="welcome-row"><div><div class="eyebrow">TU ESPACIO</div><h1>Tu perfil, a tu manera.</h1><p>Tu cuenta y tus datos, siempre a mano.</p></div></div><section class="panel profile-panel">${profileContent()}</section>`;
+}
+function quickAddModal() {
+  const g=group();
+  openModal(tr('¿Qué quieres añadir?'),ui`<div class="quick-add-content">${g?ui`<p class="quick-add-context">En el grupo: <strong>${esc(g.name)}</strong></p>${state.groups.length>1?ui`<label class="field">Seleccionar grupo<select data-quick-group>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label>`:''}<div class="quick-actions">${[['new-expense','receipt',tr('Añadir gasto'),tr('Reparte una cuenta con tu grupo.')],['new-task','task',tr('Añadir tarea'),tr('Que no se os quede nada pendiente.')],['new-poll','vote',tr('Crear votación'),tr('Decidid juntos el próximo plan.')]].map(([action,ic,title,description])=>`<button class="quick-action" data-action="${action}"><span class="quick-action-icon">${icon(ic)}</span><span><strong>${title}</strong><small>${description}</small></span>${icon('chevron')}</button>`).join('')}</div>`:ui`<p class="form-note">Crea un grupo para empezar a compartir gastos y planes.</p>`}<button class="quick-action quick-new-group" data-action="new-group"><span class="quick-action-icon">${icon('users')}</span><span><strong>${tr('Crear grupo')}</strong><small>${tr('Todo empieza con tu gente.')}</small></span>${icon('plus')}</button></div>`);
+  root.querySelector('.nav-add')?.setAttribute('aria-expanded','true');
 }
 
 document.addEventListener('click', event => {onAppClick(event).catch(handleActionError);});
@@ -256,7 +269,7 @@ async function onAppClick(event) {
   if(!el)return;
   if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
-  if(el.dataset.page){page=el.dataset.page; render(); window.scrollTo({top:0});return;}
+  if(el.dataset.page){page=el.dataset.page; render();document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
   if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
   if(el.dataset.tab){tab=el.dataset.tab;render();return;}
   if(el.dataset.filter){expenseFilter=el.dataset.filter;render();return;}
@@ -271,6 +284,7 @@ async function onAppClick(event) {
   if(el.dataset.stopRecurrence){const e=group().expenses.find(e=>e.id===el.dataset.stopRecurrence);if(e?.recurrence&&(!accountUser||canManage()||e.createdBy===accountUser.id)){e.recurrence.active=false;await save();expenseDetails(e.id);toast(tr('Repetición detenida. Los gastos anteriores se conservan.'));}return;}
   switch(el.dataset.action){
     case 'close-modal':closeModal();break;
+    case 'quick-add':quickAddModal();break;
     case 'delete-group':deleteGroupModal();break;
     case 'new-expense':expenseModal();break;
     case 'new-group':groupModal();break;
@@ -306,6 +320,7 @@ document.addEventListener('change',event=>{onAppChange(event).catch(handleAction
 async function onAppChange(event) {
   const el=event.target;
   if(remoteBusy || authLoading){render();return;}
+  if(el.matches('[data-quick-group]')){state.activeGroup=el.value;await save();render();modalOpener=[...root.querySelectorAll('[data-action=quick-add]')].find(button=>button.getClientRects().length);quickAddModal();return;}
   if(el.form?.id==='expense-form'&&(el.name==='splitMode'||el.name==='participants')){renderSplitFields(el.form);return;}
   if(el.name==='removeReceipt'&&el.checked){const file=el.form.elements.receipt;file.value='';await receiptChanged(file);return;}
   if(el.matches('select[name=currency]')){const label=el.form.querySelector('.budget-currency-label');if(label)label.textContent=ui`Presupuesto total del grupo (${el.value==='RON'?'RON':'€'})`;return;}
@@ -482,7 +497,7 @@ function canManage() {return !accountUser || group()?.remote?.ownerId===accountU
 function setSync(message) {
   syncMessage=message;
   const label=document.querySelector('.local-label');
-  if (label) label.textContent=accountUser?message:tr('Demo local');
+  if (label){label.textContent=accountUser?message:tr('Demo local');label.classList.toggle('sync-attention',!!accountUser&&!!message&&message!==tr('Actualizado'));}
 }
 function rememberActiveGroup() {
   try {sessionStorage.setItem('nexo-active-'+accountUser.id,state.activeGroup || '');} catch {}

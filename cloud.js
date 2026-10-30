@@ -1,6 +1,6 @@
-import {currencyOf} from './model.js?v=expenses-7';
-import {tr} from './i18n.js?v=expenses-7';
-import {receiptPath} from './extras.js?v=expenses-7';
+import {currencyOf} from './model.js?v=glass-8';
+import {tr} from './i18n.js?v=glass-8';
+import {receiptPath} from './extras.js?v=glass-8';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;

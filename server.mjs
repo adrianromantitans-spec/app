@@ -4,8 +4,8 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const files = new Set(['index.html', 'styles.css', 'app.js', 'auth-ui.js', 'extras.js', 'i18n.js', 'translations.js', 'model.js', 'cloud.js', 'config.js', 'favicon.svg']);
-const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml'};
+const files = new Set(['index.html', 'styles.css', 'glass.css', 'app.js', 'auth-ui.js', 'extras.js', 'i18n.js', 'translations.js', 'model.js', 'cloud.js', 'config.js', 'favicon.svg', 'assets/lisbon.png']);
+const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png'};
 const port = Number(process.env.PORT || 3000);
 http.createServer(async (req, res) => {
   const file = new URL(req.url, 'http://localhost').pathname.slice(1) || 'index.html';

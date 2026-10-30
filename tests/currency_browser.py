@@ -30,7 +30,7 @@ with sync_playwright() as p:
  state=page.evaluate("JSON.parse(localStorage.getItem('nexo-local-v1'))")
  group=next(g for g in state['groups'] if g['name']=='Lei cu prietenii')
  assert group['currency']=='RON' and group['expenses'][0]['amount']==1001
- page.get_by_role('button',name='My groups',exact=False).first.click()
+ page.get_by_role('button',name='Groups',exact=False).first.click()
  card=page.locator('.group-card').filter(has=page.get_by_role('heading',name='Lei cu prietenii'))
  assert 'RON' in card.inner_text() and '€' not in card.inner_text()
  assert '€' in page.locator('.group-cards').inner_text()
