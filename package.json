@@ -1,0 +1,14 @@
+{
+  "name": "nexo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Planes, gastos y pequeñas aventuras, juntos.",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node tests/model.test.mjs",
+    "check": "node --check app.js && node --check model.js && node --check server.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
