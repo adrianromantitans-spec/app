@@ -3,6 +3,12 @@
 Una web para organizar viajes y planes en grupo: gastos compartidos, presupuestos,
 votaciones y tareas, con un diseño adaptable a móvil.
 
+Al abrir sin sesión aparece **Bienvenido a Nexo**, con registro e inicio de sesión.
+La demo se abre únicamente con **Explorar una demo**. Una sesión válida conserva
+el acceso a los grupos al recargar. Las opciones de Google y Apple se habilitan
+según su configuración real en Supabase; consulta
+[la guía de acceso social](docs/SOCIAL-LOGIN.md) para activarlas.
+
 ## Ejecutar
 
 Requiere **Node.js 22 o posterior**. La demo local no tiene dependencias externas
@@ -67,6 +73,7 @@ puerto. La prueba crea un contexto aislado y no cambia los datos de tu navegador
 
 - `index.html`, `styles.css`: interfaz adaptable y recursos gráficos locales.
 - `app.js`: interacción, formularios y persistencia.
+- `auth-ui.js`: bienvenida, entrada y disponibilidad de proveedores de acceso.
 - `model.js`: cálculos financieros en céntimos y datos de ejemplo.
 - `cloud.js`, `config.js`: acceso a Supabase y su configuración pública opcional.
 - `supabase/schema.sql`: tablas, permisos RLS y operaciones de grupos compartidos.

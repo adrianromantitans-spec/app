@@ -1,6 +1,7 @@
 import {money, uid, totalSpent, balances, settlements, addExpense, vote, seed} from './model.js';
-import {Cloud} from './cloud.js';
+import {Cloud} from './cloud.js?v=welcome-1';
 import {cloudConfig} from './config.js';
+import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-1';
 
 let cloud;
 let configError='';
@@ -10,6 +11,9 @@ let remoteBusy=false;
 let authLoading=cloud.enabled;
 let syncMessage='';
 let authMode='login';
+let demoMode=false;
+let providers=null;
+let providerError=false;
 let pendingInvite='';
 let inviteError='';
 const remoteBaseline=new Map();
@@ -99,6 +103,7 @@ function empty(title, description, action, label) { return `<div class="empty-st
 function sectionTitle(title, subtitle, extra='') {return `<div class="section-heading"><div><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra}</div>`;}
 
 function render() {
+  if (!accountUser&&!demoMode) {renderWelcome();return;}
   const g = group();
   const navigation = [['home','grid','Mi espacio'],['groups','users','Mis grupos'],['activity','chart','Actividad'],['budget','wallet','Presupuestos']];
   root.innerHTML = `<aside class="sidebar" aria-label="Navegación principal">
@@ -220,6 +225,11 @@ async function onAppClick(event) {
     case 'new-poll':openModal('¿Cuál es el plan?',`<form id="poll-form" data-entity-id="${uid()}"><label class="field">La gran pregunta<input name="title" placeholder="¿Dónde cenamos el viernes?" maxlength="120" required></label><label class="field">Un poco de contexto <span class="muted">(opcional)</span><input name="description" placeholder="Algo rico, cerca del apartamento" maxlength="160"></label><label class="field">Opción 1<input name="option" placeholder="Pizzería del barrio" maxlength="100" required></label><label class="field">Opción 2<input name="option" placeholder="Restaurante portugués" maxlength="100" required></label><label class="field">Opción 3 <span class="muted">(opcional)</span><input name="option" placeholder="Otra buena idea" maxlength="100"></label>${actions('Crear votación')}</form>`);break;
     case 'settings':settingsModal();break;
     case 'account':accountModal();break;
+    case 'demo':demoMode=true;page='home';closeModal();render();break;
+    case 'welcome':demoMode=false;closeModal();render();break;
+    case 'oauth-google':await beginOAuth('google');break;
+    case 'oauth-apple':await beginOAuth('apple');break;
+    case 'retry-providers':await refreshProviders();break;
     case 'signup':authMode='signup';accountModal();break;
     case 'login':authMode='login';accountModal();break;
     case 'signout':await signOutAccount();break;
@@ -243,7 +253,7 @@ async function onAppChange(event) {
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();}
 }
 document.addEventListener('submit',async event=>{
-  const form=event.target;if(!form.closest('#modal-root'))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
+  const form=event.target;if(!form.closest('#modal-root')&&form.id!=='account-form')return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
   if(await handleAccountForm(form,data))return;
   try {
     if(form.id==='expense-form'){const added=addExpense(group(),{title:data.get('title'),amount:Math.round(Number(data.get('amount'))*100),payer:data.get('payer'),participants:data.getAll('participants'),category:data.get('category'),date:data.get('date')});if(accountUser){added.id=form.dataset.entityId;added.createdBy=accountUser.id;}}
@@ -282,9 +292,11 @@ document.addEventListener('keydown',event=>{
 render();
 if(storageWarning)toast(storageWarning);
 startAccount();
+refreshProviders();
 
 function currentProfile() {
-  const raw=accountUser?.user_metadata?.display_name;
+  const metadata=accountUser?.user_metadata || {};
+  const raw=metadata.display_name || metadata.full_name || metadata.name;
   const name=(typeof raw==='string'?raw.trim().slice(0,40):'') || (accountUser?'Miembro':'Alex');
   return {name,initials:name.split(/\s+/).map(s=>s[0]).join('').slice(0,2).toUpperCase(),color:'purple'};
 }
@@ -313,14 +325,37 @@ function accountBanner() {
   if (accountUser) return `<div class="account-banner shared-banner"><div>${icon('users')} <span>Tu cuenta está conectada. Solo ves los grupos a los que perteneces.</span></div><button class="text-button" data-action="refresh-shared">Actualizar ${icon('arrow')}</button></div>`;
   return '';
 }
-function accountModal() {
-  if (accountUser) {settingsModal();return;}
-  if (!cloud.enabled) {
-    openModal('Vuestros planes, juntos',`<div class="privacy-note"><h3>Estamos preparando las cuentas compartidas</h3><p>El acceso con cuenta todavía no está disponible. Puedes seguir explorando Nexo en la demo local; tus cambios no se compartirán con otras personas.</p></div><button class="button primary full-width" data-action="close-modal">Volver a la demo</button>`);
-    return;
-  }
+function accountForm() {
   const signup=authMode==='signup';
-  openModal(signup?'Tu próximo plan empieza aquí':'Qué bien tenerte de vuelta',`<form id="account-form" data-mode="${authMode}">${signup?'<label class="field">¿Cómo te llamas?<input name="name" autocomplete="nickname" maxlength="40" placeholder="Tu nombre" required></label>':''}<label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required></label><label class="field">Contraseña<input type="password" name="password" autocomplete="${signup?'new-password':'current-password'}" minlength="${signup?10:1}" maxlength="128" required>${signup?'<span class="muted">Al menos 10 caracteres.</span>':''}</label><p class="form-note">${signup?'Te enviaremos un correo para confirmar tu cuenta.':'Tus grupos te estarán esperando, también en otro móvil.'} Los grupos de la demo permanecen separados.</p>${actions(signup?'Crear mi cuenta':'Entrar')}</form><div class="account-switch">${signup?'¿Ya tienes cuenta?':'¿Es tu primera vez?'} <button class="text-button" data-action="${signup?'login':'signup'}">${signup?'Entrar':'Crear una cuenta'}</button></div>`);
+  if(!cloud.enabled) return '<div class="privacy-note"><p>El acceso con cuenta todavía no está disponible. Puedes explorar Nexo con la demo.</p></div>';
+  return `<form id="account-form" data-mode="${authMode}">${signup?'<label class="field">¿Cómo te llamas?<input name="name" autocomplete="nickname" maxlength="40" placeholder="Tu nombre" required></label>':''}<label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required></label><label class="field">Contraseña<input type="password" name="password" autocomplete="${signup?'new-password':'current-password'}" minlength="${signup?10:1}" maxlength="128" placeholder="${signup?'Al menos 10 caracteres':'Tu contraseña'}" required></label><p class="form-note">${signup?'Te enviaremos un correo para confirmar tu cuenta.':'Entra para recuperar tus grupos, también en otro móvil.'}</p><p class="form-error" role="alert"></p><button class="button primary full-width auth-submit" type="submit">${signup?'Crear cuenta':'Iniciar sesión'} ${icon('arrow')}</button></form>`;
+}
+function renderWelcome() {
+  let notice='';
+  if(pendingInvite) notice='<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>';
+  else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
+  root.innerHTML=welcomePage({loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
+  root.inert=!!modalRoot.firstElementChild;
+}
+function accountModal() {
+  if(accountUser){settingsModal();return;}
+  if(!demoMode){closeModal();render();document.querySelector('#account-form input')?.focus();return;}
+  openModal(authMode==='signup'?'Crea tu cuenta':'Inicia sesión',`<div class="social-providers">${socialButtons({providers,error:providerError,enabled:cloud.enabled})}</div><div class="auth-divider"><span>o continúa con tu correo</span></div>${accountForm()}<div class="account-switch">${authMode==='signup'?'¿Ya tienes cuenta?':'¿Es tu primera vez?'} <button class="text-button" data-action="${authMode==='signup'?'login':'signup'}">${authMode==='signup'?'Iniciar sesión':'Crear cuenta'}</button></div>`);
+}
+async function refreshProviders() {
+  if(!cloud.enabled)return;
+  try {providers=await cloud.providers();providerError=false;}
+  catch {providerError=true;}
+  document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled}));
+}
+async function beginOAuth(provider) {
+  remoteBusy=true;
+  try {
+    const latest=await cloud.providers();providers=latest;
+    if(!latest[provider]) {await refreshProviders();throw new Error(`${provider==='google'?'Google':'Apple'} todavía no está disponible. Puedes usar tu correo.`);}
+    const url=await cloud.oauthURL(provider,new URL('./',location.href).href);
+    location.assign(url);
+  } finally {remoteBusy=false;}
 }
 async function handleAccountForm(form,data) {
   if (form.id!=='account-form') return false;
@@ -346,7 +381,7 @@ async function handleAccountForm(form,data) {
   return true;
 }
 async function connectAccount() {
-  accountUser=cloud.user;
+  accountUser=cloud.user;demoMode=false;
   state={version:1,activeGroup:null,groups:[]};remoteBaseline.clear();page='home';tab='summary';
   try {state.activeGroup=sessionStorage.getItem('nexo-active-'+accountUser.id);} catch {}
   await loadSharedGroups();setSync('Actualizado');
@@ -376,7 +411,7 @@ async function signOutAccount() {
   try {await cloud.signOut();}
   catch {toast('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.');}
   finally {
-    accountUser=null;remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    accountUser=null;demoMode=false;remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }
@@ -417,6 +452,7 @@ async function acceptInvite() {
 }
 async function startAccount() {
   const hash=location.hash;
+  const callbackSearch=location.search;
   let returnedFromEmail=false;
   const params=new URLSearchParams(hash.replace(/^#/,''));
   try {pendingInvite=sessionStorage.getItem('nexo-pending-invite') || '';} catch {}
@@ -425,11 +461,16 @@ async function startAccount() {
     if (/^[a-f0-9]{64}$/.test(token)) {pendingInvite=token;try{sessionStorage.setItem('nexo-pending-invite',token);}catch{}}
     else inviteError='El enlace de invitación no está completo. Pide a tu amigo que lo copie de nuevo.';
   }
-  if (params.has('invite')||params.has('access_token')||params.has('error')) history.replaceState(null,'',location.pathname+location.search);
+  const cleanURL=new URL(location.href);
+  const queryCallback=['code','error','error_description','error_code'].some(key=>cleanURL.searchParams.has(key));
+  if(queryCallback) for(const key of ['code','error','error_description','error_code'])cleanURL.searchParams.delete(key);
+  if(params.has('invite')||params.has('access_token')||params.has('error'))cleanURL.hash='';
+  if(queryCallback||cleanURL.hash!==location.hash)history.replaceState(null,'',cleanURL.pathname+cleanURL.search+cleanURL.hash);
   try {
     if (cloud.enabled) {
+      const oauthComplete=await cloud.finishOAuth(callbackSearch,new URL('./',location.href).href);
       returnedFromEmail=await cloud.acceptCallback(hash);
-      await cloud.restore();
+      if(!oauthComplete)await cloud.restore();
       if (cloud.user) await connectAccount();
     }
     if (configError) storageWarning=configError;

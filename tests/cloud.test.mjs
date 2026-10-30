@@ -102,3 +102,69 @@ test('restoring a signed-out tab removes the previous account identity',async()=
   c.storage.removeItem(c.storageKey);
   assert.equal(await c.restore(),null);assert.equal(c.user,null);
 });
+test('provider availability comes from Auth settings rather than assuming Google or Apple works',async()=>{
+  const c=new Cloud(config,{storage:storage(),fetcher:async()=>response({external:{google:true,apple:false,email:true}})});
+  assert.deepEqual(await c.providers(),{google:true,apple:false});
+});
+test('OAuth stores a verifier only in this tab and sends its SHA-256 challenge in the authorize URL',async()=>{
+  const temporaryStorage=storage();
+  const c=new Cloud(config,{storage:storage(),temporaryStorage});
+  const url=new URL(await c.oauthURL('google','https://example.test/app/'));
+  assert.equal(url.origin,config.url);assert.equal(url.pathname,'/auth/v1/authorize');
+  assert.equal(url.searchParams.get('provider'),'google');assert.equal(url.searchParams.get('code_challenge_method'),'s256');
+  const record=JSON.parse(temporaryStorage.getItem(c.storageKey+':oauth'));
+  const hash=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(record.verifier))).toString('base64url');
+  assert.equal(url.searchParams.get('code_challenge'),hash);
+  assert.equal(c.storage.getItem(c.storageKey+':oauth'),null);
+  assert.ok(!url.href.includes(record.verifier));assert.ok(!url.href.includes(config.publishableKey));
+});
+test('an OAuth code is exchanged with its bound verifier, verified, and cannot be replayed',async()=>{
+  const seen=[];const temporaryStorage=storage();
+  const c=new Cloud(config,{storage:storage(),temporaryStorage,fetcher:async(url,options)=>{
+    seen.push({url,options});return url.includes('/token')?response({...session(),user}):response(user);
+  }});
+  await c.oauthURL('apple','https://example.test/app/');
+  const {verifier}=JSON.parse(temporaryStorage.getItem(c.storageKey+':oauth'));
+  assert.equal(await c.finishOAuth('?code=provider-code','https://example.test/app/'),true);
+  assert.equal(c.user.id,actor);
+  assert.deepEqual(JSON.parse(seen[0].options.body),{auth_code:'provider-code',code_verifier:verifier});
+  assert.ok(seen[0].url.includes('grant_type=pkce'));assert.equal(seen[1].options.headers.Authorization,'Bearer test-access');
+  assert.equal(temporaryStorage.getItem(c.storageKey+':oauth'),null);
+  await assert.rejects(()=>c.finishOAuth('?code=provider-code','https://example.test/app/'),CloudError);
+});
+test('OAuth refuses unsolicited, expired and wrong-page callbacks before any token exchange',async()=>{
+  let calls=0;const temporaryStorage=storage();
+  const c=new Cloud(config,{storage:storage(),temporaryStorage,fetcher:async()=>{calls++;return response({});}});
+  await assert.rejects(()=>c.finishOAuth('?code=unbound','https://example.test/app/'),CloudError);
+  await c.oauthURL('google','https://example.test/app/');
+  const record=JSON.parse(temporaryStorage.getItem(c.storageKey+':oauth'));
+  temporaryStorage.setItem(c.storageKey+':oauth',JSON.stringify({...record,createdAt:Date.now()-16*60000}));
+  await assert.rejects(()=>c.finishOAuth('?code=expired','https://example.test/app/'),CloudError);
+  await c.oauthURL('google','https://example.test/app/');
+  await assert.rejects(()=>c.finishOAuth('?code=wrong-route','https://example.test/other/'),CloudError);
+  await assert.rejects(()=>c.finishOAuth('?error=access_denied','https://example.test/app/'),error=>error.message.includes('cancelado'));
+  assert.equal(calls,0);assert.equal(c.session,null);
+});
+test('OAuth requires safe storage, a secure return URL and a supported provider',async()=>{
+  const blocked={setItem(){throw new Error('blocked');},getItem(){return null;}};
+  const c=new Cloud(config,{storage:storage(),temporaryStorage:blocked});
+  await assert.rejects(()=>c.oauthURL('google','https://example.test/app/'),CloudError);
+  await assert.rejects(()=>c.oauthURL('google','http://example.test/app/'),CloudError);
+  await assert.rejects(()=>c.oauthURL('other','https://example.test/app/'),CloudError);
+});
+test('a social profile name is normalized using only the signed-in user endpoint',async()=>{
+  let updated=false;const temporaryStorage=storage();
+  const socialUser={...user,user_metadata:{full_name:'Ana Social'}};
+  const c=new Cloud(config,{storage:storage(),temporaryStorage,fetcher:async(url,options)=>{
+    if(url.includes('/token'))return response({...session(),user:socialUser});
+    if(options.method==='PUT'){
+      assert.equal(options.headers.Authorization,'Bearer test-access');
+      assert.deepEqual(JSON.parse(options.body),{data:{display_name:'Ana Social'}});updated=true;
+      return response({...socialUser,user_metadata:{...socialUser.user_metadata,display_name:'Ana Social'}});
+    }
+    return response(socialUser);
+  }});
+  await c.oauthURL('google','https://example.test/app/');
+  await c.finishOAuth('?code=valid','https://example.test/app/');
+  assert.equal(updated,true);assert.equal(c.user.user_metadata.display_name,'Ana Social');
+});

@@ -101,9 +101,9 @@ def context(browser):
 def login(page,email):
     page.get_by_label('Correo electrónico').fill(email)
     page.get_by_label('Contraseña',exact=True).fill('fixture-password')
-    page.get_by_role('dialog').get_by_role('button',name='Entrar',exact=True).click()
+    page.locator('#account-form').get_by_role('button',name='Iniciar sesión',exact=True).click()
     try:
-        expect(page.get_by_role('dialog')).to_have_count(0)
+        expect(page.locator('.top-avatar')).to_be_visible()
     except AssertionError:
         print('Auth UI error:',page.locator('.form-error').all_text_contents())
         print('Browser errors:',errors)
@@ -117,12 +117,10 @@ try:
         owner=owner_context.new_page();friend=friend_context.new_page()
         for page in [owner,friend]:page.on('pageerror',lambda error:errors.append(str(error)))
         owner.goto(BASE+'#access_token=unsolicited-fixture&refresh_token=fixture&type=signup')
-        expect(owner.get_by_role('dialog').get_by_label('Correo electrónico')).to_be_visible()
+        expect(owner.locator('#account-form').get_by_label('Correo electrónico')).to_be_visible()
         assert owner.evaluate("!localStorage.getItem('nexo-session-v1:nexo-test.supabase.co')")
         assert '#access_token=' not in owner.url
-        owner.keyboard.press('Escape')
         print('PASS: returning from email confirmation requests explicit sign-in and clears URL tokens')
-        owner.get_by_role('button',name='Entrar',exact=True).click()
         login(owner,'ana@example.test')
         expect(owner.get_by_role('heading',name='Tu próximo plan empieza aquí')).to_be_visible()
         assert owner.get_by_role('heading',name='Escapada a Lisboa',exact=True).count()==0
@@ -155,7 +153,7 @@ try:
         owner.keyboard.press('Escape')
         friend.goto(link)
         assert '#invite=' not in friend.url
-        friend.get_by_role('button',name='Entrar y unirme').click()
+        expect(friend.get_by_text('Te han invitado a un grupo.',exact=False)).to_be_visible()
         login(friend,'luis@example.test')
         friend.get_by_role('button',name='Aceptar invitación').click()
         expect(friend.get_by_role('heading',name='Viaje entre móviles',exact=True)).to_be_visible()
@@ -228,9 +226,11 @@ try:
 
         owner.get_by_role('button',name='Tu perfil y datos').click()
         owner.get_by_role('button',name='Cerrar sesión',exact=True).click()
-        expect(owner.get_by_role('heading',name='Escapada a Lisboa',exact=True)).to_be_visible()
+        expect(owner.get_by_role('heading',name='Bienvenido a Nexo.')).to_be_visible()
         assert owner.get_by_text('Viaje entre móviles',exact=True).count()==0
-        print('PASS: signing out removes private groups and restores the separate demo')
+        owner.get_by_role('button',name='Explorar una demo').click()
+        expect(owner.get_by_role('heading',name='Escapada a Lisboa',exact=True)).to_be_visible()
+        print('PASS: signing out returns to welcome; private groups disappear and the demo stays separate')
         assert errors==[],errors
         print('PASS: no JavaScript errors in either browser')
         browser.close()

@@ -17,6 +17,8 @@ export class CloudError extends Error {
   constructor(message, code='network', status=0) { super(message); this.code=code; this.status=status; }
 }
 
+function browserStorage(name) {try {return globalThis[name];} catch {return null;}}
+
 function messageFor(error, status) {
   const code = error?.code || error?.error_code;
   if (code === 'NEXO_CONFLICT') return 'Alguien ha actualizado el grupo. Hemos recargado los datos; revisa tu cambio y vuelve a guardarlo.';
@@ -45,8 +47,9 @@ export function mapGroup(document, viewerId, toRemote=false) {
 }
 
 export class Cloud {
-  constructor(config, {fetcher=globalThis.fetch, storage=globalThis.localStorage}={}) {
+  constructor(config, {fetcher=globalThis.fetch, storage=browserStorage('localStorage'), temporaryStorage=browserStorage('sessionStorage')}={}) {
     this.config=validateConfig(config); this.fetcher=fetcher; this.storage=storage;
+    this.temporaryStorage=temporaryStorage;
     this.session=null; this.user=null; this.refreshing=null;
     this.storageKey=this.config ? `nexo-session-v1:${new URL(this.config.url).host}` : '';
   }
@@ -95,6 +98,52 @@ export class Cloud {
     // supplied in a URL: an unsolicited link must not switch somebody's account.
     // Ask for an explicit password sign-in after returning from confirmation.
     return params.has('access_token');
+  }
+  async providers() {
+    const settings=await this.request('/auth/v1/settings',{authenticated:false});
+    return {google:settings.external?.google===true,apple:settings.external?.apple===true};
+  }
+  async oauthURL(provider,redirect) {
+    if (!['google','apple'].includes(provider)) throw new CloudError('Esta forma de acceso no está disponible.');
+    if (!this.enabled) throw new CloudError('El acceso con cuenta todavía no está disponible.');
+    if (!globalThis.crypto?.subtle) throw new CloudError('Abre Nexo en un navegador con conexión segura para continuar.');
+    if (!this.temporaryStorage) throw new CloudError('Permite el almacenamiento de este sitio para continuar con Google o Apple.');
+    const redirectURL=new URL(redirect);
+    if (redirectURL.protocol!=='https:' && !(redirectURL.protocol==='http:'&&['localhost','127.0.0.1'].includes(redirectURL.hostname))) throw new CloudError('El enlace de vuelta a Nexo debe ser seguro.');
+    redirectURL.search='';redirectURL.hash='';
+    const base64url=bytes=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
+    const challenge=base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))));
+    try {
+      const record=JSON.stringify({verifier,provider,redirect:redirectURL.href,createdAt:Date.now()});
+      this.temporaryStorage.setItem(this.storageKey+':oauth',record);
+      if (this.temporaryStorage.getItem(this.storageKey+':oauth')!==record) throw new Error();
+    } catch {throw new CloudError('Permite el almacenamiento de este sitio para continuar con Google o Apple.');}
+    const url=new URL(this.config.url+'/auth/v1/authorize');
+    url.search=new URLSearchParams({provider,redirect_to:redirectURL.href,code_challenge:challenge,code_challenge_method:'s256'}).toString();
+    return url.href;
+  }
+  async finishOAuth(search,redirect) {
+    const params=new URLSearchParams(search);
+    if (params.has('error')) throw new CloudError(params.get('error')==='access_denied'?'Has cancelado el acceso. Puedes volver a intentarlo o entrar con tu correo.':'No se ha podido completar el acceso con Google o Apple. Vuelve a intentarlo.');
+    const code=params.get('code');if (!code) return false;
+    let record;
+    try {
+      record=JSON.parse(this.temporaryStorage?.getItem(this.storageKey+':oauth') || 'null');
+      this.temporaryStorage?.removeItem(this.storageKey+':oauth');
+    } catch {record=null;}
+    if (!record || !/^[A-Za-z0-9_-]{43,128}$/.test(record.verifier) || !['google','apple'].includes(record.provider) || record.redirect!==redirect || !Number.isFinite(record.createdAt) || Date.now()-record.createdAt>15*60*1000 || record.createdAt>Date.now()+60000) throw new CloudError('Este enlace de acceso ha caducado o se abrió en otro navegador. Vuelve a continuar con Google o Apple.');
+    const result=await this.request('/auth/v1/token?grant_type=pkce',{method:'POST',body:{auth_code:code,code_verifier:record.verifier},authenticated:false});
+    const session=this.sessionFrom(result);
+    if (!session) throw new CloudError('No se ha podido abrir la sesión. Vuelve a intentarlo.');
+    this.persistSession(session);await this.loadUser();
+    const metadata=this.user.user_metadata || {};
+    const name=metadata.full_name || metadata.name;
+    if (!metadata.display_name && typeof name==='string' && name.trim()) {
+      try {this.user=await this.request('/auth/v1/user',{method:'PUT',body:{data:{display_name:name.trim().slice(0,40)}}});}
+      catch(error) {if(!this.session)throw error; /* The optional name must not block a valid sign-in. */}
+    }
+    return true;
   }
   async ensureSession() {
     if (!this.session?.access_token) throw new CloudError('Entra en tu cuenta para continuar.','session',401);
