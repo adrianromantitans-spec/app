@@ -3,7 +3,7 @@ import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=glass-8';
 import {Cloud} from './cloud.js?v=glass-8';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=glass-8';
+import {welcomePage,socialButtons} from './auth-ui.js?v=intro-11';
 
 initializeLanguage();
 
@@ -17,6 +17,9 @@ let syncMessage='';
 let authMode=location.hash==='#registro'?'signup':'login';
 let authStage=location.hash==='#registro'?'signup':location.hash==='#acceso'?'login':'welcome';
 let brandIntroShown=false;
+let brandIntroActive=false;
+let brandIntroPendingRender=false;
+let finishBrandIntro=()=>{};
 let demoMode=false;
 let providers=null;
 let providerError=false;
@@ -113,6 +116,7 @@ function empty(title, description, action, label) { return `<div class="empty-st
 function sectionTitle(title, subtitle, extra='') {return `<div class="section-heading"><div><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra}</div>`;}
 
 function render() {
+  if(brandIntroActive){brandIntroPendingRender=true;return;}
   if(cloud.recovering){renderRecovery(true);return;}
   if (!accountUser&&!demoMode) {if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
   const g = group();
@@ -267,6 +271,7 @@ document.addEventListener('click', event => {onAppClick(event).catch(handleActio
 async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
+  if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
   if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.page){page=el.dataset.page; render();document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
@@ -515,10 +520,58 @@ function renderWelcome() {
   let notice='';
   if(pendingInvite) notice=tr('<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>');
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
-  const animate=!brandIntroShown&&!authLoading;
-  if(!authLoading)brandIntroShown=true;
-  root.innerHTML=welcomePage({stage:authStage,animate,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
+  root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
   root.inert=!!modalRoot.firstElementChild;
+  if(!brandIntroShown){brandIntroShown=true;startBrandIntro();}
+}
+// Move the one header logo from the centre to its final layout position.
+function startBrandIntro() {
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const brand=root.querySelector('.auth-header .brand');
+  if(reduced.matches || !brand?.animate)return;
+  const bounds=brand.getBoundingClientRect();
+  if(!bounds.width)return;
+  const scale=Math.min(innerWidth-64,360)/bounds.width;
+  const x=(innerWidth-bounds.width*scale)/2-bounds.left;
+  const y=(innerHeight-bounds.height*scale)/2-bounds.top;
+  const centred=`translate(${x}px,${y}px) scale(${scale})`;
+  const curtain=document.createElement('div');
+  curtain.className='brand-intro-curtain';
+  curtain.setAttribute('aria-hidden','true');
+  brand.closest('.auth-shell').prepend(curtain);
+  brandIntroActive=true;
+  root.classList.add('brand-intro-active');
+  const content=[...root.querySelectorAll('.auth-main,.auth-footer')];
+  content.forEach(el=>el.inert=true);
+  const movement=brand.animate([
+    {transform:centred,offset:0},
+    {transform:centred,offset:.68,easing:'cubic-bezier(.65,0,.2,1)'},
+    {transform:'translate(0,0) scale(1)',offset:1}
+  ],{duration:2400,fill:'both'});
+  const fade=curtain.animate([{opacity:1,offset:0},{opacity:1,offset:.68},{opacity:0,offset:1}],{duration:2400,fill:'both'});
+  const onKey=event=>{if(event.key==='Escape'){event.preventDefault();finishBrandIntro();}};
+  const onResize=()=>finishBrandIntro();
+  let timeout;
+  finishBrandIntro=()=>{
+    if(!brandIntroActive)return;
+    brandIntroActive=false;
+    clearTimeout(timeout);
+    movement.cancel();fade.cancel();curtain.remove();
+    root.classList.remove('brand-intro-active');
+    content.forEach(el=>el.inert=false);
+    document.removeEventListener('keydown',onKey);
+    window.removeEventListener('resize',onResize);
+    reduced.removeEventListener('change',onResize);
+    if(brandIntroPendingRender){
+      brandIntroPendingRender=false;render();
+      root.querySelector('.auth-header .brand')?.replaceWith(brand);
+    }
+  };
+  document.addEventListener('keydown',onKey);
+  window.addEventListener('resize',onResize);
+  reduced.addEventListener('change',onResize);
+  timeout=setTimeout(()=>finishBrandIntro(),3000);
+  movement.finished.then(()=>finishBrandIntro(),()=>{});
 }
 function accountModal() {
   if(accountUser){settingsModal();return;}

@@ -27,3 +27,16 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 
 /* Compatibility with older cached interface bundles. */
 .shared-banner,.local-label,[data-action="refresh-shared"]{display:none!important}
+
+/* One logo assembles full-screen, then travels into the header. */
+.modern-auth .auth-header .split-word{font-size:inherit;letter-spacing:-1.2px;font-weight:800;line-height:1.2}
+.modern-auth.is-landing .auth-story h1{font-size:clamp(36px,4.5vw,60px);letter-spacing:-2px;max-width:590px}
+.brand-intro-curtain{position:fixed;inset:0;z-index:210;background:radial-gradient(ellipse at 50% 42%,#eee6fa 0%,#f8f4fc 48%,#faf8fd 100%);pointer-events:auto}
+.brand-intro-active .auth-header{position:relative;z-index:211}
+.brand-intro-active .auth-header .brand{transform-origin:0 0;will-change:transform}
+.brand-intro-active .auth-main,.brand-intro-active .auth-footer,.brand-intro-active .header-note{visibility:hidden}
+.brand-intro-active .word-left{animation:word-left-in 1.35s cubic-bezier(.16,1,.3,1) both}
+.brand-intro-active .word-right{animation:word-right-in 1.35s cubic-bezier(.16,1,.3,1) both}
+.brand-intro-active .word-z{animation:z-rise 1.55s cubic-bezier(.22,1,.36,1) both}
+@media(max-width:760px){.modern-auth.is-landing .auth-story h1{font-size:36px;letter-spacing:-1.5px;max-width:340px}}
+@media(prefers-reduced-motion:reduce){.brand-intro-active .word-left,.brand-intro-active .word-right,.brand-intro-active .word-z{animation:none}}
