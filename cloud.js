@@ -1,6 +1,6 @@
-import {currencyOf} from './model.js?v=languages-6';
-import {tr} from './i18n.js?v=languages-6';
-import {receiptPath} from './extras.js?v=languages-6';
+import {currencyOf} from './model.js?v=expenses-7';
+import {tr} from './i18n.js?v=expenses-7';
+import {receiptPath} from './extras.js?v=expenses-7';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;
@@ -24,6 +24,7 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status) {
   const code = error?.error_code || error?.code;
+  if(code==='NEXO_SPLIT')return tr('Revisa el reparto personalizado: los importes o porcentajes deben sumar el total.');
   if(code==='NEXO_CURRENCY_LOCKED')return tr('La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.');
   if(code==='NEXO_CURRENCY')return tr('Moneda no disponible. Elige EUR o RON.');
   if (code === 'NEXO_CONFLICT') return tr('Alguien ha actualizado el grupo. Hemos recargado los datos; revisa tu cambio y vuelve a guardarlo.');
@@ -48,7 +49,7 @@ export function mapGroup(document, viewerId, toRemote=false) {
   const remap = id => toRemote ? (id === 'you' ? viewerId : id) : (id === viewerId ? 'you' : id);
   g.members = g.members.map(m => ({...m, id:remap(m.id)}));
   if (!toRemote) g.members = g.members.map(m => m.id === 'you' ? {...m,name:'Tú'} : m);
-  g.expenses = g.expenses.map(e => ({...e,payer:remap(e.payer),participants:e.participants.map(remap)}));
+  g.expenses = g.expenses.map(e => ({...e,payer:remap(e.payer),participants:e.participants.map(remap),...(e.split?.values?{split:{...e.split,values:Object.fromEntries(Object.entries(e.split.values).map(([id,value])=>[remap(id),value]))}}:{})}));
   g.tasks = g.tasks.map(t => ({...t,assignee:remap(t.assignee)}));
   g.payments = g.payments.map(p => ({...p,from:remap(p.from),to:remap(p.to)}));
   g.polls = g.polls.map(p => ({...p,votes:Object.fromEntries(Object.entries(p.votes).map(([id,v])=>[remap(id),v]))}));
@@ -267,12 +268,61 @@ export class Cloud {
     return this.groupRpc('nexo_create_group',{p_fields:fields});
   }
   async saveGroup(group) {
+    if(group.expenses.some(e=>e.split&&e.split.mode!=='equal'))await this.requireExpenseTools();
     if(currencyOf(group)==='RON')await this.requireCurrencies();
     const document=mapGroup(group,this.user.id,true);
     // The server owns names, membership and identity. Restore the canonical name.
     const me=document.members.find(m=>m.id===this.user.id);
     if (me) {me.name=group.remote.memberName;}
     return this.groupRpc('nexo_save_group',{p_id:group.id,p_version:group.remote.version,p_document:document});
+  }
+  async requireExpenseTools() {
+    if(this.expenseToolsReady)return;
+    let enabled=false;
+    try{enabled=await this.rpc('divzplit_expense_tools_support',{});}catch(e){if(e.status!==404&&e.code!=='PGRST202')throw e;}
+    if(enabled!==true)throw new CloudError(tr('Para activar los repartos personalizados y borrar grupos compartidos, ejecuta la actualización de Supabase.'));
+    this.expenseToolsReady=true;
+  }
+  async deleteGroup(group) {
+    await this.requireExpenseTools();
+    if(group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el propietario puede eliminar este grupo.'));
+    return this.rpc('nexo_delete_group',{p_id:group.id,p_version:group.remote.version});
+  }
+  async cleanupDeletedGroups() {
+    if(this.cleanupPromise)return this.cleanupPromise;
+    this.cleanupPromise=this.performGroupCleanup().finally(()=>{this.cleanupPromise=null;});
+    return this.cleanupPromise;
+  }
+  async performGroupCleanup() {
+    try{await this.requireExpenseTools();}catch{return;}
+    const jobs=await this.request('/rest/v1/nexo_deleted_groups?select=id&cleaned_at=is.null&order=deleted_at.asc&limit=10');
+    if(!Array.isArray(jobs))return;
+    const uuid=/^[a-f0-9-]{36}$/;
+    const list=async(prefix,offset=0)=>{
+      try{const result=await this.request('/storage/v1/object/list/divzplit-receipts',{method:'POST',body:{prefix,limit:100,offset,sortBy:{column:'name',order:'asc'}}});if(!Array.isArray(result))throw new CloudError(tr('No se ha podido completar la limpieza de las fotos.'));return result;}
+      catch(error){if(error.status===404)return [];throw error;}
+    };
+    for(const job of jobs){
+      if(!uuid.test(job.id))continue;
+      if(await this.rpc('divzplit_finish_group_cleanup',{p_id:job.id}))continue;
+      let offset=0;
+      // Storage folders have no object ID. The shipped upload paths have exactly two folders.
+      for(let page=0;page<20;page++){
+        const folders=await list(job.id+'/',offset);
+        for(const folder of folders){
+          if(!uuid.test(folder.name)||folder.id)continue;
+          for(let batch=0;batch<100;batch++){
+            const objects=await list(job.id+'/'+folder.name+'/');
+            if(!objects.length)break;
+            const paths=objects.map(object=>job.id+'/'+folder.name+'/'+object.name).filter(path=>receiptPath(path,job.id));
+            if(paths.length!==objects.length)throw new CloudError(tr('No se ha podido completar la limpieza de las fotos.'));
+            await this.request('/storage/v1/object/divzplit-receipts',{method:'DELETE',body:{prefixes:paths}});
+          }
+        }
+        if(folders.length<100)break;
+      }
+      await this.rpc('divzplit_finish_group_cleanup',{p_id:job.id});
+    }
   }
   async invite(groupId) {return this.rpc('nexo_create_invite',{p_id:groupId});}
   async revokeInvites(groupId) {return this.rpc('nexo_revoke_invites',{p_id:groupId});}

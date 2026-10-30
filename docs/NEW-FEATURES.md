@@ -43,7 +43,7 @@ La demo conserva las fotos únicamente en su navegador; no las sube a Supabase.
 Se aceptan fotos compatibles con el navegador de hasta 20 MB. Se convierten a
 JPEG (máximo 1 MB, lado mayor de 1.800 píxeles), eliminando los metadatos de la
 foto original. Los archivos compartidos se guardan como
-`grupo/autor/gasto.jpg`, con acceso solo a miembros del grupo. Los enlaces para
+`grupo/autor/uuid.jpg`, con acceso solo a miembros del grupo. Los enlaces para
 verlos caducan en 60 segundos y no se guardan en el documento del gasto.
 
 Al borrar un gasto confirmado se intenta borrar su foto. Un fallo entre la

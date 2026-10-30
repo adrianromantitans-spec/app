@@ -1,4 +1,4 @@
-import {tr} from './i18n.js?v=languages-6';
+import {tr} from './i18n.js?v=expenses-7';
 // Calendar-based recurrences keep the original day (31 Jan -> 28 Feb -> 31 Mar).
 export function nextOccurrence(date,frequency,anchorDay=Number(date.slice(8))) {
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!['weekly','monthly','yearly'].includes(frequency)) throw new Error(tr('Repetición no válida'));
@@ -20,7 +20,7 @@ export function materializeRecurring(group,until,canEdit=()=>true,actor=null) {
       if(!group.expenses.some(e=>e.id===id)) {
         // A new charge never inherits the original charge's receipt.
         const {recurrence,receipt,...base}=source;
-        group.expenses.unshift({...base,...(actor?{createdBy:actor}:{}),id,date,seriesId:source.id});count++;
+        group.expenses.unshift({...structuredClone(base),...(actor?{createdBy:actor}:{}),id,date,seriesId:source.id});count++;
       }
       r.nextDate=next;
     }

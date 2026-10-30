@@ -1839,5 +1839,173 @@ export const translations = {
   "Invitar": {
     "en": "Invite",
     "ro": "Invită"
+  },
+  "Revisa el reparto personalizado.": {
+    "en": "Check the custom split.",
+    "ro": "Verifică împărțirea personalizată."
+  },
+  "Los importes individuales deben sumar el total del gasto.": {
+    "en": "Individual amounts must add up to the expense total.",
+    "ro": "Sumele individuale trebuie să fie egale cu totalul cheltuielii."
+  },
+  "Los porcentajes deben sumar exactamente 100 %.": {
+    "en": "Percentages must add up to exactly 100%.",
+    "ro": "Procentele trebuie să însumeze exact 100 %."
+  },
+  "Introduce un número válido con un máximo de dos decimales.": {
+    "en": "Enter a valid number with at most two decimal places.",
+    "ro": "Introdu un număr valid cu cel mult două zecimale."
+  },
+  "Este gasto ya no existe. Actualiza el grupo.": {
+    "en": "This expense no longer exists. Refresh the group.",
+    "ro": "Această cheltuială nu mai există. Actualizează grupul."
+  },
+  "Detén la repetición antes de cambiar la fecha del gasto original.": {
+    "en": "Stop repeating before changing the original expense date.",
+    "ro": "Oprește repetarea înainte de a schimba data cheltuielii inițiale."
+  },
+  "Revisa el reparto personalizado: los importes o porcentajes deben sumar el total.": {
+    "en": "Check the custom split: amounts or percentages must add up to the total.",
+    "ro": "Verifică împărțirea personalizată: sumele sau procentele trebuie să corespundă totalului."
+  },
+  "Para activar los repartos personalizados y borrar grupos compartidos, ejecuta la actualización de Supabase.": {
+    "en": "To enable custom splits and shared group deletion, run the Supabase update.",
+    "ro": "Pentru a activa împărțirile personalizate și ștergerea grupurilor comune, execută actualizarea Supabase."
+  },
+  "Solo el propietario puede eliminar este grupo.": {
+    "en": "Only the owner can delete this group.",
+    "ro": "Doar proprietarul poate șterge acest grup."
+  },
+  "No se ha podido completar la limpieza de las fotos.": {
+    "en": "Photo cleanup could not be completed.",
+    "ro": "Ștergerea fotografiilor nu a putut fi finalizată."
+  },
+  "No puedes editar este gasto.": {
+    "en": "You cannot edit this expense.",
+    "ro": "Nu poți edita această cheltuială."
+  },
+  "Editar gasto": {
+    "en": "Edit expense",
+    "ro": "Editează cheltuiala"
+  },
+  "Tipo de reparto": {
+    "en": "Split type",
+    "ro": "Tipul împărțirii"
+  },
+  "Partes iguales": {
+    "en": "Equal split",
+    "ro": "În mod egal"
+  },
+  "Importes individuales": {
+    "en": "Individual amounts",
+    "ro": "Sume individuale"
+  },
+  "Porcentajes": {
+    "en": "Percentages",
+    "ro": "Procente"
+  },
+  "Por partes": {
+    "en": "By shares",
+    "ro": "Pe părți"
+  },
+  "Participantes del gasto": {
+    "en": "Expense participants",
+    "ro": "Participanții la cheltuială"
+  },
+  "Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.": {
+    "en": "Changes apply to the original expense and future repeats. Existing repeats are unchanged.",
+    "ro": "Modificările se aplică cheltuielii inițiale și repetărilor viitoare. Repetările deja create nu se schimbă."
+  },
+  "Solo se modificará esta cuota; la repetición original no cambia.": {
+    "en": "Only this occurrence will change; the original recurrence is unchanged.",
+    "ro": "Se modifică doar această înregistrare; repetarea inițială nu se schimbă."
+  },
+  "Quitar la foto actual": {
+    "en": "Remove the current photo",
+    "ro": "Elimină fotografia actuală"
+  },
+  "Porcentaje": {
+    "en": "Percentage",
+    "ro": "Procent"
+  },
+  "Número de partes": {
+    "en": "Number of shares",
+    "ro": "Număr de părți"
+  },
+  "Introduce un número entero de partes.": {
+    "en": "Enter a whole number of shares.",
+    "ro": "Introdu un număr întreg de părți."
+  },
+  "El gasto se divide a partes iguales entre los participantes seleccionados.": {
+    "en": "The expense is split equally between the selected participants.",
+    "ro": "Cheltuiala se împarte în mod egal între participanții selectați."
+  },
+  "Total: {0} % de 100 %": {
+    "en": "Total: {0}% of 100%",
+    "ro": "Total: {0} % din 100 %"
+  },
+  "Total asignado: {0} de {1}": {
+    "en": "Allocated total: {0} of {1}",
+    "ro": "Total alocat: {0} din {1}"
+  },
+  "Total de partes: {0}": {
+    "en": "Total shares: {0}",
+    "ro": "Total părți: {0}"
+  },
+  "Completa el reparto para comprobar el total.": {
+    "en": "Complete the split to check the total.",
+    "ro": "Completează împărțirea pentru a verifica totalul."
+  },
+  "Eliminar grupo": {
+    "en": "Delete group",
+    "ro": "Șterge grupul"
+  },
+  "¿Eliminar este grupo?": {
+    "en": "Delete this group?",
+    "ro": "Ștergi acest grup?"
+  },
+  "Se eliminarán el grupo, sus gastos, tareas, votaciones e invitaciones para todos los miembros. Esta acción no se puede deshacer.": {
+    "en": "The group, its expenses, tasks, polls and invitations will be deleted for all members. This cannot be undone.",
+    "ro": "Grupul, cheltuielile, sarcinile, sondajele și invitațiile sale vor fi șterse pentru toți membrii. Această acțiune nu poate fi anulată."
+  },
+  "Hay saldos pendientes. Eliminar el grupo no realiza pagos ni salda las deudas.": {
+    "en": "There are unsettled balances. Deleting the group does not make payments or settle debts.",
+    "ro": "Există solduri neachitate. Ștergerea grupului nu efectuează plăți și nu achită datoriile."
+  },
+  "{0} gastos · Total: {1}": {
+    "en": "{0} expenses · Total: {1}",
+    "ro": "{0} cheltuieli · Total: {1}"
+  },
+  "Escribe el nombre del grupo para confirmar": {
+    "en": "Type the group name to confirm",
+    "ro": "Scrie numele grupului pentru a confirma"
+  },
+  "Eliminar grupo definitivamente": {
+    "en": "Permanently delete group",
+    "ro": "Șterge definitiv grupul"
+  },
+  "El nombre no coincide. Escríbelo exactamente como aparece.": {
+    "en": "The name does not match. Type it exactly as shown.",
+    "ro": "Numele nu coincide. Scrie-l exact cum apare."
+  },
+  "Eliminando grupo…": {
+    "en": "Deleting group…",
+    "ro": "Se șterge grupul…"
+  },
+  "Grupo eliminado.": {
+    "en": "Group deleted.",
+    "ro": "Grup șters."
+  },
+  "El grupo ha cambiado. Cierra esta ventana, actualiza y revisa los datos antes de eliminarlo.": {
+    "en": "The group has changed. Close this window, refresh and review the data before deleting it.",
+    "ro": "Grupul s-a schimbat. Închide această fereastră, actualizează și verifică datele înainte de a-l șterge."
+  },
+  "La repetición está detenida. Editar no la reactivará.": {
+    "en": "Repeating is stopped. Editing will not restart it.",
+    "ro": "Repetarea este oprită. Editarea nu o va reactiva."
+  },
+  "Los cambios solo afectan a este gasto.": {
+    "en": "Changes affect only this expense.",
+    "ro": "Modificările afectează doar această cheltuială."
   }
 };

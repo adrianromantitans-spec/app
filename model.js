@@ -1,4 +1,4 @@
-import {locale,tr} from './i18n.js?v=languages-6';
+import {locale,tr} from './i18n.js?v=expenses-7';
 export const currencies = ['EUR','RON'];
 export function currencyOf(group) {
   const currency=group?.currency??'EUR';
@@ -24,11 +24,40 @@ export function splitAmount(amount, participants) {
   return Object.fromEntries(participants.map((id, i) => [id, base + (i < amount % participants.length ? 1 : 0)]));
 }
 
+export function expenseShares(expense) {
+  const {amount,participants,split}=expense;
+  if(!split||split.mode==='equal')return splitAmount(amount,participants);
+  splitAmount(amount,participants);
+  const values=split.values;
+  if(!['amounts','percent','shares'].includes(split.mode)||!values||typeof values!=='object'||Array.isArray(values)||Object.keys(values).length!==participants.length||Object.keys(values).some(id=>!participants.includes(id)))throw new Error(tr('Revisa el reparto personalizado.'));
+  const weights=participants.map(id=>values[id]);
+  if(weights.some(value=>!Number.isSafeInteger(value)||value<0||value>(split.mode==='percent'?10000:split.mode==='shares'?1000000:100000000))||(split.mode==='shares'&&weights.some(value=>value<1)))throw new Error(tr('Revisa el reparto personalizado.'));
+  const sum=weights.reduce((a,b)=>a+b,0);
+  if(split.mode==='amounts'){
+    if(sum!==amount)throw new Error(tr('Los importes individuales deben sumar el total del gasto.'));
+    return Object.fromEntries(participants.map((id,i)=>[id,weights[i]]));
+  }
+  if(split.mode==='percent'&&sum!==10000)throw new Error(tr('Los porcentajes deben sumar exactamente 100 %.'));
+  if(sum<=0)throw new Error(tr('Revisa el reparto personalizado.'));
+  const denominator=BigInt(sum);
+  const shares=weights.map((value,index)=>{const numerator=BigInt(amount)*BigInt(value);return {index,cents:Number(numerator/denominator),remainder:numerator%denominator};});
+  let left=amount-shares.reduce((sum,item)=>sum+item.cents,0);
+  const ranked=[...shares].sort((a,b)=>a.remainder===b.remainder?a.index-b.index:a.remainder>b.remainder?-1:1);
+  for(let i=0;i<left;i++)ranked[i].cents++;
+  return Object.fromEntries(participants.map((id,i)=>[id,shares[i].cents]));
+}
+export function decimalUnits(value) {
+  const text=String(value).trim().replace(',','.');
+  if(!/^\d+(?:\.\d{1,2})?$/.test(text))throw new Error(tr('Introduce un número válido con un máximo de dos decimales.'));
+  const [whole,fraction='']=text.split('.');const result=Number(whole)*100+Number(fraction.padEnd(2,'0'));
+  if(!Number.isSafeInteger(result))throw new Error(tr('Revisa el reparto personalizado.'));
+  return result;
+}
 export function balances(group) {
   const result = Object.fromEntries(group.members.map(m => [m.id, 0]));
   for (const expense of group.expenses) {
     result[expense.payer] += expense.amount;
-    for (const [id, share] of Object.entries(splitAmount(expense.amount, expense.participants))) result[id] -= share;
+    for (const [id, share] of Object.entries(expenseShares(expense))) result[id] -= share;
   }
   for (const payment of group.payments) {
     result[payment.from] += payment.amount;
@@ -52,13 +81,27 @@ export function settlements(group) {
   return transfers;
 }
 
-export function addExpense(group, {title, amount, payer, participants, category, date}) {
-  const ids = group.members.map(m => m.id);
-  if (!title?.trim() || title.length > 100 || !ids.includes(payer) || !participants.every(id => ids.includes(id)) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(tr('Revisa los datos del gasto'));
-  splitAmount(amount, participants);
-  const expense = {id:uid(), title:title.trim(), amount, payer, participants, category, date};
-  group.expenses.unshift(expense);
+export function validateExpense(group,{title,amount,payer,participants,category,date,split}) {
+  const ids=group.members.map(m=>m.id);
+  if(typeof title!=='string'||!title.trim()||title.length>100||!ids.includes(payer)||!Array.isArray(participants)||!participants.every(id=>ids.includes(id))||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!['Comida','Transporte','Alojamiento','Actividades','Otros'].includes(category)||!Number.isSafeInteger(amount)||amount<1||amount>100000000)throw new Error(tr('Revisa los datos del gasto'));
+  const calendar=new Date(date+'T12:00:00Z');if(Number.isNaN(calendar.valueOf())||calendar.toISOString().slice(0,10)!==date)throw new Error(tr('Revisa los datos del gasto'));
+  const expense={title:title.trim(),amount,payer,participants:[...participants],category,date};
+  if(split&&split.mode!=='equal')expense.split=structuredClone(split);
+  expenseShares(expense);
   return expense;
+}
+export function addExpense(group,fields) {
+  const expense={id:uid(),...validateExpense(group,fields)};
+  group.expenses.unshift(expense);return expense;
+}
+export function updateExpense(group,id,fields) {
+  const index=group.expenses.findIndex(e=>e.id===id);
+  if(index<0)throw new Error(tr('Este gasto ya no existe. Actualiza el grupo.'));
+  const previous=group.expenses[index];
+  if(previous.recurrence?.active&&fields.date!==previous.date)throw new Error(tr('Detén la repetición antes de cambiar la fecha del gasto original.'));
+  const updated={...previous,...validateExpense(group,fields)};
+  if(!fields.split||fields.split.mode==='equal')delete updated.split;
+  group.expenses[index]=updated;return updated;
 }
 
 export function vote(poll, optionId, memberId) {

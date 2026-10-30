@@ -225,3 +225,31 @@ test('RON group creation sends a supported currency after capability verificatio
  await c.createGroup({...seed().groups[0],currency:'RON'});
  assert.equal(fields.currency,'RON');
 });
+
+test('custom split member keys are mapped for each viewer without mutating the source',()=>{
+ const g=seed().groups[1];g.expenses=[{id:'custom',title:'Dinner',amount:1001,payer:'you',participants:['you','marta'],split:{mode:'percent',values:{you:2500,marta:7500}},category:'Comida',date:'2026-10-30'}];
+ const before=structuredClone(g);const remote=mapGroup(g,actor,true);
+ assert.deepEqual(remote.expenses[0].split.values,{[actor]:2500,marta:7500});
+ assert.deepEqual(mapGroup(remote,actor).expenses[0].split.values,g.expenses[0].split.values);assert.deepEqual(g,before);
+});
+test('interrupted photo cleanup keeps its job for a later retry and uses only the deleted group prefix',async()=>{
+ const groupId='11111111-1111-4111-8111-111111111111',uploader='22222222-2222-4222-8222-222222222222';
+ const path=groupId+'/'+uploader+'/'+groupId+'.jpg';let fail=true,removed=false,done=false;
+ const c=authed(async(url,options)=>{
+  if(url.includes('expense_tools_support'))return response(true);
+  if(url.includes('nexo_deleted_groups'))return response(done?[]:[{id:groupId}]);
+  if(url.includes('finish_group_cleanup')){if(removed)done=true;return response(removed);}
+  if(url.includes('/object/list/')){
+   const {prefix}=JSON.parse(options.body);
+   assert.ok(prefix.startsWith(groupId+'/'));
+   return response(prefix===groupId+'/'?[{name:uploader,id:null}]:removed?[]:[{name:groupId+'.jpg',id:'object'}]);
+  }
+  if(options.method==='DELETE'){
+   assert.deepEqual(JSON.parse(options.body).prefixes,[path]);
+   if(fail){fail=false;throw new Error('lost connection');}removed=true;return response([]);
+  }
+  throw new Error('Unexpected request');
+ });
+ await assert.rejects(()=>c.cleanupDeletedGroups());assert.equal(done,false);assert.equal(c.cleanupPromise,null);
+ await c.cleanupDeletedGroups();assert.equal(done,true);assert.equal(removed,true);
+});

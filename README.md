@@ -136,3 +136,9 @@ Para otra moneda, crear otro grupo. La actualización no cambia Storage ni ticke
 
 Pruebas adicionales: `tests/currency_browser.py` y, después de las pruebas de base
 de datos en un contenedor desechable, `tests/currency_database.py`.
+
+## Edición, repartos y borrado de grupos
+
+Consulta [la guía de estas funciones](docs/EXPENSE-TOOLS.md). Para activarlas en
+grupos compartidos existentes, ejecutar una vez `supabase/expense-tools.sql`.
+Los importes, participantes y monedas existentes se conservan.

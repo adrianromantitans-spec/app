@@ -1,12 +1,11 @@
--- Run once in your Supabase SQL Editor after the original group schema.
--- Existing groups retain EUR; no amounts are converted or rewritten.
+-- Currency upgrade, including current validation. Existing data is unchanged.
 begin;
 
 create or replace function public.nexo_assert_document(d jsonb) returns void
 language plpgsql set search_path = '' as $$
 declare
   ids text[]; e jsonb; p jsonb; t jsonb; m jsonb; o jsonb; k text; v text;
-  collection text;
+  collection text; split_sum numeric;
 begin
   if d?'currency' and (jsonb_typeof(d->'currency') is distinct from 'string' or (d->>'currency' in ('EUR','RON')) is not true) then
     raise exception 'NEXO_CURRENCY';
@@ -71,6 +70,25 @@ begin
       or jsonb_array_length(e->'participants')<>(select count(distinct id) from jsonb_array_elements_text(e->'participants') id) then
       raise exception using errcode='22023',message='Invalid expense participants';
     end if;
+    if e?'split' then
+      if jsonb_typeof(e->'split') is distinct from 'object'
+        or (e->'split'->>'mode' in ('amounts','percent','shares')) is not true
+        or jsonb_typeof(e->'split'->'values') is distinct from 'object' then raise exception 'NEXO_SPLIT'; end if;
+      if (select count(*) from jsonb_object_keys(e->'split'->'values'))<>jsonb_array_length(e->'participants')
+        or exists(select 1 from jsonb_object_keys(e->'split'->'values') key where not (e->'participants' ? key)) then
+        raise exception 'NEXO_SPLIT';
+      end if;
+      split_sum:=0;
+      for k,v in select * from jsonb_each_text(e->'split'->'values') loop
+        if jsonb_typeof(e->'split'->'values'->k) is distinct from 'number' or (v ~ '^[0-9]+$') is not true then raise exception 'NEXO_SPLIT'; end if;
+        if v::numeric>100000000
+          or (e->'split'->>'mode'='percent' and v::numeric>10000)
+          or (e->'split'->>'mode'='shares' and v::numeric not between 1 and 1000000) then raise exception 'NEXO_SPLIT'; end if;
+        split_sum:=split_sum+v::numeric;
+      end loop;
+      if (e->'split'->>'mode'='amounts' and split_sum<>(e->>'amount')::numeric)
+        or (e->'split'->>'mode'='percent' and split_sum<>10000) then raise exception 'NEXO_SPLIT'; end if;
+    end if;
   end loop;
   for t in select * from jsonb_array_elements(d->'tasks') loop
     if jsonb_typeof(t->'title') is distinct from 'string' or length(trim(t->>'title')) not between 1 and 120
@@ -120,6 +138,9 @@ begin
   if actor is null then raise exception 'NEXO_FORBIDDEN'; end if;
   -- Serialize this owner's creates and make retries of the same form idempotent.
   perform pg_advisory_xact_lock(hashtextextended(actor::text,0));
+  if to_regclass('public.nexo_deleted_groups') is not null then
+    if exists(select 1 from public.nexo_deleted_groups where id=gid) then raise exception 'NEXO_FORBIDDEN'; end if;
+  end if;
   select * into g from public.nexo_groups where id=gid;
   if found then
     if g.owner_id<>actor then raise exception 'NEXO_FORBIDDEN'; end if;
@@ -202,10 +223,11 @@ begin
   return to_jsonb(g);
 end;
 $$;
-
 create or replace function public.divzplit_currency_support() returns boolean
 language sql stable as $$select true;$$;
 revoke all on function public.divzplit_currency_support() from public,anon;
 grant execute on function public.divzplit_currency_support() to authenticated;
 
+
+notify pgrst,'reload schema';
 commit;

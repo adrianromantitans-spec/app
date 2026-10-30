@@ -44,7 +44,7 @@ def api(route):
     if request.method=='OPTIONS':
         route.fulfill(status=204,headers={'Access-Control-Allow-Origin':'*',
             'Access-Control-Allow-Headers':'apikey,authorization,content-type',
-            'Access-Control-Allow-Methods':'GET,POST,OPTIONS'})
+            'Access-Control-Allow-Methods':'GET,POST,DELETE,OPTIONS'})
         return
     data=json.loads(request.post_data or '{}')
     user=tokens.get(request.headers.get('authorization','').replace('Bearer ',''))
@@ -58,6 +58,24 @@ def api(route):
         fulfill(route,user or {'code':'invalid_credentials'},200 if user else 401);return
     if path=='/auth/v1/logout': fulfill(route,{});return
     if not user: fulfill(route,{'message':'NEXO_FORBIDDEN'},403);return
+    if path=='/rest/v1/nexo_deleted_groups':
+        result=sql("select coalesce(jsonb_agg(jsonb_build_object('id',id)),'[]') from public.nexo_deleted_groups where cleaned_at is null;",user['id'])
+        if result.returncode:fulfill(route,{},404)
+        else:fulfill(route,json.loads(result.stdout))
+        return
+    if path=='/storage/v1/object/list/divzplit-receipts':
+        prefix=data.get('prefix','');result=sql("select coalesce(jsonb_agg(name),'[]') from storage.objects where bucket_id='divzplit-receipts' and starts_with(name,"+quote(prefix)+");",user['id'])
+        assert result.returncode==0,result.stderr
+        found={}
+        for name in json.loads(result.stdout):
+            rest=name[len(prefix):];first=rest.split('/')[0];found[first]={'name':first,'id':None if '/' in rest else 'fixture-object'}
+        values=sorted(found.values(),key=lambda x:x['name']);offset=data.get('offset',0)
+        fulfill(route,values[offset:offset+data.get('limit',100)]);return
+    if path=='/storage/v1/object/divzplit-receipts' and request.method=='DELETE':
+        paths=data.get('prefixes',[])
+        if paths:
+            result=sql("delete from storage.objects where bucket_id='divzplit-receipts' and name in ("+','.join(map(quote,paths))+");",user['id']);assert result.returncode==0,result.stderr
+        fulfill(route,[]);return
     if path=='/rest/v1/nexo_groups':
         result=sql("select coalesce(jsonb_agg(to_jsonb(g) order by created_at),'[]') from public.nexo_groups g;",user['id'])
     else:
@@ -66,11 +84,15 @@ def api(route):
         elif name=='nexo_save_group': args=[quote(data['p_id'])+'::uuid',str(int(data['p_version'])),quote(json.dumps(data['p_document']))+'::jsonb']
         elif name in ['nexo_create_invite','nexo_revoke_invites']: args=[quote(data['p_id'])+'::uuid']
         elif name=='nexo_join_group': args=[quote(data['p_token'])]
-        elif name=='divzplit_currency_support': args=[]
+        elif name in ['divzplit_currency_support','divzplit_expense_tools_support']: args=[]
+        elif name=='nexo_delete_group': args=[quote(data['p_id'])+'::uuid',str(int(data['p_version']))]
+        elif name=='divzplit_finish_group_cleanup': args=[quote(data['p_id'])+'::uuid']
         else: fulfill(route,{},404);return
-        result=sql('select '+('to_json(public.divzplit_currency_support())' if name=='divzplit_currency_support' else 'public.'+name+'('+','.join(args)+')')+';',user['id'])
+        call='public.'+name+'('+','.join(args)+')'
+        if name in ['divzplit_currency_support','divzplit_expense_tools_support','nexo_delete_group','divzplit_finish_group_cleanup']:call='to_json('+call+')'
+        result=sql('select '+call+';',user['id'])
     if result.returncode:
-        code=next((c for c in ['NEXO_CURRENCY_LOCKED','NEXO_CURRENCY','NEXO_CONFLICT','NEXO_INVITE','NEXO_OWNER','NEXO_FORBIDDEN'] if c in result.stderr),'22023')
+        code=next((c for c in ['NEXO_SPLIT','NEXO_CURRENCY_LOCKED','NEXO_CURRENCY','NEXO_CONFLICT','NEXO_INVITE','NEXO_OWNER','NEXO_FORBIDDEN'] if c in result.stderr),'22023')
         fulfill(route,{'code':'P0001','message':code},400);return
     value=json.loads(result.stdout.strip() or 'null')
     if path.endswith('/nexo_create_group'):created.append(value['id'])
