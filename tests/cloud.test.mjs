@@ -180,3 +180,9 @@ test('signup reports email delivery configuration errors without exposing backen
  const c=new Cloud(config,{storage:storage(),fetcher:async()=>response({code:500,error_code:'unexpected_failure',msg:'Error sending confirmation email'},500)});
  await assert.rejects(()=>c.signUp('ana@example.test','fixture-password','Ana','https://example.test/'),e=>e.code==='unexpected_failure'&&e.message.includes('configuración de envío'));
 });
+
+test('browser fetch is invoked with its global receiver',async()=>{
+ let called=false;
+ const c=new Cloud(config,{storage:storage(),fetcher:async function(){assert.equal(this,globalThis);called=true;return response({external:{email:true}});}});
+ await c.providers();assert.equal(called,true);
+});

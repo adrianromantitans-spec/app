@@ -1,5 +1,5 @@
 import {money, uid, totalSpent, balances, settlements, addExpense, vote, seed} from './model.js';
-import {Cloud} from './cloud.js?v=registration-3';
+import {Cloud} from './cloud.js?v=registration-4';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=design-2';
 

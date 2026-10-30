@@ -53,7 +53,7 @@ export function mapGroup(document, viewerId, toRemote=false) {
 
 export class Cloud {
   constructor(config, {fetcher=globalThis.fetch, storage=browserStorage('localStorage'), temporaryStorage=browserStorage('sessionStorage')}={}) {
-    this.config=validateConfig(config); this.fetcher=fetcher; this.storage=storage;
+    this.config=validateConfig(config); this.fetcher=fetcher.bind(globalThis); this.storage=storage;
     this.temporaryStorage=temporaryStorage;
     this.session=null; this.user=null; this.refreshing=null;
     this.storageKey=this.config ? `nexo-session-v1:${new URL(this.config.url).host}` : '';
@@ -70,11 +70,15 @@ export class Cloud {
     const headers={'apikey':this.config.publishableKey,'Content-Type':'application/json'};
     if (authenticated && this.session?.access_token) headers.Authorization=`Bearer ${this.session.access_token}`;
     let response;
-    try { response=await this.fetcher(this.config.url+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(timeoutMs),referrerPolicy:'no-referrer',cache:'no-store'}); }
+    const controller=new AbortController();
+    let timedOut=false;
+    const timer=setTimeout(()=>{timedOut=true;controller.abort();},timeoutMs);
+    try { response=await this.fetcher(this.config.url+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal,referrerPolicy:'no-referrer',cache:'no-store'}); }
     catch (error) {
-      if(path.startsWith('/auth/v1/signup')) throw new CloudError(error?.name==='TimeoutError'?'El registro está tardando demasiado. No podemos confirmar si se ha creado la cuenta. Revisa tu correo antes de volver a intentarlo.':'No se ha podido conectar con el servicio de registro. Comprueba tu conexión o prueba con otra red. Si ya recibiste el correo de confirmación, úsalo antes de repetir el registro.',error?.name==='TimeoutError'?'signup_timeout':'signup_network');
+      if(path.startsWith('/auth/v1/signup')) throw new CloudError((timedOut || error?.name==='TimeoutError')?'El registro está tardando demasiado. No podemos confirmar si se ha creado la cuenta. Revisa tu correo antes de volver a intentarlo.':'No se ha podido conectar con el servicio de registro. Comprueba tu conexión o prueba con otra red. Si ya recibiste el correo de confirmación, úsalo antes de repetir el registro.',(timedOut || error?.name==='TimeoutError')?'signup_timeout':'signup_network');
       throw new CloudError('No hay conexión con tus grupos. No se ha confirmado ningún cambio.');
     }
+    finally {clearTimeout(timer);}
     let result; try {result=await response.json();} catch {result=null;}
     if (!response.ok) {
       if (response.status===401 && authenticated && retry && this.session?.refresh_token) {
