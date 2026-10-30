@@ -563,7 +563,11 @@ function startBrandIntro() {
   ],{duration:2400,fill:'both'});
   const fade=curtain.animate([{opacity:1,offset:0},{opacity:1,offset:.68},{opacity:0,offset:1}],{duration:2400,fill:'both'});
   const onKey=event=>{if(event.key==='Escape'){event.preventDefault();finishBrandIntro();}};
-  const onResize=()=>finishBrandIntro();
+  const initialWidth=innerWidth;
+  // Safari can emit resize while its browser bars settle on first paint.
+  // Only a real width change (rotation/window resize) should skip the intro.
+  const onResize=()=>{if(Math.abs(innerWidth-initialWidth)>40)finishBrandIntro();};
+  const onMotionChange=()=>{if(reduced.matches)finishBrandIntro();};
   let timeout;
   finishBrandIntro=()=>{
     if(!brandIntroActive)return;
@@ -576,7 +580,7 @@ function startBrandIntro() {
     content.forEach(el=>el.inert=false);
     document.removeEventListener('keydown',onKey);
     window.removeEventListener('resize',onResize);
-    reduced.removeEventListener('change',onResize);
+    reduced.removeEventListener('change',onMotionChange);
     if(brandIntroPendingRender){
       brandIntroPendingRender=false;render();
       root.querySelector('.auth-header .brand')?.replaceWith(brand);
@@ -584,7 +588,7 @@ function startBrandIntro() {
   };
   document.addEventListener('keydown',onKey);
   window.addEventListener('resize',onResize);
-  reduced.addEventListener('change',onResize);
+  reduced.addEventListener('change',onMotionChange);
   timeout=setTimeout(()=>finishBrandIntro(),3000);
   movement.finished.then(()=>finishBrandIntro(),()=>{});
 }

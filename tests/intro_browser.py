@@ -35,7 +35,12 @@ with sync_playwright() as p:
         expect(page.locator('.brand-intro-curtain')).to_have_count(0)
         expect(page.locator('.auth-main')).to_be_visible()
         page.reload();expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        page.set_viewport_size({'width':width+20,'height':height})
+        page.evaluate('window.dispatchEvent(new Event("resize"))')
+        expect(page.locator('.brand-intro-curtain')).to_be_visible()
+        page.set_viewport_size({'width':width,'height':height-60})
+        page.wait_for_timeout(100)
+        expect(page.locator('.brand-intro-curtain')).to_be_visible()
+        page.set_viewport_size({'width':width+100,'height':height})
         expect(page.locator('.brand-intro-curtain')).to_have_count(0)
         assert not errors,errors
         c.close()
