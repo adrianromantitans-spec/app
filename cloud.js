@@ -20,11 +20,16 @@ export class CloudError extends Error {
 function browserStorage(name) {try {return globalThis[name];} catch {return null;}}
 
 function messageFor(error, status) {
-  const code = error?.code || error?.error_code;
+  const code = error?.error_code || error?.code;
   if (code === 'NEXO_CONFLICT') return 'Alguien ha actualizado el grupo. Hemos recargado los datos; revisa tu cambio y vuelve a guardarlo.';
   if (code === 'NEXO_INVITE') return 'Este enlace ha caducado, se ha revocado o ya no admite más personas. Pide uno nuevo.';
   if (code === 'NEXO_OWNER') return 'Solo quien creó el grupo puede modificar sus detalles o gestionar invitaciones.';
   if (code === 'NEXO_FORBIDDEN' || status === 403) return 'No tienes acceso a este grupo.';
+  if (code === 'email_address_not_authorized') return 'El servicio de correo todavía no permite enviar confirmaciones a esta dirección. Hace falta configurar el envío de correos de la aplicación.';
+  if (code === 'email_address_invalid') return 'Revisa tu dirección de correo electrónico.';
+  if (code === 'weak_password') return 'Elige una contraseña más segura, con al menos 10 caracteres, mayúsculas, minúsculas y números.';
+  if (code === 'signup_disabled' || code === 'email_provider_disabled') return 'El registro por correo no está disponible en este momento.';
+  if (code === 'unexpected_failure' && /confirmation email/i.test(error?.msg || error?.message || '')) return 'El servicio no ha podido enviar el correo de confirmación. Hay que revisar la configuración de envío de la aplicación.';
   if (code === 'email_not_confirmed') return 'Confirma tu correo antes de entrar. Revisa también la carpeta de spam.';
   if (code === 'invalid_credentials') return 'El correo o la contraseña no son correctos.';
   if (status === 429 || code === 'over_email_send_rate_limit') return 'Demasiados intentos. Espera un poco antes de volver a intentarlo.';
@@ -59,20 +64,23 @@ export class Cloud {
     try { if (session) this.storage.setItem(this.storageKey,JSON.stringify(session)); else this.storage.removeItem(this.storageKey); }
     catch { /* A memory-only session is still usable; the UI explains it. */ }
   }
-  async request(path, {method='GET', body, authenticated=true, retry=true}={}) {
+  async request(path, {method='GET', body, authenticated=true, retry=true, timeoutMs=15000}={}) {
     if (!this.enabled) throw new CloudError('Las cuentas compartidas todavía no están disponibles.');
     if (authenticated) await this.ensureSession();
     const headers={'apikey':this.config.publishableKey,'Content-Type':'application/json'};
     if (authenticated && this.session?.access_token) headers.Authorization=`Bearer ${this.session.access_token}`;
     let response;
-    try { response=await this.fetcher(this.config.url+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000),referrerPolicy:'no-referrer',cache:'no-store'}); }
-    catch { throw new CloudError('No hay conexión con tus grupos. No se ha confirmado ningún cambio.'); }
+    try { response=await this.fetcher(this.config.url+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(timeoutMs),referrerPolicy:'no-referrer',cache:'no-store'}); }
+    catch (error) {
+      if(path.startsWith('/auth/v1/signup')) throw new CloudError(error?.name==='TimeoutError'?'El registro está tardando demasiado. No podemos confirmar si se ha creado la cuenta. Revisa tu correo antes de volver a intentarlo.':'No se ha podido conectar con el servicio de registro. Comprueba tu conexión o prueba con otra red. Si ya recibiste el correo de confirmación, úsalo antes de repetir el registro.',error?.name==='TimeoutError'?'signup_timeout':'signup_network');
+      throw new CloudError('No hay conexión con tus grupos. No se ha confirmado ningún cambio.');
+    }
     let result; try {result=await response.json();} catch {result=null;}
     if (!response.ok) {
       if (response.status===401 && authenticated && retry && this.session?.refresh_token) {
         await this.refresh(); return this.request(path,{method,body,authenticated,retry:false});
       }
-      let code=result?.code || result?.error_code;
+      let code=result?.error_code || result?.code;
       // PostgreSQL custom errors use P0001; the stable message contains our code.
       if (result?.message?.startsWith('NEXO_')) code=result.message;
       if (response.status===401 && authenticated) {this.persistSession(null);this.user=null;}
@@ -171,7 +179,7 @@ export class Cloud {
     this.persistSession(session);await this.loadUser();return this.user;
   }
   async signUp(email,password,name,redirect) {
-    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name}},authenticated:false});
+    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name}},authenticated:false,timeoutMs:45000});
     const session=this.sessionFrom(result);
     if (session) {this.persistSession(session);await this.loadUser();}
     return !!session;

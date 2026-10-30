@@ -168,3 +168,15 @@ test('a social profile name is normalized using only the signed-in user endpoint
   await c.finishOAuth('?code=valid','https://example.test/app/');
   assert.equal(updated,true);assert.equal(c.user.user_metadata.display_name,'Ana Social');
 });
+
+ test('signup distinguishes a lost response from rejection and does not retry registration',async()=>{
+   let calls=0;
+   const c=new Cloud(config,{fetcher:async()=>{calls++;throw new DOMException('transport details','TimeoutError');},storage:storage()});
+   await assert.rejects(()=>c.signUp('ana@example.test','fixture-password','Ana','https://example.test/'),e=>e.code==='signup_timeout'&&e.message.includes('Revisa tu correo'));
+   assert.equal(calls,1);assert.equal(c.session,null);
+ });
+
+test('signup reports email delivery configuration errors without exposing backend details',async()=>{
+ const c=new Cloud(config,{storage:storage(),fetcher:async()=>response({code:500,error_code:'unexpected_failure',msg:'Error sending confirmation email'},500)});
+ await assert.rejects(()=>c.signUp('ana@example.test','fixture-password','Ana','https://example.test/'),e=>e.code==='unexpected_failure'&&e.message.includes('configuración de envío'));
+});

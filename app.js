@@ -1,5 +1,5 @@
 import {money, uid, totalSpent, balances, settlements, addExpense, vote, seed} from './model.js';
-import {Cloud} from './cloud.js?v=welcome-1';
+import {Cloud} from './cloud.js?v=registration-3';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=design-2';
 
@@ -364,7 +364,7 @@ async function beginOAuth(provider) {
 async function handleAccountForm(form,data) {
   if (form.id!=='account-form') return false;
   remoteBusy=true;
-  const submit=form.querySelector('[type="submit"]');submit.disabled=true;
+  const submit=form.querySelector('[type="submit"]');const originalSubmit=submit.innerHTML;submit.disabled=true;submit.textContent=form.dataset.mode==='signup'?'Creando tu cuenta…':'Iniciando sesión…';form.setAttribute('aria-busy','true');const existingError=form.querySelector('.form-error');if(existingError)existingError.textContent='';
   try {
     const email=data.get('email').trim();
     const password=data.get('password');
@@ -381,7 +381,7 @@ async function handleAccountForm(form,data) {
     if (accountUser) {setSync('Sin conexión · Reintentar');render();}
     const alert=form.querySelector('.form-error');if (alert?.isConnected) alert.textContent=error.message;
     else toast(error.message);
-  } finally {remoteBusy=false;if(submit.isConnected)submit.disabled=false;}
+  } finally {remoteBusy=false;if(submit.isConnected){submit.disabled=false;submit.innerHTML=originalSubmit;form.removeAttribute('aria-busy');}}
   return true;
 }
 async function connectAccount() {
