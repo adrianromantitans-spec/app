@@ -16,5 +16,5 @@ http.createServer(async (req, res) => {
     const body = await readFile(path.join(root, file));
     res.writeHead(200, {'Content-Type':mime[path.extname(file)], 'X-Content-Type-Options':'nosniff', 'Cache-Control':'no-cache'});
     res.end(req.method === 'HEAD' ? undefined : body);
-  } catch { res.writeHead(500); res.end('No se ha podido cargar Nexo'); }
-}).listen(port, '0.0.0.0', () => console.log(`Nexo disponible en el puerto ${port}`));
+  } catch { res.writeHead(500); res.end('No se ha podido cargar DivZplit'); }
+}).listen(port, '0.0.0.0', () => console.log(`DivZplit disponible en el puerto ${port}`));
