@@ -99,6 +99,7 @@ def context(browser):
     return c
 
 def login(page,email):
+    if page.locator('#account-form').count()==0:page.locator('.entry-login').click()
     page.get_by_label('Correo electrónico').fill(email)
     page.get_by_label('Contraseña',exact=True).fill('fixture-password')
     page.locator('#account-form').get_by_role('button',name='Iniciar sesión',exact=True).click()
@@ -150,6 +151,10 @@ try:
         owner.get_by_role('button',name='Generar enlace de invitación').click()
         link=owner.get_by_label('Enlace de invitación').input_value()
         assert '#invite=' in link
+        from urllib.parse import parse_qs
+        share=owner.get_by_role('link',name='WhatsApp').get_attribute('href')
+        assert share.startswith('https://wa.me/?text=') and link in parse_qs(urlsplit(share).query)['text'][0]
+        print('PASS: WhatsApp link contains the exact invitation, without sending a message')
         owner.keyboard.press('Escape')
         friend.goto(link)
         assert '#invite=' not in friend.url
@@ -226,7 +231,7 @@ try:
 
         owner.get_by_role('button',name='Tu perfil y datos').click()
         owner.get_by_role('button',name='Cerrar sesión',exact=True).click()
-        expect(owner.get_by_role('heading',name='Bienvenido a Nexo.')).to_be_visible()
+        expect(owner.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
         assert owner.get_by_text('Viaje entre móviles',exact=True).count()==0
         owner.get_by_role('button',name='Explorar una demo').click()
         expect(owner.get_by_role('heading',name='Escapada a Lisboa',exact=True)).to_be_visible()

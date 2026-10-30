@@ -94,3 +94,9 @@ GitHub mostrará el enlace cuando termine el despliegue; para este repositorio s
 
 Subir el código no activa GitHub Pages por sí solo. El sitio seguirá guardando los
 datos únicamente en el navegador de cada persona.
+
+## Nuevas funciones
+
+Recuperación de contraseña, invitaciones por WhatsApp, fotos de tickets y gastos
+recurrentes: consulta [la guía de activación y uso](docs/NEW-FEATURES.md).
+Las fotos de grupos compartidos requieren ejecutar `supabase/receipts.sql` una vez.

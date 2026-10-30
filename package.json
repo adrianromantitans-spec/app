@@ -7,9 +7,9 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "test": "node tests/model.test.mjs && node tests/cloud.test.mjs",
+    "test": "node tests/model.test.mjs && node tests/cloud.test.mjs && node tests/extras.test.mjs",
     "test:database": "python3 tests/database_test.py",
-    "check": "node --check app.js && node --check auth-ui.js && node --check model.js && node --check cloud.js && node --check config.js && node --check server.mjs"
+    "check": "node --check app.js && node --check auth-ui.js && node --check extras.js && node --check model.js && node --check cloud.js && node --check config.js && node --check server.mjs"
   },
   "engines": { "node": ">=22" }
 }

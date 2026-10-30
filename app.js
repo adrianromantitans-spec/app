@@ -1,7 +1,8 @@
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=extras-5';
 import {money, uid, totalSpent, balances, settlements, addExpense, vote, seed} from './model.js';
-import {Cloud} from './cloud.js?v=registration-4';
+import {Cloud} from './cloud.js?v=extras-5';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=design-2';
+import {welcomePage,socialButtons} from './auth-ui.js?v=extras-5';
 
 let cloud;
 let configError='';
@@ -105,7 +106,8 @@ function empty(title, description, action, label) { return `<div class="empty-st
 function sectionTitle(title, subtitle, extra='') {return `<div class="section-heading"><div><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra}</div>`;}
 
 function render() {
-  if (!accountUser&&!demoMode) {renderWelcome();return;}
+  if(cloud.recovering){renderRecovery(true);return;}
+  if (!accountUser&&!demoMode) {if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
   const g = group();
   const navigation = [['home','grid','Mi espacio'],['groups','users','Mis grupos'],['activity','chart','Actividad'],['budget','wallet','Presupuestos']];
   root.innerHTML = `<aside class="sidebar" aria-label="Navegación principal">
@@ -142,7 +144,7 @@ function summaryView() {
 
 function expenseList(items) {
   if (!items.length) return empty('Las cuentas empiezan aquí','Añade el primer gasto y DivZplit calculará el reparto.','new-expense','Añadir gasto');
-  return `<div class="expense-list">${items.map(e=>`<div class="expense-row"><span class="expense-icon ${e.category==='Alojamiento'?'lavender':e.category==='Transporte'?'blue-bg':'peach'}">${icon(categoryIcon(e.category))}</span><div class="expense-description"><strong>${esc(e.title)}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?'persona':'personas'}</small></div><button class="icon-button expense-detail-button" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}">${icon('chevron')}</button></div>`).join('')}</div>`;
+  return `<div class="expense-list">${items.map(e=>`<div class="expense-row"><span class="expense-icon ${e.category==='Alojamiento'?'lavender':e.category==='Transporte'?'blue-bg':'peach'}">${icon(categoryIcon(e.category))}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?' · Ticket':''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?'persona':'personas'}</small></div><button class="icon-button expense-detail-button" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}">${icon('chevron')}</button></div>`).join('')}</div>`;
 }
 
 function expensesView() {
@@ -176,11 +178,11 @@ function openModal(title, content, subtitle='') {
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
 }
-function closeModal() {modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
+function closeModal() {const previewForm=modalRoot.querySelector('#expense-form');if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
 const actions = label => `<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" type="submit">${label}${icon('arrow')}</button></div>`;
 const memberOptions = () => group().members.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');
 function expenseModal() {
-  openModal('Un gasto, bien repartido',`<form id="expense-form" data-entity-id="${uid()}"><label class="field">¿Qué habéis pagado?<input name="title" placeholder="Ej. Cena de bienvenida" required maxlength="100"></label><div class="form-columns"><label class="field">Importe (€)<input name="amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0,00" required inputmode="decimal"></label><label class="field">Pagado por<select name="payer">${memberOptions()}</select></label></div><div class="form-columns"><label class="field">Categoría<select name="category">${['Comida','Transporte','Alojamiento','Actividades','Otros'].map(c=>`<option>${c}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required></label></div><fieldset class="participants"><legend>Repartir a partes iguales entre</legend>${group().members.map(m=>`<label class="participant"><input type="checkbox" name="participants" value="${esc(m.id)}" checked>${avatar(m,true)}<span>${esc(m.name)}</span></label>`).join('')}</fieldset><div class="form-note">${icon('spark')} Cada céntimo cuenta: el reparto se ajusta automáticamente.</div>${actions('Guardar gasto')}</form>`,esc(group().name));
+  openModal('Un gasto, bien repartido',`<form id="expense-form" data-entity-id="${uid()}"><label class="field">¿Qué habéis pagado?<input name="title" placeholder="Ej. Cena de bienvenida" required maxlength="100"></label><div class="form-columns"><label class="field">Importe (€)<input name="amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0,00" required inputmode="decimal"></label><label class="field">Pagado por<select name="payer">${memberOptions()}</select></label></div><div class="form-columns"><label class="field">Categoría<select name="category">${['Comida','Transporte','Alojamiento','Actividades','Otros'].map(c=>`<option>${c}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required></label></div><label class="field">Repetir<select name="frequency"><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label><div class="receipt-preview" aria-live="polite"></div><fieldset class="participants"><legend>Repartir a partes iguales entre</legend>${group().members.map(m=>`<label class="participant"><input type="checkbox" name="participants" value="${esc(m.id)}" checked>${avatar(m,true)}<span>${esc(m.name)}</span></label>`).join('')}</fieldset><div class="form-note">${icon('spark')} Cada céntimo cuenta: el reparto se ajusta automáticamente.</div>${actions('Guardar gasto')}</form>`,esc(group().name));
 }
 function groupModal(edit=false) {
   const g=group() || {};
@@ -193,7 +195,7 @@ function settlementsModal() {
 function expenseDetails(id) {
   const e=group().expenses.find(e=>e.id===id); if(!e)return;
   const base=Math.floor(e.amount/e.participants.length); const remainder=e.amount%e.participants.length;
-  openModal(esc(e.title),`<div class="expense-detail-total">${money(e.amount)}<span>${esc(e.category)} · ${dateLabel(e.date)}</span></div><p class="detail-payer">Pagado por <strong>${esc(member(e.payer).name)}</strong></p><h3 class="detail-subtitle">Así se reparte</h3>${e.participants.map((id,i)=>`<div class="share-row">${avatar(member(id),true)}<span>${esc(member(id).name)}</span><strong>${money(base+(i<remainder?1:0))}</strong></div>`).join('')}<div class="modal-actions">${!accountUser||canManage()||e.createdBy===accountUser.id?`<button class="button danger" data-delete-expense="${esc(e.id)}">Eliminar gasto</button>`:''}<button class="button primary" data-action="close-modal">Entendido</button></div>`);
+  openModal(esc(e.title),`<div class="expense-detail-total">${money(e.amount)}<span>${esc(e.category)} · ${dateLabel(e.date)}</span></div><p class="detail-payer">Pagado por <strong>${esc(member(e.payer).name)}</strong></p>${e.receipt?`<button class="button secondary full-width" data-view-receipt="${esc(e.id)}">${icon('receipt')} Ver foto del ticket</button>`:''}${e.recurrence?`<div class="recurrence-info"><strong>${({weekly:'Cada semana',monthly:'Cada mes',yearly:'Cada año'})[e.recurrence.frequency]||'Recurrente'}</strong><p>${e.recurrence.active?'Próximo gasto: '+dateLabel(e.recurrence.nextDate):'Repetición detenida'}</p>${e.recurrence.active&&(!accountUser||canManage()||e.createdBy===accountUser.id)?`<button class="text-button" data-stop-recurrence="${esc(e.id)}">Detener repetición</button>`:''}</div>`:e.seriesId?'<p class="form-note">Generado a partir de un gasto recurrente.</p>':''}<h3 class="detail-subtitle">Así se reparte</h3>${e.participants.map((id,i)=>`<div class="share-row">${avatar(member(id),true)}<span>${esc(member(id).name)}</span><strong>${money(base+(i<remainder?1:0))}</strong></div>`).join('')}<div class="modal-actions">${!accountUser||canManage()||e.createdBy===accountUser.id?`<button class="button danger" data-delete-expense="${esc(e.id)}">Eliminar gasto</button>`:''}<button class="button primary" data-action="close-modal">Entendido</button></div>`);
 }
 function settingsModal() {
   const profile=currentProfile();
@@ -213,9 +215,11 @@ async function onAppClick(event) {
   if(el.dataset.poll){const poll=group().polls.find(p=>p.id===el.dataset.poll);vote(poll,el.dataset.option,'you');await save();render();toast(poll.votes.you?'Tu voto está guardado. Puedes cambiarlo cuando quieras.':'Has retirado tu voto.');return;}
   if(el.dataset.expense){expenseDetails(el.dataset.expense);return;}
   if(el.dataset.deleteExpense){const id=el.dataset.deleteExpense;openModal('¿Eliminar este gasto?',`<p class="dialog-copy">El reparto y los saldos del grupo se volverán a calcular. Esta acción no se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button danger" data-confirm-delete="${esc(id)}">Sí, eliminar</button></div>`);return;}
-  if(el.dataset.confirmDelete){group().expenses=group().expenses.filter(e=>e.id!==el.dataset.confirmDelete);await save();closeModal();render();toast('Gasto eliminado. Los saldos están actualizados.');return;}
+  if(el.dataset.confirmDelete){const g=group();const receipt=g.expenses.find(e=>e.id===el.dataset.confirmDelete)?.receipt;g.expenses=g.expenses.filter(e=>e.id!==el.dataset.confirmDelete);await save();let removed=true;if(accountUser&&receipt?.path){try{await cloud.deleteReceipt(g.id,receipt.path);}catch{removed=false;}}closeModal();render();toast(removed?'Gasto eliminado. Los saldos están actualizados.':'Gasto eliminado; no se pudo borrar su foto del almacenamiento.');return;}
   if(el.dataset.settle!==undefined){const p=settlements(group())[Number(el.dataset.settle)];if(!p)return;openModal('¿Ya se ha realizado el pago?',`<p class="dialog-copy">Vas a registrar que <strong>${esc(member(p.from).name)}</strong> ha devuelto <strong>${money(p.amount)}</strong> a <strong>${esc(member(p.to).name)}</strong>.</p><p class="form-note">Confirma únicamente si el dinero ya ha llegado a su destino.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" data-confirm-payment="${esc(JSON.stringify(p))}">Sí, registrar pago</button></div>`);return;}
   if(el.dataset.confirmPayment){const p=JSON.parse(el.dataset.confirmPayment);group().payments.unshift({...p,id:uid(),date:today()});await save();closeModal();render();toast('Devolución registrada. Un poquito más cerca del equilibrio.');return;}
+  if(el.dataset.viewReceipt){await viewReceipt(el.dataset.viewReceipt);return;}
+  if(el.dataset.stopRecurrence){const e=group().expenses.find(e=>e.id===el.dataset.stopRecurrence);if(e?.recurrence&&(!accountUser||canManage()||e.createdBy===accountUser.id)){e.recurrence.active=false;await save();expenseDetails(e.id);toast('Repetición detenida. Los gastos anteriores se conservan.');}return;}
   switch(el.dataset.action){
     case 'close-modal':closeModal();break;
     case 'new-expense':expenseModal();break;
@@ -227,7 +231,7 @@ async function onAppClick(event) {
     case 'new-poll':openModal('¿Cuál es el plan?',`<form id="poll-form" data-entity-id="${uid()}"><label class="field">La gran pregunta<input name="title" placeholder="¿Dónde cenamos el viernes?" maxlength="120" required></label><label class="field">Un poco de contexto <span class="muted">(opcional)</span><input name="description" placeholder="Algo rico, cerca del apartamento" maxlength="160"></label><label class="field">Opción 1<input name="option" placeholder="Pizzería del barrio" maxlength="100" required></label><label class="field">Opción 2<input name="option" placeholder="Restaurante portugués" maxlength="100" required></label><label class="field">Opción 3 <span class="muted">(opcional)</span><input name="option" placeholder="Otra buena idea" maxlength="100"></label>${actions('Crear votación')}</form>`);break;
     case 'settings':settingsModal();break;
     case 'account':accountModal();break;
-    case 'demo':demoMode=true;page='home';closeModal();render();break;
+    case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
     case 'welcome':demoMode=false;authStage='welcome';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
     case 'oauth-google':await beginOAuth('google');break;
     case 'oauth-apple':await beginOAuth('apple');break;
@@ -237,6 +241,7 @@ async function onAppClick(event) {
     case 'signout':await signOutAccount();break;
     case 'invite':inviteModal();break;
     case 'generate-invite':await generateInvite();break;
+    case 'recover':authStage='recover';demoMode=false;closeModal();render();break;
     case 'copy-invite':await copyInvite();break;
     case 'revoke-invites':await revokeInvites();break;
     case 'accept-invite':await acceptInvite();break;
@@ -251,14 +256,36 @@ document.addEventListener('change',event=>{onAppChange(event).catch(handleAction
 async function onAppChange(event) {
   const el=event.target;
   if(remoteBusy || authLoading){render();return;}
+  if(el.matches('input[name=receipt]')){await receiptChanged(el);return;}
   if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();toast(t.done?'¡Una cosa menos por hacer!':'Tarea marcada como pendiente.');}
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();}
 }
 document.addEventListener('submit',async event=>{
-  const form=event.target;if(!form.closest('#modal-root')&&form.id!=='account-form')return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
+  const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
+  if(await handleRecoveryForm(form,data))return;
   if(await handleAccountForm(form,data))return;
   try {
-    if(form.id==='expense-form'){const added=addExpense(group(),{title:data.get('title'),amount:Math.round(Number(data.get('amount'))*100),payer:data.get('payer'),participants:data.getAll('participants'),category:data.get('category'),date:data.get('date')});if(accountUser){added.id=form.dataset.entityId;added.createdBy=accountUser.id;}}
+    if(form.id==='expense-form'){
+      if(form.receiptPending)throw new Error('Espera a que termine de prepararse la foto.');
+      remoteBusy=true;const submit=form.querySelector('[type=submit]');submit.disabled=true;
+      try {
+        const fields={title:data.get('title'),amount:Math.round(Number(data.get('amount'))*100),payer:data.get('payer'),participants:data.getAll('participants'),category:data.get('category'),date:data.get('date')};
+        // Validate before uploading, without changing the real group.
+        addExpense({...group(),expenses:[]},fields);
+        const frequency=data.get('frequency');
+        if(frequency&&!['weekly','monthly','yearly'].includes(frequency))throw new Error('Repetición no válida.');
+        const recurrence=frequency?{frequency,active:true,anchorDay:Number(fields.date.slice(8)),nextDate:nextOccurrence(fields.date,frequency)}:null;
+        let receipt=form.uploadedReceipt;
+        if(form.receiptBlob&&!receipt){
+          if(accountUser){submit.textContent='Subiendo ticket…';receipt=await cloud.uploadReceipt(group().id,form.dataset.entityId,form.receiptBlob);form.uploadedReceipt=receipt;}
+          else receipt={dataURL:await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(form.receiptBlob);})};
+        }
+        const added=addExpense(group(),fields);added.id=form.dataset.entityId;
+        if(accountUser)added.createdBy=accountUser.id;
+        if(receipt)added.receipt=receipt;
+        if(recurrence)added.recurrence=recurrence;
+      }finally{remoteBusy=false;submit.disabled=false;submit.innerHTML='Guardar gasto'+icon('arrow');}
+    }
     if(form.id==='task-form'){const title=data.get('title').trim();if(!title)throw new Error('Escribe qué hay que hacer.');group().tasks.push({id:accountUser?form.dataset.entityId:uid(),title,assignee:data.get('assignee'),done:false});}
     if(form.id==='poll-form'){const title=data.get('title').trim();const options=data.getAll('option').map(s=>s.trim()).filter(Boolean);if(!title||options.length<2)throw new Error('Escribe una pregunta y al menos dos opciones.');if(new Set(options.map(s=>s.toLowerCase())).size!==options.length)throw new Error('Las opciones deben ser diferentes.');group().polls.unshift({id:accountUser?form.dataset.entityId:uid(),title,description:data.get('description').trim(),options:options.map(label=>({id:uid(),label,emoji:'✦'})),votes:{}});tab='plans';}
     if(form.id==='budget-form'){const budget=Math.round(Number(data.get('budget'))*100);if(!Number.isSafeInteger(budget)||budget<100)throw new Error('El presupuesto debe ser de al menos 1 €.');group().budget=budget;}
@@ -308,6 +335,60 @@ function handleActionError(error) {
   }
   toast(error.message);
 }
+async function processRecurrences() {
+  let changed=false;
+  for(const g of state.groups){
+    const before=JSON.stringify(g);materializeRecurring(g,today(),e=>!accountUser||g.remote?.ownerId===accountUser.id||e.createdBy===accountUser.id,accountUser?.id);if(before!==JSON.stringify(g))changed=true;
+  }
+  if(changed)await save();
+}
+async function receiptChanged(input) {
+  const form=input.form;const attempt={};form.receiptAttempt=attempt;
+  form.receiptBlob=null;form.uploadedReceipt=null;
+  const preview=form.querySelector('.receipt-preview');preview.replaceChildren();
+  if(form.receiptPreviewURL)URL.revokeObjectURL(form.receiptPreviewURL);
+  try {
+    form.receiptPending=prepareReceipt(input.files[0]);const blob=await form.receiptPending;
+    if(form.receiptAttempt!==attempt||!form.isConnected)return;
+    if(blob){form.receiptBlob=blob;form.receiptPreviewURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=form.receiptPreviewURL;img.alt='Vista previa del ticket';preview.append(img);}
+  }catch(error){if(form.receiptAttempt===attempt){input.value='';toast(error.message);}}
+  finally{if(form.receiptAttempt===attempt)form.receiptPending=null;}
+}
+async function viewReceipt(id) {
+  const g=group();const e=g.expenses.find(e=>e.id===id);if(!e?.receipt)return;
+  openModal('Foto del ticket','<p class="receipt-loading" role="status">Abriendo ticket…</p>');const container=modalRoot.querySelector('.modal');
+  try {
+    let url;
+    if(accountUser)url=await cloud.receiptURL(g.id,e.receipt.path);
+    else if(typeof e.receipt.dataURL==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(e.receipt.dataURL))url=e.receipt.dataURL;
+    else throw new Error('No se ha encontrado la foto del ticket.');
+    if(!container.isConnected)return;
+    const img=document.createElement('img');img.className='receipt-photo';img.alt='Ticket de '+e.title;img.src=url;img.referrerPolicy='no-referrer';img.onerror=()=>{if(container.isConnected)container.querySelector('.receipt-loading').textContent='No se ha podido cargar la foto. Cierra esta ventana y vuelve a intentarlo.';};img.onload=()=>container.querySelector('.receipt-loading')?.remove();container.append(img);
+  }catch(error){if(container.isConnected)container.querySelector('.receipt-loading').textContent=error.message;}
+}
+function renderRecovery(reset) {
+  const form=reset?`<form id="password-form"><label class="field">Nueva contraseña<input type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" required></label><label class="field">Repetir contraseña<input type="password" name="confirm" autocomplete="new-password" minlength="10" maxlength="128" required></label><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Guardar contraseña</button></form>`:`<form id="recovery-form"><label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" required maxlength="254"></label><p class="form-note">Abre el enlace del correo en este mismo navegador. No cierres esta pestaña hasta recibirlo.</p><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Enviar enlace de recuperación</button></form>`;
+  root.innerHTML=welcomePage({stage:'recover',form,social:'',notice:'',signup:false,title:reset?'Elige una contraseña':'Recupera tu cuenta',description:reset?'Una contraseña nueva para volver a tus planes.':'Te ayudamos a volver a entrar.'});
+  const prompt=root.querySelector('.signup-prompt');
+  if(reset){prompt.remove();const back=root.querySelector('.auth-back');back.dataset.action='signout';back.textContent='← Cancelar recuperación';}
+  else prompt.innerHTML='¿Recuerdas tu contraseña? <a href="#acceso" data-action="login">Iniciar sesión</a>';
+  root.inert=!!modalRoot.firstElementChild;
+}
+async function handleRecoveryForm(form,data) {
+  if(!['recovery-form','password-form'].includes(form.id))return false;
+  remoteBusy=true;const submit=form.querySelector('[type=submit]');submit.disabled=true;const original=submit.textContent;submit.textContent='Un momento…';
+  try {
+    if(form.id==='recovery-form'){
+      await cloud.recoverPassword(data.get('email').trim(),new URL('./',location.href).href);
+      openModal('Revisa tu correo','<p class="form-note">Si existe una cuenta con esa dirección, recibirás un enlace para elegir una nueva contraseña. Ábrelo en este mismo navegador. Revisa también spam.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>');
+    }else{
+      const password=data.get('password');if(password.length<10||password!==data.get('confirm'))throw new Error('Las contraseñas deben coincidir y tener al menos 10 caracteres.');
+      await cloud.updatePassword(password);try{await cloud.signOut();}catch{/* local session is cleared even when sign-out is unreachable */}accountUser=null;authStage='login';authMode='login';history.replaceState(null,'',location.pathname+location.search+'#acceso');render();toast('Contraseña actualizada. Entra con tu nueva contraseña.');
+    }
+  }catch(e){form.querySelector('.form-error').textContent=e.message;}
+  finally{remoteBusy=false;if(submit.isConnected){submit.disabled=false;submit.textContent=original;}}
+  return true;
+}
 function canManage() {return !accountUser || group()?.remote?.ownerId===accountUser.id;}
 function setSync(message) {
   syncMessage=message;
@@ -330,7 +411,7 @@ function accountBanner() {
 function accountForm() {
   const signup=authMode==='signup';
   if(!cloud.enabled) return '<div class="privacy-note"><p>El acceso con cuenta todavía no está disponible. Puedes explorar DivZplit con la demo.</p></div>';
-  return `<form id="account-form" data-mode="${authMode}">${signup?'<label class="field">¿Cómo te llamas?<input name="name" autocomplete="nickname" maxlength="40" placeholder="Tu nombre" required></label>':''}<label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required></label><label class="field">Contraseña<input type="password" name="password" autocomplete="${signup?'new-password':'current-password'}" minlength="${signup?10:1}" maxlength="128" placeholder="${signup?'Al menos 10 caracteres':'Tu contraseña'}" required></label><p class="form-note">${signup?'Te enviaremos un correo para confirmar tu cuenta.':'Entra para recuperar tus grupos, también en otro móvil.'}</p><p class="form-error" role="alert"></p><button class="button primary full-width auth-submit" type="submit">${signup?'Crear cuenta':'Iniciar sesión'} ${icon('arrow')}</button></form>`;
+  return `<form id="account-form" data-mode="${authMode}">${signup?'<label class="field">¿Cómo te llamas?<input name="name" autocomplete="nickname" maxlength="40" placeholder="Tu nombre" required></label>':''}<label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required></label><label class="field">Contraseña<input type="password" name="password" autocomplete="${signup?'new-password':'current-password'}" minlength="${signup?10:1}" maxlength="128" placeholder="${signup?'Al menos 10 caracteres':'Tu contraseña'}" required></label><p class="form-note">${signup?'Te enviaremos un correo para confirmar tu cuenta.':'Entra para recuperar tus grupos, también en otro móvil.'}</p><p class="form-error" role="alert"></p><button class="button primary full-width auth-submit" type="submit">${signup?'Crear cuenta':'Iniciar sesión'} ${icon('arrow')}</button>${signup?'':'<button type="button" class="text-button forgot-password" data-action="recover">¿Has olvidado tu contraseña?</button>'}</form>`;
 }
 function renderWelcome() {
   let notice='';
@@ -388,7 +469,7 @@ async function connectAccount() {
   accountUser=cloud.user;demoMode=false;
   state={version:1,activeGroup:null,groups:[]};remoteBaseline.clear();page='home';tab='summary';
   try {state.activeGroup=sessionStorage.getItem('nexo-active-'+accountUser.id);} catch {}
-  await loadSharedGroups();setSync('Actualizado');
+  await loadSharedGroups();await processRecurrences();setSync('Actualizado');
 }
 async function loadSharedGroups() {
   const groups=await cloud.listGroups();
@@ -397,11 +478,12 @@ async function loadSharedGroups() {
   remoteBaseline.clear();groups.forEach(g=>remoteBaseline.set(g.id,JSON.stringify(g)));
 }
 async function refreshShared(showError=false) {
+  if(!accountUser&&demoMode&&!remoteBusy&&!modalRoot.firstElementChild&&!document.hidden){const before=JSON.stringify(state.groups);await processRecurrences();if(before!==JSON.stringify(state.groups))render();return;}
   if (!accountUser||remoteBusy||authLoading||modalRoot.firstElementChild||document.hidden) return;
   remoteBusy=true;
   const before=JSON.stringify(state.groups);
   try {
-    await loadSharedGroups();setSync('Actualizado');
+    await loadSharedGroups();await processRecurrences();setSync('Actualizado');
     if (before!==JSON.stringify(state.groups)) render();
     if (showError) toast('Tus grupos están actualizados.');
   } catch(error) {
@@ -432,7 +514,7 @@ async function generateInvite() {
   try {
     const result=await cloud.invite(group().id);
     const url=new URL('./',location.href);url.search='';url.hash='invite='+result.token;
-    openModal('Una invitación a buenos momentos',`<label class="field">Enlace para tu grupo<input id="invite-link" readonly value="${esc(url.href)}" aria-label="Enlace de invitación"></label><p class="form-note">Válido hasta el ${esc(new Date(result.expires_at).toLocaleDateString('es-ES'))}. Hasta 20 personas. Los enlaces anteriores ya no funcionan.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cerrar</button><button class="button primary" data-action="copy-invite">Copiar enlace</button></div>`);
+    openModal('Una invitación a buenos momentos',`<label class="field">Enlace para tu grupo<input id="invite-link" readonly value="${esc(url.href)}" aria-label="Enlace de invitación"></label><p class="form-note">Válido hasta el ${esc(new Date(result.expires_at).toLocaleDateString('es-ES'))}. Hasta 20 personas. Los enlaces anteriores ya no funcionan.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cerrar</button><a class="button secondary whatsapp-share" href="https://wa.me/?text=${encodeURIComponent('Únete a '+group().name+' en DivZplit para compartir los gastos: '+url.href)}" target="_blank" rel="noopener noreferrer">WhatsApp</a><button class="button primary" data-action="copy-invite">Copiar enlace</button></div>`);
   } finally {remoteBusy=false;}
 }
 async function copyInvite() {
@@ -475,7 +557,7 @@ async function startAccount() {
       const oauthComplete=await cloud.finishOAuth(callbackSearch,new URL('./',location.href).href);
       returnedFromEmail=await cloud.acceptCallback(hash);
       if(!oauthComplete)await cloud.restore();
-      if (cloud.user) await connectAccount();
+      if (cloud.user&&!cloud.recovering) await connectAccount();
     }
     if (configError) storageWarning=configError;
   } catch(error) {

@@ -1,3 +1,4 @@
+import {receiptPath} from './extras.js?v=extras-5';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;
@@ -116,7 +117,7 @@ export class Cloud {
     return {google:settings.external?.google===true,apple:settings.external?.apple===true};
   }
   async oauthURL(provider,redirect) {
-    if (!['google','apple'].includes(provider)) throw new CloudError('Esta forma de acceso no está disponible.');
+    if (!['google','apple','recovery'].includes(provider)) throw new CloudError('Esta forma de acceso no está disponible.');
     if (!this.enabled) throw new CloudError('El acceso con cuenta todavía no está disponible.');
     if (!globalThis.crypto?.subtle) throw new CloudError('Abre Nexo en un navegador con conexión segura para continuar.');
     if (!this.temporaryStorage) throw new CloudError('Permite el almacenamiento de este sitio para continuar con Google o Apple.');
@@ -141,14 +142,16 @@ export class Cloud {
     const code=params.get('code');if (!code) return false;
     let record;
     try {
-      record=JSON.parse(this.temporaryStorage?.getItem(this.storageKey+':oauth') || 'null');
-      this.temporaryStorage?.removeItem(this.storageKey+':oauth');
+      const oauthRecord=this.temporaryStorage?.getItem(this.storageKey+':oauth');
+      if(oauthRecord){record=JSON.parse(oauthRecord);this.temporaryStorage.removeItem(this.storageKey+':oauth');}
+      else{record=JSON.parse(this.storage?.getItem(this.storageKey+':recovery-pkce')||'null');this.storage?.removeItem(this.storageKey+':recovery-pkce');if(record?.provider!=='recovery')record=null;}
     } catch {record=null;}
-    if (!record || !/^[A-Za-z0-9_-]{43,128}$/.test(record.verifier) || !['google','apple'].includes(record.provider) || record.redirect!==redirect || !Number.isFinite(record.createdAt) || Date.now()-record.createdAt>15*60*1000 || record.createdAt>Date.now()+60000) throw new CloudError('Este enlace de acceso ha caducado o se abrió en otro navegador. Vuelve a continuar con Google o Apple.');
+    if (!record || !/^[A-Za-z0-9_-]{43,128}$/.test(record.verifier) || !['google','apple','recovery'].includes(record.provider) || record.redirect!==redirect || !Number.isFinite(record.createdAt) || Date.now()-record.createdAt>15*60*1000 || record.createdAt>Date.now()+60000) throw new CloudError('Este enlace de acceso ha caducado o se abrió en otro navegador. Solicita un nuevo enlace o vuelve a continuar con Google o Apple.');
     const result=await this.request('/auth/v1/token?grant_type=pkce',{method:'POST',body:{auth_code:code,code_verifier:record.verifier},authenticated:false});
     const session=this.sessionFrom(result);
     if (!session) throw new CloudError('No se ha podido abrir la sesión. Vuelve a intentarlo.');
     this.persistSession(session);await this.loadUser();
+    if(record.provider==='recovery'){this.temporaryStorage.setItem(this.storageKey+':recovery',this.user.id);return true;}
     const metadata=this.user.user_metadata || {};
     const name=metadata.full_name || metadata.name;
     if (!metadata.display_name && typeof name==='string' && name.trim()) {
@@ -156,6 +159,42 @@ export class Cloud {
       catch(error) {if(!this.session)throw error; /* The optional name must not block a valid sign-in. */}
     }
     return true;
+  }
+  get recovering() {try{return !!this.user&&this.temporaryStorage?.getItem(this.storageKey+':recovery')===this.user.id;}catch{return false;}}
+  async recoverPassword(email,redirect) {
+    const url=new URL(await this.oauthURL('recovery',redirect));
+    const record=this.temporaryStorage.getItem(this.storageKey+':oauth');
+    this.temporaryStorage.removeItem(this.storageKey+':oauth');
+    try{this.storage.setItem(this.storageKey+':recovery-pkce',record);if(this.storage.getItem(this.storageKey+':recovery-pkce')!==record)throw new Error();}catch{throw new CloudError('Permite guardar datos en este navegador para recuperar tu contraseña.');}
+    return this.request('/auth/v1/recover?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,code_challenge:url.searchParams.get('code_challenge'),code_challenge_method:'s256'},authenticated:false,timeoutMs:45000});
+  }
+  async updatePassword(password) {
+    if(!this.recovering)throw new CloudError('Abre primero el enlace de recuperación en este navegador.');
+    await this.request('/auth/v1/user',{method:'PUT',body:{password}});
+    this.temporaryStorage.removeItem(this.storageKey+':recovery');
+  }
+  async uploadReceipt(groupId,expenseId,blob) {
+    await this.ensureSession();
+    const path=groupId+'/'+this.user.id+'/'+expenseId+'.jpg';
+    if(!receiptPath(path,groupId)||blob.type!=='image/jpeg'||blob.size>1048576)throw new CloudError('El ticket no es válido.');
+    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),45000);
+    try {
+      const r=await this.fetcher(this.config.url+'/storage/v1/object/divzplit-receipts/'+path,{method:'POST',headers:{apikey:this.config.publishableKey,Authorization:'Bearer '+this.session.access_token,'Content-Type':'image/jpeg','x-upsert':'false'},body:blob,signal:controller.signal});
+      if(!r.ok){let result;try{result=await r.json();}catch{};if(r.status===404||/bucket.*not found/i.test(result?.message||''))throw new CloudError('Las fotos de tickets todavía no están activadas. El administrador debe configurar su almacenamiento privado. Puedes guardar el gasto sin foto mientras tanto.');throw new CloudError('No se ha podido subir el ticket. El gasto todavía no se ha guardado.');}
+      return {path};
+    }catch(e){if(e instanceof CloudError)throw e;throw new CloudError('No se ha podido conectar para subir la foto. Vuelve a intentarlo.');}finally{clearTimeout(timer);}
+  }
+  async deleteReceipt(groupId,path) {
+    if(!receiptPath(path,groupId))throw new CloudError('El ticket no pertenece a este grupo.');
+    return this.request('/storage/v1/object/divzplit-receipts',{method:'DELETE',body:{prefixes:[path]}});
+  }
+  async receiptURL(groupId,path) {
+    if(!receiptPath(path,groupId))throw new CloudError('El ticket no pertenece a este grupo.');
+    const result=await this.request('/storage/v1/object/sign/divzplit-receipts/'+path,{method:'POST',body:{expiresIn:60}});
+    if(typeof result?.signedURL!=='string')throw new CloudError('No se ha podido abrir el ticket.');
+    const url=new URL(result.signedURL.startsWith('/object/')?this.config.url+'/storage/v1'+result.signedURL:result.signedURL,this.config.url);
+    if(url.origin!==this.config.url||url.pathname!=='/storage/v1/object/sign/divzplit-receipts/'+path)throw new CloudError('El enlace del ticket no es válido.');
+    return url.href;
   }
   async ensureSession() {
     if (!this.session?.access_token) throw new CloudError('Entra en tu cuenta para continuar.','session',401);
@@ -189,6 +228,7 @@ export class Cloud {
     return !!session;
   }
   async signOut() {
+    try{this.temporaryStorage?.removeItem(this.storageKey+':recovery');}catch{/* session cleanup below must still run */}
     try {if (this.session) await this.request('/auth/v1/logout',{method:'POST'});}
     finally {this.persistSession(null);this.user=null;}
   }

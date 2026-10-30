@@ -186,3 +186,28 @@ test('browser fetch is invoked with its global receiver',async()=>{
  const c=new Cloud(config,{storage:storage(),fetcher:async function(){assert.equal(this,globalThis);called=true;return response({external:{email:true}});}});
  await c.providers();assert.equal(called,true);
 });
+
+test('password recovery uses a bound PKCE code, then permits a password change only for that verified recovery',async()=>{
+ const temp=storage(),persist=storage();let challenge,updated=false;
+ const c=new Cloud(config,{storage:persist,temporaryStorage:temp,fetcher:async(url,options)=>{
+  const body=JSON.parse(options.body||'{}');
+  if(url.includes('/recover?')){challenge=body.code_challenge;return response({});}
+  if(url.includes('grant_type=pkce')){const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.code_verifier));assert.equal(Buffer.from(digest).toString('base64url'),challenge);return response(session());}
+  if(options.method==='PUT'){assert.equal(body.password,'new-safe-password');updated=true;return response(user);}
+  return response(user);
+ }});
+ await assert.rejects(()=>c.updatePassword('new-safe-password'));
+ await c.recoverPassword('ana@example.test','https://app.example/');
+ assert.equal(c.session,null);
+ await c.finishOAuth('?code=recovery-code','https://app.example/');
+ assert.equal(c.recovering,true);
+ await c.updatePassword('new-safe-password');assert.equal(updated,true);assert.equal(c.recovering,false);
+ await assert.rejects(()=>c.finishOAuth('?code=recovery-code','https://app.example/'));
+});
+test('receipt links stay on the configured storage origin and wrong-group paths are rejected before requests',async()=>{
+ const g='11111111-1111-4111-8111-111111111111',u='22222222-2222-4222-8222-222222222222';
+ const path=g+'/'+u+'/'+g+'.jpg';let calls=0;
+ const c=authed(async()=>{calls++;return response({signedURL:'/object/sign/divzplit-receipts/'+path+'?token=fixture'});});
+ assert.equal(await c.receiptURL(g,path),config.url+'/storage/v1/object/sign/divzplit-receipts/'+path+'?token=fixture');
+ await assert.rejects(()=>c.receiptURL(u,path));assert.equal(calls,1);
+});
