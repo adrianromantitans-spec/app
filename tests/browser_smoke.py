@@ -12,7 +12,7 @@ with sync_playwright() as p:
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(os.environ.get('NEXO_URL', 'http://127.0.0.1:3000'))
-    expect(page.get_by_role('heading', name='Bienvenido a Nexo.')).to_be_visible()
+    expect(page.get_by_role('heading', name='Bienvenido a DivZplit.')).to_be_visible()
     page.get_by_role('button', name='Explorar una demo').click()
     expect(page.get_by_role('heading', name='Escapada a Lisboa', exact=True)).to_be_visible()
     print('PASS: dashboard and seeded group')
@@ -24,7 +24,7 @@ with sync_playwright() as p:
     dialog.get_by_role('button', name='Guardar gasto').click()
     expect(page.get_by_text('Cena de prueba', exact=True)).to_be_visible()
     page.reload()
-    expect(page.get_by_role('heading', name='Bienvenido a Nexo.')).to_be_visible()
+    expect(page.get_by_role('heading', name='Bienvenido a DivZplit.')).to_be_visible()
     page.get_by_role('button', name='Explorar una demo').click()
     expect(page.get_by_text('Cena de prueba', exact=True)).to_be_visible()
     print('PASS: add expense and persistence after reload')
