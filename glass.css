@@ -40,3 +40,20 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 .brand-intro-active .word-z{animation:z-rise 1.55s cubic-bezier(.22,1,.36,1) both}
 @media(max-width:760px){.modern-auth.is-landing .auth-story h1{font-size:36px;letter-spacing:-1.5px;max-width:340px}}
 @media(prefers-reduced-motion:reduce){.brand-intro-active .word-left,.brand-intro-active .word-right,.brand-intro-active .word-z{animation:none}}
+
+/* Summary amounts adapt to card width without splitting currency codes. */
+.stat-copy{flex:1;container-type:inline-size}
+.stat-copy>strong.stat-amount{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px .22em;overflow-wrap:normal;word-break:normal;font-size:clamp(14px,18cqi,28px)}
+.stat-amount>span{white-space:nowrap}
+.stat-amount .stat-currency{font-size:.68em;letter-spacing:0;font-weight:650}
+.balance-stat.is-credit .stat-amount,.balance-stat.is-credit .stat-icon{color:#397f65}
+.balance-stat.is-credit .stat-icon{background:#eef8f0}
+.balance-stat.is-credit .stat-icon .icon{transform:rotate(-90deg)}
+.balance-stat.is-owed .stat-amount,.balance-stat.is-owed .stat-icon{color:#c13d51}
+.balance-stat.is-owed .stat-icon{background:#fcecf0}
+.balance-stat.is-owed .stat-icon .icon{transform:rotate(90deg)}
+.balance-stat.is-settled .stat-amount,.balance-stat.is-settled .stat-icon{color:#78668d}
+.balance-stat.is-settled .stat-icon{background:#f2edf7}
+.balance-stat.is-settled .stat-icon .icon{transform:none}
+@media(max-width:760px){.stat-copy>strong.stat-amount{font-size:clamp(14px,18cqi,22px)}}
+.stat-amount .stat-number{white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
