@@ -1,4 +1,4 @@
-# Nexo
+# DivZplit
 
 Una web para organizar viajes y planes en grupo: gastos compartidos, presupuestos,
 votaciones y tareas, con un diseño adaptable a móvil.
