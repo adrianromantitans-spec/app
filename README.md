@@ -214,3 +214,24 @@ y el resultado con símbolos ilegibles. Usa `OCR_URL` para seleccionar el servid
 `tests/receipt_autofill_browser.py` verifica que adjuntar una foto rellena el
 importe sin pasos adicionales, admite correcciones antes del guardado y protege
 datos manuales, moneda incompatible y sustitución de la foto.
+
+
+Para tickets fotografiados en ángulo, el lector puede localizar las líneas de
+texto sobre papel cálido, estimar su inclinación y leer filas individuales tras
+normalizar el ancho de la letra y eliminar series de puntos guía. Los decimales
+se conservan. Una fila con lectura débil solo se acepta como total si ese mismo
+importe tiene corroboración en otras líneas leídas del documento; las líneas de
+IVA, cambio y descuento no aportan esa corroboración. No se deduce el total del
+importe más grande ni se usa un valor fijo.
+
+Prueba privada con una foto real (la imagen y el texto completo no se incluyen
+en el repositorio ni se envían a un servicio OCR):
+
+```sh
+RECEIPT_TEST_IMAGE=/ruta/local/ticket.jpg RECEIPT_TEST_AMOUNT=145.00 \
+RECEIPT_TEST_CURRENCY=RON python3 tests/receipt_photo_file_browser.py
+```
+
+La prueba comprueba el campo real de importe, que no se guarda un gasto por sí
+solo y que la lectura no realiza subidas de fotos. `OCR_URL` permite ejecutarla
+contra el servidor local o la web publicada usando únicamente la demo.

@@ -1,4 +1,4 @@
-import {locale,tr} from './i18n.js?v=ocr-17';
+import {locale,tr} from './i18n.js?v=ocr-18';
 export const currencies = ['EUR','RON'];
 export function currencyOf(group) {
   const currency=group?.currency??'EUR';

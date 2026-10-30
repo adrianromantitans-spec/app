@@ -1,4 +1,4 @@
-import {prepareOCRImage} from './receipt-image.js?v=ocr-17';
+import {prepareOCRImage,receiptTextRows} from './receipt-image.js?v=ocr-18';
 // The pinned Tesseract 6 worker and language models are hosted with the app.
 // Only image bytes are sent to this local worker; OCR text is never persisted.
 export async function readReceipt(blob,{signal,onProgress=()=>{},rotation=0,crop=null}={}) {
@@ -36,20 +36,47 @@ export async function readReceipt(blob,{signal,onProgress=()=>{},rotation=0,crop
     await job('load',{options:{lstmOnly:true,corePath:base.href,logging:false}});
     await job('loadLanguage',{langs:'spa+eng+ron',options:{langPath:new URL('lang/',base).href,gzip:false,cacheMethod:'write',lstmOnly:true}});
     await job('initialize',{langs:'spa+eng+ron',oem:1,config:{}});
-    let best=null;
-    const recognize=async(source,mode)=>{
+    let best=null;const evidence=new Map();
+    const recognize=async(source,mode,rotateAuto=true,focused=false)=>{
       attempt++;onProgress(null,attempt);
       await job('setParameters',{params:{tessedit_pageseg_mode:String(mode),preserve_interword_spaces:'1',user_defined_dpi:'300'}});
-      const result=await job('recognize',{image:new Uint8Array(await source.arrayBuffer()),options:{rotateAuto:true},output:{text:true}});
+      const result=await job('recognize',{image:new Uint8Array(await source.arrayBuffer()),options:{rotateAuto},output:{text:true}});
       const text=result.text||'',confidence=result.confidence||0,details=parseReceipt(text);
       const words=(text.match(/[A-Za-zÀ-ž]{3,}/g)||[]).length;
-      const reliable=confidence>=45&&words>=3;
+      const confirmedTotal=focused&&details.amount!==null&&(evidence.get(details.amount)||0)>=2&&confidence>=40;
+      const reliable=focused?details.amount!==null&&(confidence>=75||confirmedTotal):confidence>=45&&words>=3;
+      if(!focused&&confidence>=60){
+        const counts=new Map();
+        for(const line of text.split(/\r?\n/)){
+          if(/\b(?:TVA|IVA|VAT|TAX|CHANGE|CAMBIO|REST|DESCUENTO|DISCOUNT)\b/i.test(line))continue;
+          for(const match of line.matchAll(/\d+(?:[ .,'’]\d{3})*[.,]\d{2}\b/g)){
+            const amount=centsFromText(match[0]);if(amount)counts.set(amount,(counts.get(amount)||0)+1);
+          }
+        }
+        for(const [amount,count] of counts)evidence.set(amount,Math.max(count,evidence.get(amount)||0));
+      }
+      if(focused&&best){
+        details.title=best.details.title||details.title;details.date=details.date||best.details.date;
+        details.currencyAmbiguous=details.currencyAmbiguous||best.details.currencyAmbiguous||!!(details.currency&&best.details.currency&&details.currency!==best.details.currency);
+        details.currency=details.currency||best.details.currency;
+      }
       const score=(details.amount!==null&&reliable?1000:0)+(details.date?60:0)+(details.title?30:0)+confidence+Math.min(words,30);
-      const candidate={text,confidence,score,reliable,total:details.amount!==null};
+      const candidate={text,confidence,score,reliable,confirmedTotal,details,total:details.amount!==null};
       if(!best||candidate.score>best.score)best=candidate;
       return candidate.total&&candidate.reliable;
     };
     if(await recognize(image,3))return best;
+    {
+      // Respect a manual crop: deskew only its contents, never the excluded background.
+      const paper=await prepareOCRImage(crop?image:blob,{signal,rotation:crop?0:rotation,isolateText:true,enhance:true});
+      if(await recognize(paper,6,false))return best;
+      const readable=await prepareOCRImage(paper,{signal,autoCrop:false,stretchX:1.65,enhance:true});
+      if(await recognize(readable,6,false))return best;
+      for(const row of evidence.size?await receiptTextRows(paper,{signal}):[]){
+        const strip=await prepareOCRImage(paper,{signal,autoCrop:false,crop:row,stretchX:2.6,binarize:true,removeLeaders:true,maxDimension:1600});
+        if(await recognize(strip,7,false,true))return best;
+      }
+    }
     const enhanced=await prepareOCRImage(image,{signal,autoCrop:false,enhance:true});
     if(await recognize(enhanced,6))return best;
     if(await recognize(enhanced,11))return best;
@@ -106,7 +133,7 @@ export function parseReceipt(text='') {
     if(amount)candidates.push({amount,score:/GRAND\s+TOTAL|TOTAL\s+(?:A\s+PAGAR|DE\s+PLATA|PLATA|GENERAL)|AMOUNT\s+DUE|IMPORTE\s+A\s+PAGAR/.test(line)?2:1,index});
   }
   candidates.sort((a,b)=>b.score-a.score||b.index-a.index);
-  const title=lines.slice(0,8).find(line=>{
+  const title=lines.slice(0,8).map(line=>line.replace(/^[\s|<>“”"']+|[\s|<>“”"']+$/g,'')).find(line=>{
     const clean=plain(line).replace(/\bT[O0]TA[L1I]\b/g,'TOTAL');
     return line.length>=3&&line.length<=100&&(clean.match(/[A-Z]/g)||[]).length>=3&&(clean.match(/[A-Z0-9]/g)||[]).length/clean.replace(/\s/g,'').length>=.7&&!/\b(?:TOTAL|SUBTOTAL|RECEIPT|TICKET|FACTURA|FISCAL|BON|FECHA|DATE|DATA|HORA|TIME|TVA|IVA|VAT|CIF|CUI|NIF|TEL|TELEFON|PHONE|CLIENTE|CLIENT|DUPLICADO|COPIA|ADDRESS|ADRESA|STRADA|CALLE|CARRER)\b/.test(clean)&&!dateFromText(line)&&!/\d+[.,]\d{2}\b/.test(clean)&&!/^[\d\s#*\-]+$/.test(clean);
   })||null;

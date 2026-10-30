@@ -40,3 +40,7 @@ test('item counts, units and loyalty points never replace the actual total',()=>
   assert.equal(parseReceipt('TOTAL 24,90 EUR\nTOTAL '+label+' 8').amount,2490,label);
  }
 });
+
+test('scanner frame noise is removed from merchant labels',()=>{
+ assert.equal(parseReceipt('| SHOP SOL “>\nTOTAL 145,00').title,'SHOP SOL');
+});

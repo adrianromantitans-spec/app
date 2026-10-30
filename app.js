@@ -1,10 +1,10 @@
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-17';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=ocr-17';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-17';
-import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-17';
-import {Cloud} from './cloud.js?v=ocr-17';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-18';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=ocr-18';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
+import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
+import {Cloud} from './cloud.js?v=ocr-18';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=ocr-17';
+import {welcomePage,socialButtons} from './auth-ui.js?v=ocr-18';
 
 initializeLanguage();
 

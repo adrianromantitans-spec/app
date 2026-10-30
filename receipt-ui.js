@@ -1,6 +1,6 @@
-import {openReceiptCrop,closeReceiptCrop,applyReceiptCrop} from './receipt-crop.js?v=ocr-17';
-import {tr,ui,locale} from './i18n.js?v=ocr-17';
-import {readReceipt,parseReceipt} from './receipt-ocr.js?v=ocr-17';
+import {openReceiptCrop,closeReceiptCrop,applyReceiptCrop} from './receipt-crop.js?v=ocr-18';
+import {tr,ui,locale} from './i18n.js?v=ocr-18';
+import {readReceipt,parseReceipt} from './receipt-ocr.js?v=ocr-18';
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function setAutomaticValue(form,name,value) {
   form.receiptApplyingAuto=true;
@@ -14,7 +14,7 @@ export function clearReceiptAutofill(form) {
   form.receiptAutofilled={};
 }
 function autofillReceipt(form,data,result,mismatch,revisions) {
-  if(mismatch||data.amount===null||!result.reliable||result.confidence<50||form.dataset.edit==='true'||form.querySelector('[type=submit]')?.disabled)return [];
+  if(mismatch||data.amount===null||!result.reliable||(result.confidence<50&&!result.confirmedTotal)||form.dataset.edit==='true'||form.querySelector('[type=submit]')?.disabled)return [];
   const filled=[];
   for(const [name,value] of Object.entries({amount:(data.amount/100).toFixed(2),title:data.title,date:data.date})){
     const input=form.elements[name],previous=form.receiptAutofilled?.[name];
@@ -91,7 +91,7 @@ export async function handleReceiptAction(button,currency,onApplied) {
       if(active())status.textContent=attempt>1?tr('Mejorando la lectura del ticket…'):progress===null?tr('Preparando el lector… La primera vez puede tardar un poco.'):ui`Leyendo ticket… ${progress}%`;
     }});
     if(!active())return;
-    const data=result.confidence>=25?parseReceipt(result.text):{title:null,amount:null,date:null,currency:null,currencyAmbiguous:false};
+    const data=result.confidence>=25?{...(result.details||parseReceipt(result.text))}:{title:null,amount:null,date:null,currency:null,currencyAmbiguous:false};
     if(data.amount===null&&data.date===null)data.title=null;
     const mismatch=data.currencyAmbiguous||(data.currency&&data.currency!==currency);
     const filled=autofillReceipt(form,data,result,mismatch,revisions);
