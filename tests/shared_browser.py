@@ -186,7 +186,7 @@ try:
         friend.get_by_role('button',name='Aceptar invitación').click()
         expect(friend.get_by_role('heading',name='Viaje entre móviles',exact=True)).to_be_visible()
         expect(friend.get_by_text('2 personas, un gran plan')).to_be_visible()
-        owner.get_by_role('button',name='Actualizar',exact=True).click()
+        owner.reload()
         expect(owner.get_by_text('2 personas, un gran plan')).to_be_visible()
         assert friend.get_by_role('button',name='Invitar',exact=True).count()==0
         assert friend.get_by_role('button',name='Ajustar presupuesto').count()==0
@@ -201,9 +201,9 @@ try:
         print('PASS: second browser receives a shared expense through automatic polling')
 
         owner.get_by_role('button',name='Mercado',exact=False).click()
-        friend.get_by_role('button',name='Actualizar',exact=True).click()
+        friend.reload()
         friend.get_by_role('button',name='Terraza',exact=False).click()
-        owner.get_by_role('button',name='Actualizar',exact=True).click()
+        owner.reload()
         expect(owner.get_by_text('2 de 2 han votado')).to_be_visible()
         expect(owner.get_by_role('button',name='Mercado',exact=False)).to_have_attribute('aria-pressed','true')
         expect(friend.get_by_role('button',name='Terraza',exact=False)).to_have_attribute('aria-pressed','true')
@@ -220,7 +220,7 @@ try:
         owner.get_by_role('button',name='Guardar gasto').click()
         expect(owner.get_by_text('Taxi sin duplicados',exact=True)).to_have_count(1)
         expect(owner.get_by_role('checkbox',name='Reservar museo')).to_be_checked()
-        friend.get_by_role('button',name='Actualizar',exact=True).click()
+        friend.reload()
         expect(friend.get_by_text('Taxi sin duplicados',exact=True)).to_have_count(1)
         print('PASS: concurrent edits produce a visible conflict; retry preserves peers’ changes without duplicates')
 

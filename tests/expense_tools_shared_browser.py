@@ -13,17 +13,17 @@ try:
   owner.get_by_role('button',name='Invitar',exact=True).click();owner.get_by_role('button',name='Generar enlace de invitación').click()
   link=owner.get_by_label('Enlace de invitación').input_value();owner.keyboard.press('Escape')
   friend.goto(link);login(friend,'luis@example.test');friend.get_by_role('button',name='Aceptar invitación').click()
-  owner.get_by_role('button',name='Actualizar',exact=True).click()
+  owner.reload()
   owner.get_by_role('button',name='Añadir gasto',exact=True).first.click()
   f=owner.locator('#expense-form');f.get_by_label('¿Qué habéis pagado?',exact=True).fill('Cena compartida');f.get_by_label('Importe (€)',exact=True).fill('10.01');f.get_by_role('button',name='Guardar gasto').click()
-  friend.get_by_role('button',name='Actualizar',exact=True).click();friend.get_by_role('button',name='Ver detalle de Cena compartida').click()
+  friend.reload();friend.get_by_role('button',name='Ver detalle de Cena compartida').click()
   assert friend.get_by_role('button',name='Editar gasto',exact=True).count()==0
   friend.keyboard.press('Escape')
   owner.get_by_role('button',name='Ver detalle de Cena compartida').click();owner.get_by_role('button',name='Editar gasto',exact=True).click()
   f=owner.locator('#expense-form');f.get_by_label('Tipo de reparto',exact=False).select_option('percent')
   for field,value in zip(f.locator('[data-split-member]').all(),['25','75']):field.fill(value)
   f.get_by_role('button',name='Guardar cambios').click()
-  friend.get_by_role('button',name='Actualizar',exact=True).click();friend.get_by_role('button',name='Ver detalle de Cena compartida').click()
+  friend.reload();friend.get_by_role('button',name='Ver detalle de Cena compartida').click()
   assert [r.inner_text().splitlines()[-1] for r in friend.locator('.share-row').all()]==['2,50\xa0€','7,51\xa0€']
   friend.keyboard.press('Escape')
   owner.get_by_role('button',name='Ver detalle de Cena compartida').click();owner.get_by_role('button',name='Editar gasto',exact=True).click()
@@ -45,10 +45,10 @@ try:
   # Stale confirmation must not delete new activity.
   owner.get_by_role('button',name='Editar detalles del grupo').click();owner.get_by_role('button',name='Eliminar grupo',exact=True).click()
   delete=owner.locator('#delete-group-form');delete.get_by_label('Escribe el nombre del grupo para confirmar').fill('Edición compartida')
-  friend.get_by_role('button',name='Actualizar',exact=True).click();friend.get_by_role('button',name='Añadir gasto',exact=True).first.click()
+  friend.reload();friend.get_by_role('button',name='Añadir gasto',exact=True).first.click()
   ff=friend.locator('#expense-form');ff.get_by_label('¿Qué habéis pagado?',exact=True).fill('Nuevo gasto');ff.get_by_label('Importe (€)',exact=True).fill('2');ff.get_by_role('button',name='Guardar gasto').click()
   delete.get_by_role('button',name='Eliminar grupo definitivamente').click();expect(delete.get_by_role('alert')).to_contain_text('El grupo ha cambiado')
-  owner.keyboard.press('Escape');owner.get_by_role('button',name='Actualizar',exact=True).click()
+  owner.keyboard.press('Escape');owner.reload()
   # Include an unreferenced private file; cleanup must remove the entire deleted prefix.
   for actor in [OWNER,FRIEND]:
    path=gid+'/'+actor+'/'+str(uuid.uuid4())+'.jpg'
