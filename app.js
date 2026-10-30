@@ -1,7 +1,7 @@
 import {money, uid, totalSpent, balances, settlements, addExpense, vote, seed} from './model.js';
 import {Cloud} from './cloud.js?v=welcome-1';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-1';
+import {welcomePage,socialButtons} from './auth-ui.js?v=design-2';
 
 let cloud;
 let configError='';
@@ -10,7 +10,9 @@ let accountUser=null;
 let remoteBusy=false;
 let authLoading=cloud.enabled;
 let syncMessage='';
-let authMode='login';
+let authMode=location.hash==='#registro'?'signup':'login';
+let authStage=location.hash==='#registro'?'signup':location.hash==='#acceso'?'login':'welcome';
+let brandIntroShown=false;
 let demoMode=false;
 let providers=null;
 let providerError=false;
@@ -203,7 +205,7 @@ async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
   if(remoteBusy || authLoading){event.preventDefault();toast('Espera un momento; estamos conectando con tus grupos.');return;}
-  if(el.matches('a[href="#"]'))event.preventDefault();
+  if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.page){page=el.dataset.page; render(); window.scrollTo({top:0});return;}
   if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
   if(el.dataset.tab){tab=el.dataset.tab;render();return;}
@@ -226,12 +228,12 @@ async function onAppClick(event) {
     case 'settings':settingsModal();break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';closeModal();render();break;
-    case 'welcome':demoMode=false;closeModal();render();break;
+    case 'welcome':demoMode=false;authStage='welcome';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
     case 'oauth-google':await beginOAuth('google');break;
     case 'oauth-apple':await beginOAuth('apple');break;
     case 'retry-providers':await refreshProviders();break;
-    case 'signup':authMode='signup';accountModal();break;
-    case 'login':authMode='login';accountModal();break;
+    case 'signup':authMode='signup';authStage='signup';if(!demoMode)history.pushState(null,'','#registro');accountModal();break;
+    case 'login':authMode='login';authStage='login';if(!demoMode)history.pushState(null,'','#acceso');accountModal();break;
     case 'signout':await signOutAccount();break;
     case 'invite':inviteModal();break;
     case 'generate-invite':await generateInvite();break;
@@ -334,7 +336,9 @@ function renderWelcome() {
   let notice='';
   if(pendingInvite) notice='<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>';
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
-  root.innerHTML=welcomePage({loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
+  const animate=!brandIntroShown&&!authLoading;
+  if(!authLoading)brandIntroShown=true;
+  root.innerHTML=welcomePage({stage:authStage,animate,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
   root.inert=!!modalRoot.firstElementChild;
 }
 function accountModal() {
@@ -411,7 +415,7 @@ async function signOutAccount() {
   try {await cloud.signOut();}
   catch {toast('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.');}
   finally {
-    accountUser=null;demoMode=false;remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }
@@ -479,11 +483,14 @@ async function startAccount() {
     storageWarning=error.message;
   } finally {
     authLoading=false;render();
-    if(returnedFromEmail&&!accountUser){authMode='login';accountModal();toast('Has vuelto del enlace de correo. Entra para comprobar tu cuenta.');}
+    if(returnedFromEmail&&!accountUser){authMode='login';authStage='login';accountModal();toast('Has vuelto del enlace de correo. Entra para comprobar tu cuenta.');}
     else if(storageWarning)toast(storageWarning);
   }
 }
 setInterval(()=>refreshShared(),8000);
+window.addEventListener('popstate',()=>{
+  if(!accountUser&&!demoMode){authStage=location.hash==='#registro'?'signup':location.hash==='#acceso'?'login':'welcome';authMode=authStage==='signup'?'signup':'login';closeModal();render();}
+});
 window.addEventListener('hashchange',()=>{
   const params=new URLSearchParams(location.hash.replace(/^#/,''));
   if (params.has('invite')) {

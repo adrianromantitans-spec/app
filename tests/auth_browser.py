@@ -69,20 +69,29 @@ with sync_playwright() as p:
     page=c.new_page();page.goto(BASE)
     expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
     assert page.locator('.sidebar').count()==0
-    page.get_by_label('Correo electrónico').fill('draft@example.test')
+    assert page.locator('#account-form').count()==0
     for route in seen['settings']:route.fulfill(content_type='application/json',body=json.dumps({'external':{'google':False,'apple':False}}))
     seen['hold']=False
-    expect(page.get_by_text('Google y Apple todavía no están disponibles.',exact=False)).to_be_visible()
     expect(page.get_by_role('button',name='Continuar con Google',exact=False)).to_be_disabled()
-    expect(page.get_by_role('button',name='Continuar con Apple',exact=False)).to_be_disabled()
+    page.get_by_role('link',name='Crear cuenta',exact=False).click()
+    assert page.url.endswith('#registro')
+    expect(page.get_by_label('¿Cómo te llamas?')).to_be_visible()
+    assert page.locator('.social-buttons').count()==0
+    page.reload()
+    expect(page.get_by_label('¿Cómo te llamas?')).to_be_visible()
+    page.go_back()
+    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
+    assert page.locator('#account-form').count()==0
+    page.get_by_role('link',name='Iniciar sesión',exact=False).click()
+    page.get_by_label('Correo electrónico').fill('draft@example.test')
     expect(page.get_by_label('Correo electrónico')).to_have_value('draft@example.test')
     page.reload()
-    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
-    assert page.locator('.sidebar').count()==0
-    print('PASS: welcome is the default, refresh stays there and provider updates preserve form input')
+    expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
+    page.get_by_role('link',name='Volver al inicio',exact=False).click()
+    print('PASS: landing has no form; signup and login use separate URLs, reload and Back work')
 
     # New account entry, without sending any actual confirmation email.
-    page.locator('.auth-mode-tabs [data-action=signup]').click()
+    page.get_by_role('link',name='Crear cuenta',exact=False).click()
     form=page.locator('#account-form')
     form.get_by_label('¿Cómo te llamas?').fill('Ana')
     form.get_by_label('Correo electrónico').fill(USER['email'])
