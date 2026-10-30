@@ -5,8 +5,8 @@ votaciones y tareas, con un diseño adaptable a móvil.
 
 ## Ejecutar
 
-Requiere **Node.js 22 o posterior**. No tiene dependencias externas ni necesita claves,
-base de datos o instalación de paquetes.
+Requiere **Node.js 22 o posterior**. La demo local no tiene dependencias externas
+ni necesita claves o base de datos. No requiere instalar paquetes.
 
 ```sh
 cd /workspace/app
@@ -30,13 +30,20 @@ para ver cambios en la interfaz.
 
 ## Alcance de esta versión
 
-Es una **demo local**, con datos de ejemplo para explorarla. Guarda los cambios en
-`localStorage` de este navegador; no hay backend, registro, autenticación,
-sincronización ni invitaciones reales. Los participantes son nombres locales y
-solo se vota desde el perfil de Alex («Tú»). Si se borran los datos del navegador
-se pierden los cambios; la exportación JSON sirve como copia consultable, pero
-todavía no hay importación. Si el almacenamiento está bloqueado, la interfaz avisa
-de que los cambios solo durarán la sesión.
+Sin configurar un backend, Nexo funciona como **demo local**, con datos de ejemplo
+y cambios en `localStorage`. En ese modo los participantes son nombres locales y
+solo se vota desde el perfil de Alex («Tú»). La exportación JSON sirve como copia
+consultable, pero todavía no hay importación.
+
+La integración opcional con **Supabase** añade cuentas, grupos compartidos,
+invitaciones por enlace y sincronización cada ocho segundos. Los datos de ejemplo
+no se suben a la cuenta. Solo los miembros pueden consultar el grupo; el creador
+gestiona sus detalles e invitaciones y cada persona vota con su identidad.
+
+**La integración no está activa por defecto.** Hace falta crear tu proyecto,
+ejecutar el esquema SQL y configurar sus dos valores públicos.
+Sigue [la guía de activación](docs/SHARED-GROUPS.md) para configurar y verificar
+Auth, correos, permisos y el despliegue en GitHub Pages.
 
 ## Validar
 
@@ -45,8 +52,8 @@ npm run check
 npm test
 ```
 
-Las 8 pruebas de lógica verifican repartos exactos, validaciones, saldos, pagos,
-participantes y votos. Para la comprobación opcional de navegador, con el servidor
+Las pruebas de lógica verifican repartos exactos, validaciones, saldos, pagos,
+participantes, votos, autenticación del cliente y conflictos. Para la comprobación opcional de navegador, con el servidor
 arrancado y Python Playwright y Chromium disponibles:
 
 ```sh
@@ -61,11 +68,14 @@ puerto. La prueba crea un contexto aislado y no cambia los datos de tu navegador
 - `index.html`, `styles.css`: interfaz adaptable y recursos gráficos locales.
 - `app.js`: interacción, formularios y persistencia.
 - `model.js`: cálculos financieros en céntimos y datos de ejemplo.
+- `cloud.js`, `config.js`: acceso a Supabase y su configuración pública opcional.
+- `supabase/schema.sql`: tablas, permisos RLS y operaciones de grupos compartidos.
 - `server.mjs`: servidor HTTP sin dependencias; sirve únicamente los recursos de la app.
 - `tests/`: pruebas de lógica y flujo de navegador.
 
-La siguiente etapa para compartir grupos entre personas es incorporar backend,
-autenticación y permisos de acceso a cada grupo.
+Consulta la guía de activación para ejecutar las pruebas de base de datos y de dos
+navegadores. Esas comprobaciones locales no verifican el proyecto alojado ni su
+envío de correos; la prueba final con dos cuentas reales sigue siendo necesaria.
 
 ## Publicar en GitHub Pages
 
