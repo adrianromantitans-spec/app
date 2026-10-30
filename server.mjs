@@ -4,12 +4,13 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const files = new Set(['index.html', 'styles.css', 'glass.css', 'app.js', 'auth-ui.js', 'extras.js', 'i18n.js', 'translations.js', 'model.js', 'cloud.js', 'config.js', 'favicon.svg', 'assets/lisbon.png']);
-const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png'};
+const files = new Set(['index.html', 'styles.css', 'glass.css', 'app.js', 'auth-ui.js', 'extras.js', 'i18n.js', 'translations.js', 'model.js', 'cloud.js', 'config.js', 'favicon.svg', 'assets/lisbon.png', 'receipt-ocr.js', 'receipt-ui.js']);
+const ocrFiles=new Set(['worker.min.js','tesseract-core-lstm.wasm.js','tesseract-core-simd-lstm.wasm.js','lang/eng.traineddata','lang/spa.traineddata','lang/ron.traineddata'].map(file=>'vendor/ocr/'+file));
+const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.traineddata':'application/octet-stream'};
 const port = Number(process.env.PORT || 3000);
 http.createServer(async (req, res) => {
   const file = new URL(req.url, 'http://localhost').pathname.slice(1) || 'index.html';
-  if (!files.has(file) || !['GET', 'HEAD'].includes(req.method)) {
+  if ((!files.has(file)&&!ocrFiles.has(file)) || !['GET', 'HEAD'].includes(req.method)) {
     res.writeHead(404); res.end('No encontrado'); return;
   }
   try {

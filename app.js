@@ -1,9 +1,10 @@
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=glass-8';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=glass-8';
-import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=glass-8';
-import {Cloud} from './cloud.js?v=glass-8';
+import {receiptTools,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-15';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=ocr-15';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-15';
+import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-15';
+import {Cloud} from './cloud.js?v=ocr-15';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=intro-11';
+import {welcomePage,socialButtons} from './auth-ui.js?v=ocr-15';
 
 initializeLanguage();
 
@@ -200,7 +201,7 @@ function openModal(title, content, subtitle='') {
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
 }
-function closeModal() {root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
+function closeModal() {root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
 const actions = label => ui`<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" type="submit">${label}${icon('arrow')}</button></div>`;
 const memberOptions = () => group().members.map(m=>`<option value="${esc(m.id)}">${esc(memberName(m))}</option>`).join('');
 function canEditExpense(e) {return !!e&&(!accountUser||canManage()||e.createdBy===accountUser.id);}
@@ -209,7 +210,7 @@ function expenseModal(id=null) {
   if(id&&!canEditExpense(existing)){toast(tr('No puedes editar este gasto.'));return;}
   const editing=!!existing;
   const participantMembers=existing?[...existing.participants.map(id=>group().members.find(m=>m.id===id)).filter(Boolean),...group().members.filter(m=>!existing.participants.includes(m.id))]:group().members;
-  openModal(tr(editing?'Editar gasto':'Un gasto, bien repartido'),ui`<form id="expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}"><label class="field">¿Qué habéis pagado?<input name="title" placeholder="Ej. Cena de bienvenida" required maxlength="100"></label><div class="form-columns"><label class="field">Importe (${currencyUnit(group())})<input name="amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0,00" required inputmode="decimal"></label><label class="field">Pagado por<select name="payer">${memberOptions()}</select></label></div><div class="form-columns"><label class="field">Categoría<select name="category">${['Comida','Transporte','Alojamiento','Actividades','Otros'].map(c=>`<option value="${esc(c)}">${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Tipo de reparto<select name="splitMode"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></label><fieldset class="participants"><legend>Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}>${avatar(m,true)}<span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div><div class="form-note">${icon('spark')} Cada céntimo cuenta: el reparto se ajusta automáticamente.</div>${actions(tr(editing?'Guardar cambios':'Guardar gasto'))}</form>`,esc(group().name));
+  openModal(tr(editing?'Editar gasto':'Un gasto, bien repartido'),ui`<form id="expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}"><label class="field">¿Qué habéis pagado?<input name="title" placeholder="Ej. Cena de bienvenida" required maxlength="100"></label><div class="form-columns"><label class="field">Importe (${currencyUnit(group())})<input name="amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0,00" required inputmode="decimal"></label><label class="field">Pagado por<select name="payer">${memberOptions()}</select></label></div><div class="form-columns"><label class="field">Categoría<select name="category">${['Comida','Transporte','Alojamiento','Actividades','Otros'].map(c=>`<option value="${esc(c)}">${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Tipo de reparto<select name="splitMode"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></label><fieldset class="participants"><legend>Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}>${avatar(m,true)}<span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div>${receiptTools()}<div class="form-note">${icon('spark')} Cada céntimo cuenta: el reparto se ajusta automáticamente.</div>${actions(tr(editing?'Guardar cambios':'Guardar gasto'))}</form>`,esc(group().name));
   const form=modalRoot.querySelector('#expense-form');
   form.splitDrafts={};
   if(existing){
@@ -283,6 +284,7 @@ async function onAppClick(event) {
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
   if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
+  if(el.dataset.receiptAction){await handleReceiptAction(el,currencyOf(group()),updateSplitTotal);return;}
   if(el.dataset.page){page=el.dataset.page; render();document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
   if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
   if(el.dataset.tab){tab=el.dataset.tab;render();return;}
@@ -450,7 +452,7 @@ async function handleDeleteGroupForm(form,data) {
   }finally{remoteBusy=false;if(button.isConnected){button.disabled=false;button.textContent=tr('Eliminar grupo definitivamente');}}
   return true;
 }
-document.addEventListener('input',event=>{if(event.target.form?.id==='expense-form'&&(event.target.name==='amount'||event.target.dataset.splitMember))updateSplitTotal(event.target.form);});
+document.addEventListener('input',event=>{if(event.target.form?.id==='expense-form'&&['title','amount','date'].includes(event.target.name)){const form=event.target.form;(form.receiptEditedFields??=new Set()).add(event.target.name);}if(event.target.form?.id==='expense-form'&&(event.target.name==='amount'||event.target.dataset.splitMember))updateSplitTotal(event.target.form);});
 async function processRecurrences() {
   let changed=false;
   for(const g of state.groups){
@@ -461,13 +463,14 @@ async function processRecurrences() {
 async function receiptChanged(input) {
   const form=input.form;const attempt={};form.receiptAttempt=attempt;
   form.receiptBlob=null;form.uploadedReceipt=null;form.receiptUploadId=uid();
+  resetReceiptReader(form);
   if(input.files[0]?.size&&form.elements.removeReceipt)form.elements.removeReceipt.checked=false;
   const preview=form.querySelector('.receipt-preview');preview.replaceChildren();
   if(form.receiptPreviewURL)URL.revokeObjectURL(form.receiptPreviewURL);
   try {
     form.receiptPending=prepareReceipt(input.files[0]);const blob=await form.receiptPending;
     if(form.receiptAttempt!==attempt||!form.isConnected)return;
-    if(blob){form.receiptBlob=blob;form.receiptPreviewURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=form.receiptPreviewURL;img.alt=tr('Vista previa del ticket');preview.append(img);}
+    if(blob){form.receiptBlob=blob;form.receiptPreviewURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=form.receiptPreviewURL;img.alt=tr('Vista previa del ticket');preview.append(img);resetReceiptReader(form);}
   }catch(error){if(form.receiptAttempt===attempt){input.value='';toast(error.message);}}
   finally{if(form.receiptAttempt===attempt)form.receiptPending=null;}
 }

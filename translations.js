@@ -1,5 +1,22 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Leer ticket": {"en": "Read receipt", "ro": "Citește bonul"},
+  "Extrae el importe, la fecha y el comercio. La lectura se hace en tu dispositivo.": {"en": "Extract the amount, date and merchant. Reading takes place on your device.", "ro": "Extrage suma, data și comerciantul. Citirea se face pe dispozitivul tău."},
+  "Cancelar lectura": {"en": "Cancel reading", "ro": "Anulează citirea"},
+  "Selecciona al menos un dato para usar.": {"en": "Select at least one field to use.", "ro": "Selectează cel puțin un câmp de utilizat."},
+  "Revisa los datos seleccionados.": {"en": "Check the selected details.", "ro": "Verifică datele selectate."},
+  "Datos copiados. Revísalos y guarda el gasto cuando esté listo.": {"en": "Details copied. Review them and save the expense when ready.", "ro": "Date copiate. Verifică-le și salvează cheltuiala când este gata."},
+  "Preparando el lector… La primera vez puede tardar un poco.": {"en": "Preparing the reader… The first time may take a little while.", "ro": "Se pregătește cititorul… Prima dată poate dura puțin."},
+  "Leyendo ticket… {0}%": {"en": "Reading receipt… {0}%", "ro": "Se citește bonul… {0}%"},
+  "Comercio o concepto": {"en": "Merchant or description", "ro": "Comerciant sau descriere"},
+  "Lectura terminada. Revisa los datos y elige cuáles usar.": {"en": "Reading complete. Review the details and choose which to use.", "ro": "Citire terminată. Verifică datele și alege ce dorești să folosești."},
+  "No se han detectado datos claros. Prueba con una foto más nítida o introduce el gasto a mano.": {"en": "No clear details were found. Try a sharper photo or enter the expense manually.", "ro": "Nu au fost detectate date clare. Încearcă o fotografie mai clară sau introdu cheltuiala manual."},
+  "La moneda del ticket no coincide o no está clara. Introduce el importe en la moneda del grupo; no se convierte automáticamente.": {"en": "The receipt currency is different or unclear. Enter the amount in the group currency; it is not converted automatically.", "ro": "Moneda bonului este diferită sau neclară. Introdu suma în moneda grupului; nu se face conversia automată."},
+  "Usar datos seleccionados": {"en": "Use selected details", "ro": "Folosește datele selectate"},
+  "Ver texto reconocido": {"en": "View recognized text", "ro": "Vezi textul recunoscut"},
+  "Lectura cancelada. Puedes seguir introduciendo el gasto a mano.": {"en": "Reading cancelled. You can continue entering the expense manually.", "ro": "Citire anulată. Poți continua să introduci cheltuiala manual."},
+  "No se ha podido leer el ticket. Prueba con una foto más nítida o introduce el gasto a mano.": {"en": "The receipt could not be read. Try a sharper photo or enter the expense manually.", "ro": "Bonul nu a putut fi citit. Încearcă o fotografie mai clară sau introdu cheltuiala manual."},
+
   "(opcional)": {
     "en": "(optional)",
     "ro": "(opțional)"

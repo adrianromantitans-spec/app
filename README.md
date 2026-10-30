@@ -157,3 +157,36 @@ siguen siendo datos reales, no textos incrustados en una imagen. Hay estilos sin
 transparencia para navegadores sin backdrop-filter y preferencias de movimiento
 reducido. `tests/glass_browser.py` verifica navegación, grupo de destino, perfil,
 presupuesto y tamaños de pantalla en los tres idiomas. No requiere SQL adicional.
+
+
+### Lectura de tickets
+
+En un gasto, elige una foto y pulsa **Leer ticket**. El OCR propone comercio,
+importe y fecha; permite revisar el texto y editar/seleccionar cada sugerencia
+antes de copiarla al formulario. Guardar el gasto sigue siendo una acción aparte.
+No reemplaza campos ya escritos sin seleccionarlos y no convierte monedas.
+
+El reconocimiento se ejecuta en un Web Worker del dispositivo con Tesseract 6,
+modelos en español, inglés y rumano, y archivos alojados en esta misma web.
+Solo se cargan al solicitar la lectura; la primera vez requiere descargar los
+modelos y puede tardar. La foto solo se comparte al guardar según el flujo de
+tickets existente. El texto OCR completo no se almacena ni se comparte.
+Si la lectura falla, siempre se puede introducir el gasto a mano. La calidad de
+la foto afecta al reconocimiento: hay que revisar las sugerencias.
+
+No requiere claves nuevas, migraciones ni servicios de pago. Versiones y
+licencias: `vendor/ocr/`. La CSP permite WebAssembly (`wasm-unsafe-eval`) y
+workers del propio origen, sin permitir evaluación arbitraria de JavaScript.
+
+Pruebas con tickets generados y motor real (servidor en puerto 3001):
+
+```sh
+PORT=3001 npm start
+python3 tests/receipt_ocr_browser.py
+python3 tests/receipt_ocr_lifecycle_browser.py
+```
+
+El primer test cubre los tres idiomas, ambos motores SIMD/no SIMD, revisión,
+moneda diferente y guardado. El segundo cubre cancelación, cierre, cambio de
+foto, fallo del lector e inclusión segura del texto reconocido. Los casos del
+analizador de importes y fechas se ejecutan también con `npm test`.

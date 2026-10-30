@@ -1,0 +1,24 @@
+{
+  "tesseract.js": "6.0.1",
+  "tesseract.js-core": "6.0.0",
+  "tessdata_fast_commit": "87416418657359cb625c412a48b6e1d6d41c29bd",
+  "languages": {
+    "eng": {
+      "bytes": 4113088,
+      "sha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+    },
+    "spa": {
+      "bytes": 2294433,
+      "sha256": "6f2e04d02774a18f01bed44b1111f2cd7f3ba7ac9dc4373cd3f898a40ea6b464"
+    },
+    "ron": {
+      "bytes": 2376323,
+      "sha256": "9adfde6b51ba4b97efd10ea37c3070fd3fc2bad7815e81f5c3c198cd96216cc9"
+    }
+  },
+  "runtime_sha256": {
+    "tesseract-core-lstm.wasm.js": "775a35df6f2ae100e02609443e6bd5cafcd07983dd6175454ca4a432a7730687",
+    "worker.min.js": "38645599043239c0eb6db08a6504a92dcdc292200535f3e9339cd77c4443b842",
+    "tesseract-core-simd-lstm.wasm.js": "9d7c43fb206dc9f48475228b46bf35f888fa9e6259da2e67d5a75c77049f2dc7"
+  }
+}

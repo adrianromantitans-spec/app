@@ -1,4 +1,4 @@
-import {tr} from './i18n.js?v=glass-8';
+import {tr} from './i18n.js?v=ocr-15';
 // Calendar-based recurrences keep the original day (31 Jan -> 28 Feb -> 31 Mar).
 export function nextOccurrence(date,frequency,anchorDay=Number(date.slice(8))) {
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!['weekly','monthly','yearly'].includes(frequency)) throw new Error(tr('Repetición no válida'));
