@@ -15,6 +15,7 @@ with sync_playwright() as p:
         assert page.locator('.split-word').count()==1
         page.locator('.auth-header .brand').evaluate('(el)=>window.introLogo=el')
         page.wait_for_timeout(700)
+        assert page.locator('.auth-header .brand').evaluate('(el)=>parseFloat(getComputedStyle(el).fontSize)>60')
         box=page.locator('.auth-header .brand').bounding_box()
         assert abs(box['x']+box['width']/2-width/2)<2
         assert abs(box['y']+box['height']/2-height/2)<2

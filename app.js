@@ -531,22 +531,35 @@ function startBrandIntro() {
   if(reduced.matches || !brand?.animate)return;
   const bounds=brand.getBoundingClientRect();
   if(!bounds.width)return;
-  const scale=Math.min(innerWidth-64,360)/bounds.width;
-  const x=(innerWidth-bounds.width*scale)/2-bounds.left;
-  const y=(innerHeight-bounds.height*scale)/2-bounds.top;
-  const centred=`translate(${x}px,${y}px) scale(${scale})`;
+  root.classList.add('brand-intro-active');
+  const header=brand.closest('.auth-header');
+  const headerBounds=header.getBoundingClientRect();
+  const fontSize=parseFloat(getComputedStyle(brand).fontSize);
+  const spacing=parseFloat(getComputedStyle(brand).letterSpacing)||0;
+  const ratio=Math.min(innerWidth-64,360)/bounds.width;
+  // Render large text at its real font size; scaling a small composited layer
+  // can blur the letters, especially in Safari.
+  header.style.height=`${headerBounds.height}px`;
+  Object.assign(brand.style,{
+    position:'absolute',left:`${bounds.left-headerBounds.left}px`,
+    top:`${bounds.top-headerBounds.top}px`,fontSize:`${fontSize*ratio}px`,
+    letterSpacing:`${spacing*ratio}px`
+  });
+  const largeBounds=brand.getBoundingClientRect();
+  const x=Math.round((innerWidth-largeBounds.width)/2-largeBounds.left);
+  const y=Math.round((innerHeight-largeBounds.height)/2-largeBounds.top);
+  const centred=`translate(${x}px,${y}px)`;
   const curtain=document.createElement('div');
   curtain.className='brand-intro-curtain';
   curtain.setAttribute('aria-hidden','true');
   brand.closest('.auth-shell').prepend(curtain);
   brandIntroActive=true;
-  root.classList.add('brand-intro-active');
   const content=[...root.querySelectorAll('.auth-main,.auth-footer')];
   content.forEach(el=>el.inert=true);
   const movement=brand.animate([
-    {transform:centred,offset:0},
-    {transform:centred,offset:.68,easing:'cubic-bezier(.65,0,.2,1)'},
-    {transform:'translate(0,0) scale(1)',offset:1}
+    {transform:centred,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`,offset:0},
+    {transform:centred,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`,offset:.68,easing:'cubic-bezier(.65,0,.2,1)'},
+    {transform:'translate(0,0)',fontSize:`${fontSize}px`,letterSpacing:`${spacing}px`,offset:1}
   ],{duration:2400,fill:'both'});
   const fade=curtain.animate([{opacity:1,offset:0},{opacity:1,offset:.68},{opacity:0,offset:1}],{duration:2400,fill:'both'});
   const onKey=event=>{if(event.key==='Escape'){event.preventDefault();finishBrandIntro();}};
@@ -557,6 +570,8 @@ function startBrandIntro() {
     brandIntroActive=false;
     clearTimeout(timeout);
     movement.cancel();fade.cancel();curtain.remove();
+    for(const property of ['position','left','top','font-size','letter-spacing'])brand.style.removeProperty(property);
+    header.style.removeProperty('height');
     root.classList.remove('brand-intro-active');
     content.forEach(el=>el.inert=false);
     document.removeEventListener('keydown',onKey);
