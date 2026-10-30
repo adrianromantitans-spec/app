@@ -66,3 +66,14 @@ puerto. La prueba crea un contexto aislado y no cambia los datos de tu navegador
 
 La siguiente etapa para compartir grupos entre personas es incorporar backend,
 autenticación y permisos de acceso a cada grupo.
+
+## Publicar en GitHub Pages
+
+La aplicación es estática y admite la ruta `/app/`, sin un proceso de compilación.
+En el repositorio de GitHub, abre **Settings → Pages** y selecciona
+**Deploy from a branch**, la rama **main** y la carpeta **/ (root)**. Pulsa **Save**.
+GitHub mostrará el enlace cuando termine el despliegue; para este repositorio será
+`https://adrianromantitans-spec.github.io/app/`.
+
+Subir el código no activa GitHub Pages por sí solo. El sitio seguirá guardando los
+datos únicamente en el navegador de cada persona.
