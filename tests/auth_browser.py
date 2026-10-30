@@ -67,7 +67,7 @@ with sync_playwright() as p:
                              headless=True,args=['--no-sandbox'])
     c,seen=context(browser,hold_settings=True)
     page=c.new_page();page.goto(BASE)
-    expect(page.get_by_role('heading',name='Bienvenido a Nexo.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
     assert page.locator('.sidebar').count()==0
     page.get_by_label('Correo electrónico').fill('draft@example.test')
     for route in seen['settings']:route.fulfill(content_type='application/json',body=json.dumps({'external':{'google':False,'apple':False}}))
@@ -77,7 +77,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('button',name='Continuar con Apple',exact=False)).to_be_disabled()
     expect(page.get_by_label('Correo electrónico')).to_have_value('draft@example.test')
     page.reload()
-    expect(page.get_by_role('heading',name='Bienvenido a Nexo.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
     assert page.locator('.sidebar').count()==0
     print('PASS: welcome is the default, refresh stays there and provider updates preserve form input')
 
@@ -103,7 +103,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('heading',name='Tu próximo plan empieza aquí')).to_be_visible()
     page.get_by_role('button',name='Tu perfil y datos').click()
     page.get_by_role('button',name='Cerrar sesión',exact=True).click()
-    expect(page.get_by_role('heading',name='Bienvenido a Nexo.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
     print('PASS: signup, confirmation guidance, login errors, session restoration and logout')
     c.close()
 
@@ -123,7 +123,7 @@ with sync_playwright() as p:
 
     c,seen=context(browser,enabled=True)
     page=c.new_page();page.goto(BASE+'?code=unsolicited')
-    expect(page.get_by_role('heading',name='Bienvenido a Nexo.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
     expect(page.locator('#toast')).to_contain_text('otro navegador')
     assert seen['tokens']==0 and 'code=' not in page.url
     page.goto(BASE+'?error=access_denied&error_description=untrusted-provider-text')
