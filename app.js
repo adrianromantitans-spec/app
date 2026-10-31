@@ -618,7 +618,7 @@ async function refreshProviders() {
   if(!cloud.enabled)return;
   try {providers=await cloud.providers();providerError=false;}
   catch {providerError=true;}
-  document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled}));
+  document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:!!el.closest('.welcome-entry')}));
 }
 async function beginOAuth(provider) {
   remoteBusy=true;
