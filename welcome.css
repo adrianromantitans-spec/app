@@ -36,25 +36,25 @@
 .welcome-phone-screen:after{box-sizing:border-box;content:"9:41";position:absolute;inset:0 0 auto;height:32px;background:#f8f5fd;padding:11px 18px;font-size:8px;color:#777080}
 .welcome-phone-island{z-index:1;box-shadow:none}
 
-/* Keep entry controls above the midpoint on phones, including Safari toolbars. */
+/* Reserve space for the phone greeting above the controls on each viewport. */
 @media(max-width:760px){
   .welcome-entry{min-height:100vh;min-height:100dvh}
   .welcome-entry main.auth-main{
     display:flex;flex:0 0 auto;flex-direction:column;align-items:center;justify-content:flex-start;
     min-height:100vh;min-height:100dvh;
-    padding:clamp(88px,16vh,144px) 24px max(28px,env(safe-area-inset-bottom));
-    padding-top:max(clamp(88px,16dvh,144px),calc(env(safe-area-inset-top) + 44px));
+    padding:clamp(130px,22vh,190px) 24px max(28px,env(safe-area-inset-bottom));
+    padding-top:max(clamp(130px,22dvh,190px),calc(env(safe-area-inset-top) + 44px));
   }
   .welcome-stage{flex:none;width:min(100%,420px)}
-  .welcome-phone{top:-85px;right:-65px}
+  .welcome-phone{top:-165px;right:-65px}
 }
 @media(max-width:760px) and (max-height:700px){
-  .welcome-entry main.auth-main{padding:clamp(48px,10vh,70px) 20px max(24px,env(safe-area-inset-bottom));padding-top:max(clamp(48px,10dvh,70px),calc(env(safe-area-inset-top) + 20px))}
+  .welcome-entry main.auth-main{padding:clamp(80px,18vh,126px) 20px max(24px,env(safe-area-inset-bottom));padding-top:max(clamp(80px,18dvh,126px),calc(env(safe-area-inset-top) + 20px))}
   .welcome-panel{padding:28px 22px 24px}
   .welcome-entry .auth-header{margin-bottom:28px}
   .welcome-entry .entry-login{min-height:50px;padding:14px 18px}
   .welcome-entry .entry-signup{min-height:46px;margin:8px 0 12px}
-  .welcome-phone{top:-55px;width:250px;height:520px}
+  .welcome-phone{top:-135px;width:250px;height:520px}
 }
 @media(max-height:500px) and (orientation:landscape){
   .welcome-entry main.auth-main{display:grid;place-items:center;min-height:100vh;min-height:100dvh;padding:16px max(24px,env(safe-area-inset-right)) 16px max(24px,env(safe-area-inset-left))}
