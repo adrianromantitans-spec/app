@@ -235,3 +235,11 @@ RECEIPT_TEST_CURRENCY=RON python3 tests/receipt_photo_file_browser.py
 La prueba comprueba el campo real de importe, que no se guarda un gasto por sí
 solo y que la lectura no realiza subidas de fotos. `OCR_URL` permite ejecutarla
 contra el servidor local o la web publicada usando únicamente la demo.
+
+## Confirmación de pagos e historial de cambios
+
+La nueva pantalla Actividad reúne pagos pendientes y cambios del grupo con valores
+anteriores y nuevos. Solo el destinatario confirma la recepción; solo el creador
+del grupo puede borrar entradas del historial. Para activar en proyectos existentes,
+ejecutar `supabase/collaboration.sql` después de `expense-tools.sql`.
+Consultar [la guía de pagos e historial](docs/COLLABORATION.md).

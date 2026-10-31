@@ -253,3 +253,25 @@ test('interrupted photo cleanup keeps its job for a later retry and uses only th
  await assert.rejects(()=>c.cleanupDeletedGroups());assert.equal(done,false);assert.equal(c.cleanupPromise,null);
  await c.cleanupDeletedGroups();assert.equal(done,true);assert.equal(removed,true);
 });
+
+test('payment flow fails closed when the server migration is missing',async()=>{
+ const calls=[];const c=authed(async url=>{calls.push(url);return response({code:'PGRST202'},404);});
+ await assert.rejects(()=>c.requestPayment({...seed().groups[0],remote:{version:1}},{from:'you',to:actor,amount:10},crypto.randomUUID()));
+ assert.equal(calls.length,1);assert.ok(calls[0].endsWith('divzplit_collaboration_support'));
+});
+test('payment requests retain idempotency, group version, receiver identity and currency',async()=>{
+ const calls=[];const c=authed(async(url,options)=>{calls.push([url,JSON.parse(options.body)]);return response(url.endsWith('divzplit_collaboration_support')?true:{status:'pending'});});
+ const g={...seed().groups[0],currency:'RON',remote:{ownerId:actor,version:9}};const id=crypto.randomUUID();
+ await c.requestPayment(g,{from:'you',to:'22222222-2222-4222-8222-222222222222',amount:1234},id);
+ assert.deepEqual(calls[1][1],{p_id:g.id,p_version:9,p_request_id:id,p_to:'22222222-2222-4222-8222-222222222222',p_amount:1234,p_currency:'RON'});
+ await assert.rejects(()=>c.requestPayment(g,{from:'someone-else',to:actor,amount:10},id));
+ assert.equal(calls.length,2);
+ await assert.rejects(()=>c.deleteHistory({...g,remote:{ownerId:'someone-else',version:9}},id));
+ assert.equal(calls.length,2);
+});
+test('activity uses a bounded cursor and never delivers data to an account that changed',async()=>{
+ let c;const c1=authed(async url=>url.endsWith('divzplit_collaboration_support')?response(true):url.includes('divzplit_history')?response(Array.from({length:51},(_,i)=>({id:String(i),created_at:'2026-10-31T10:00:00Z'}))):response([]));
+ const first=await c1.readActivity(actor);assert.equal(first.events.length,50);assert.deepEqual(first.next,{id:'49',created_at:'2026-10-31T10:00:00Z'});
+ c=authed(async url=>{if(url.endsWith('divzplit_collaboration_support'))return response(true);c.user={id:'new-account'};return response([]);});
+ await assert.rejects(()=>c.readActivity(actor),/cuenta ha cambiado/);
+});

@@ -139,10 +139,18 @@ print('PASS: expense authorship, duplicate/foreign participants and fractional c
 
 doc=json.loads(json.dumps(row['document']))
 doc['payments']=[{'id':'payment-1','from':FRIEND,'to':OWNER,'amount':500,'date':'2026-10-30'}]
-row=save(row,doc,FRIEND)
+save(row,doc,FRIEND,'NEXO_PAYMENT_FLOW')
+request_id=str(uuid.uuid4())
+request=json.loads(rpc('divzplit_request_payment',[literal(gid),str(row['version']),literal(request_id),literal(OWNER),'500',literal('EUR')],FRIEND))
+assert request['status']=='pending'
+rpc('divzplit_respond_payment',[literal(gid),literal(request_id),literal('confirm')],FRIEND,'NEXO_FORBIDDEN')
+row=json.loads(rpc('divzplit_respond_payment',[literal(gid),literal(request_id),literal('confirm')],OWNER))
+assert row['document']['payments'][0]['id']==request_id
+again=json.loads(rpc('divzplit_respond_payment',[literal(gid),literal(request_id),literal('confirm')],OWNER))
+assert again['version']==row['version']
 doc={**row['document'],'payments':[]}
-save(row,doc,OWNER,'NEXO_FORBIDDEN')
-print('PASS: involved parties can confirm repayments; recorded payments are append-only')
+save(row,doc,OWNER,'NEXO_PAYMENT_FLOW')
+print('PASS: only the recipient confirms; repeats are idempotent and payments cannot be edited through group saves')
 
 rpc('nexo_join_group',[literal('0'*64)],STRANGER,'NEXO_INVITE')
 rpc('nexo_join_group',[literal('invalid')],STRANGER,'NEXO_INVITE')

@@ -1,8 +1,9 @@
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-18';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=ocr-18';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=collaboration-25';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
-import {Cloud} from './cloud.js?v=ocr-18';
+import {Cloud} from './cloud.js?v=collaboration-25';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=collaboration-25';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -27,6 +28,7 @@ let providerError=false;
 let pendingInvite='';
 let inviteError='';
 const remoteBaseline=new Map();
+const activityCache=new Map();
 
 const icons = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
@@ -190,7 +192,35 @@ function taskList(items) {
 }
 function tasksView() {const done=group().tasks.filter(t=>t.done).length;return `<section class="panel">${sectionTitle(tr('Un equipo para todo'),ui`${done} de ${group().tasks.length} tareas completadas.`, ui`<button class="button primary small-button" data-action="new-task">${icon('plus')} Añadir tarea</button>`)}${taskList(group().tasks)}</section>`;}
 function groupsView() {return ui`<div class="welcome-row"><div><div class="eyebrow">CADA GRUPO, SU HISTORIA</div><h1>La gente con la que compartes<span class="purple-text">.</span></h1><p>De la escapada del finde a las cuentas de casa.</p></div><button class="button primary" data-action="new-group">${icon('plus')} Crear grupo</button></div><div class="group-cards">${state.groups.map((g,i)=>ui`<button class="group-card" data-group="${esc(g.id)}"><div class="group-card-cover cover-${i%3}"><span>${esc(g.emoji)}</span><span class="tiny-pill">${esc(tr(g.type))}</span></div><div class="group-card-body"><h2>${esc(g.name)} ${icon('arrow')}</h2><p>${icon('pin')}${esc(g.place || tr('El próximo gran plan'))}</p><div class="group-card-footer">${avatars(g.members)}<span>${g.members.length} personas</span></div><div class="group-card-total"><span>Compartido hasta ahora</span><strong>${money(totalSpent(g),currencyOf(g))}</strong></div></div></button>`).join('')}<button class="new-group-card" data-action="new-group"><span>${icon('plus')}</span><h3>El siguiente buen plan</h3><p>Empieza con un grupo.</p></button></div>`;}
-function activityView() {const g=group();return ui`<div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Cada pequeño paso cuenta<span class="purple-text">.</span></h1><p>La actividad de ${esc(g.name)}.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><section class="panel">${sectionTitle(tr('Gastos registrados'),tr('El historial de las cuentas del grupo.'))}${expenseList(g.expenses)}</section><section class="panel activity-payments">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos que habéis marcado como realizados.'))}${g.payments.length?g.payments.map(p=>ui`<div class="payment-row">${icon('check')}<span>${esc(member(p.from).name)} devolvió a ${esc(member(p.to).name)}</span><strong>${money(p.amount)}</strong><small>${dateLabel(p.date)}</small></div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>')}</section>`;}
+function activityData() {return activityCache.get(group()?.id)||{ready:null,events:[],requests:[],next:null};}
+const activityMemberName=id=>id===accountUser?.id?tr('Tú'):group()?.members.find(m=>m.id===id)?.name||tr('Miembro');
+function activityNotice(data) {
+  if(!accountUser)return `<p class="muted">${tr('Entra con tu cuenta para confirmar pagos compartidos.')}</p>`;
+  if(data.error)return `<p class="activity-error" role="alert">${esc(data.error)}<button class="text-button" data-action="reload-activity">${tr('Volver a intentar')}</button></p>`;
+  if(data.ready===false)return `<p class="muted">${tr('Los pagos con confirmación y el historial todavía no están activados.')}</p>`;
+  if(data.ready===null)return `<p class="muted" role="status">${tr('Cargando actividad…')}</p>`;
+  return '';
+}
+async function loadActivity(more=false,preservePages=false) {
+  const g=group(),viewer=accountUser?.id;if(!viewer||!g)return;
+  const previous=activityCache.get(g.id);
+  try{
+    const ready=await cloud.collaborationAvailable();
+    if(!ready){activityCache.set(g.id,{ready:false,events:[],requests:[],next:null});return;}
+    const result=await cloud.readActivity(g.id,more?previous?.next:null);
+    if(accountUser?.id!==viewer)return;
+    const keepPages=preservePages&&previous?.events?.length>50&&JSON.stringify(previous.events.slice(0,50))===JSON.stringify(result.events);
+    activityCache.set(g.id,{ready:true,...result,events:more?[...(previous?.events||[]),...result.events]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
+  }catch(error){if(accountUser?.id===viewer)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}
+}
+function pendingPaymentsPanel(data) {
+  return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(group()))}</section>`;
+}
+function activityView() {
+  const g=group(),data=activityData();
+  return ui`<div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||historyView(data.events,canManage(),activityMemberName,!!data.next)}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${g.payments.length?g.payments.map(p=>ui`<div class="payment-row">${icon('check')}<span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${money(p.amount)}</strong><small>${dateLabel(p.date)}</small></div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>')}</section>`;
+}
+
 function budgetView() {const g=group(); const spent=totalSpent(g); const categories=['Alojamiento','Transporte','Comida','Actividades','Otros'];return ui`<div class="welcome-row"><div><div class="eyebrow">DISFRUTAR, CON LAS CUENTAS CLARAS</div><h1>Un poquito de previsión<span class="purple-text">.</span></h1><p>El presupuesto de ${esc(g.name)}, de un vistazo.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><div class="budget-layout">${budgetCard()}<section class="panel">${sectionTitle(tr('¿En qué se va el plan?'),tr('Tus gastos agrupados por categoría.'))}${categories.map(cat=>{const sum=g.expenses.filter(e=>e.category===cat).reduce((s,e)=>s+e.amount,0);return `<div class="category-row"><span class="expense-icon lavender">${icon(categoryIcon(cat))}</span><div><span>${tr(cat)}</span><div class="progress-track"><span style="width:${spent?sum/spent*100:0}%"></span></div></div><strong>${money(sum)}</strong></div>`;}).join('')}</section></div>`;}
 
 function openModal(title, content, subtitle='') {
@@ -254,10 +284,29 @@ function groupModal(edit=false) {
   const selectedCurrency=currencyOf(edit?g:undefined);
   openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${edit&&g.type===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}"></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}"></label></div>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}><option value="EUR" ${selectedCurrency==='EUR'?'selected':''}>${tr('Euro (€)')}</option><option value="RON" ${selectedCurrency==='RON'?'selected':''}>${tr('Leu rumano (RON)')}</option></select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='RON'?'RON':'€'})`}</span><input name="budget" type="number" min="1" max="10000000" step="0.01" value="${edit?g.budget/100:''}" placeholder="1200" required></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
 }
-function settlementsModal() {
-  const items=settlements(group());
-  openModal(tr('Las cuentas claras'),ui`<div class="settlement-list">${items.length?items.map((p,i)=>`<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div><strong>${money(p.amount)}</strong>${!accountUser||p.from==='you'||p.to==='you'?ui`<button class="button secondary small-button" data-settle="${i}">Registrar pago</button>`:''}</div></div>`).join(''):empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`,tr('Menos transferencias para equilibrar los saldos.'));
+function paymentSuggestions() {
+  const pending=activityData().ready===true?activityData().requests:[];
+  const id=value=>value===accountUser?.id?'you':value;
+  return settlements({...group(),payments:[...group().payments,...pending.map(r=>({from:id(r.from_id),to:id(r.to_id),amount:r.amount}))]});
 }
+async function settlementsModal() {
+  await loadActivity();
+  const items=paymentSuggestions(),data=activityData();
+  openModal(tr('Las cuentas claras'),ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(group())):''}<div class="settlement-list">${items.length?items.map((p,i)=>`<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div><strong>${money(p.amount)}</strong>${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}">Marcar como pagado</button>`:''}</div></div>`).join(''):data.requests.length?`<p class="pending-summary">${tr('Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.')}</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`,tr('Menos transferencias para equilibrar los saldos.'));
+}
+async function respondToPayment(requestId,action) {
+  const request=activityData().requests.find(r=>r.id===requestId);
+  if(!request||!['confirm','reject','cancel'].includes(action))return;
+  if((action==='cancel'?request.from_id:request.to_id)!==accountUser?.id)throw new Error(tr('No puedes responder a este pago.'));
+  remoteBusy=true;
+  try{
+    const saved=await cloud.respondPayment(group(),requestId,action);
+    const index=state.groups.findIndex(g=>g.id===saved.id);state.groups[index]=saved;remoteBaseline.set(saved.id,JSON.stringify(saved));
+    await loadActivity();closeModal();render();
+    toast(tr(action==='confirm'?'Pago confirmado. Los saldos están actualizados.':action==='reject'?'Pago marcado como no recibido. Los saldos no han cambiado.':'Solicitud cancelada. Los saldos no han cambiado.'));
+  }catch(error){await loadActivity();throw error;}finally{remoteBusy=false;}
+}
+
 function expenseDetails(id) {
   const e=group().expenses.find(e=>e.id===id); if(!e)return;
   const shares=expenseShares(e);
@@ -285,7 +334,7 @@ async function onAppClick(event) {
   if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.receiptAction){await handleReceiptAction(el,currencyOf(group()),updateSplitTotal);return;}
-  if(el.dataset.page){page=el.dataset.page; render();document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
+  if(el.dataset.page){page=el.dataset.page; render();if(page==='activity'){await loadActivity();render();}document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
   if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
   if(el.dataset.tab){tab=el.dataset.tab;render();return;}
   if(el.dataset.filter){expenseFilter=el.dataset.filter;render();return;}
@@ -294,8 +343,26 @@ async function onAppClick(event) {
   if(el.dataset.expense){expenseDetails(el.dataset.expense);return;}
   if(el.dataset.deleteExpense){const id=el.dataset.deleteExpense;openModal(tr('¿Eliminar este gasto?'),ui`<p class="dialog-copy">El reparto y los saldos del grupo se volverán a calcular. Esta acción no se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button danger" data-confirm-delete="${esc(id)}">Sí, eliminar</button></div>`);return;}
   if(el.dataset.confirmDelete){const g=group();const receipt=g.expenses.find(e=>e.id===el.dataset.confirmDelete)?.receipt;g.expenses=g.expenses.filter(e=>e.id!==el.dataset.confirmDelete);await save();let removed=true;if(accountUser&&receipt?.path){try{await cloud.deleteReceipt(g.id,receipt.path);}catch{removed=false;}}closeModal();render();toast(removed?tr('Gasto eliminado. Los saldos están actualizados.'):tr('Gasto eliminado; no se pudo borrar su foto del almacenamiento.'));return;}
-  if(el.dataset.settle!==undefined){const p=settlements(group())[Number(el.dataset.settle)];if(!p)return;openModal(tr('¿Ya se ha realizado el pago?'),ui`<p class="dialog-copy">Vas a registrar que <strong>${esc(member(p.from).name)}</strong> ha devuelto <strong>${money(p.amount)}</strong> a <strong>${esc(member(p.to).name)}</strong>.</p><p class="form-note">Confirma únicamente si el dinero ya ha llegado a su destino.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" data-confirm-payment="${esc(JSON.stringify(p))}">Sí, registrar pago</button></div>`);return;}
-  if(el.dataset.confirmPayment){const p=JSON.parse(el.dataset.confirmPayment);group().payments.unshift({...p,id:uid(),date:today()});await save();closeModal();render();toast(tr('Devolución registrada. Un poquito más cerca del equilibrio.'));return;}
+  if(el.dataset.settle!==undefined){
+    const p=paymentSuggestions()[Number(el.dataset.settle)];if(!p||p.from!=='you')return;
+    openModal(tr('¿Has enviado el pago?'),ui`<p class="dialog-copy">Vas a marcar como enviado un pago de <strong>${money(p.amount)}</strong> a <strong>${esc(member(p.to).name)}</strong>.</p><p class="form-note">El saldo no cambiará hasta que la otra persona confirme la recepción.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" data-confirm-payment="${esc(JSON.stringify(p))}" data-request-id="${uid()}">Ya lo he enviado</button></div>`);return;
+  }
+  if(el.dataset.confirmPayment){
+    const p=JSON.parse(el.dataset.confirmPayment);remoteBusy=true;
+    try{await cloud.requestPayment(group(),p,el.dataset.requestId);await loadActivity();closeModal();render();toast(tr('Pago enviado para confirmar. Los saldos todavía no han cambiado.'));}
+    finally{remoteBusy=false;}return;
+  }
+  if(el.dataset.paymentResponse){
+    const action=el.dataset.paymentResponse,id=el.dataset.requestId;
+    const label=action==='confirm'?'¿Confirmas que has recibido el dinero?':action==='reject'?'¿Todavía no has recibido este pago?':'¿Cancelar esta solicitud de pago?';
+    openModal(tr(label),ui`<p class="dialog-copy">${tr(action==='confirm'?'Confirma únicamente si el dinero ya ha llegado a su destino.':'Los saldos no cambiarán.')}</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Volver</button><button class="button primary" data-resolve-payment="${esc(action)}" data-request-id="${esc(id)}">Confirmar</button></div>`);return;
+  }
+  if(el.dataset.resolvePayment){await respondToPayment(el.dataset.requestId,el.dataset.resolvePayment);return;}
+  if(el.dataset.deleteHistory){
+    if(!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));
+    openModal(tr('¿Borrar esta entrada del historial?'),ui`<p class="dialog-copy">Solo se eliminará esta entrada del historial. Los gastos, pagos y saldos no cambian. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button danger" data-confirm-history-delete="${esc(el.dataset.deleteHistory)}">Borrar entrada</button></div>`);return;
+  }
+  if(el.dataset.confirmHistoryDelete){remoteBusy=true;try{await cloud.deleteHistory(group(),el.dataset.confirmHistoryDelete);await loadActivity();closeModal();render();toast(tr('Entrada del historial borrada.'));}finally{remoteBusy=false;}return;}
   if(el.dataset.viewReceipt){await viewReceipt(el.dataset.viewReceipt);return;}
   if(el.dataset.stopRecurrence){const e=group().expenses.find(e=>e.id===el.dataset.stopRecurrence);if(e?.recurrence&&(!accountUser||canManage()||e.createdBy===accountUser.id)){e.recurrence.active=false;await save();expenseDetails(e.id);toast(tr('Repetición detenida. Los gastos anteriores se conservan.'));}return;}
   switch(el.dataset.action){
@@ -305,7 +372,9 @@ async function onAppClick(event) {
     case 'new-expense':expenseModal();break;
     case 'new-group':groupModal();break;
     case 'edit-group':groupModal(true);break;
-    case 'settlements':settlementsModal();break;
+    case 'settlements':await settlementsModal();break;
+    case 'reload-activity':await loadActivity();if(modalRoot.firstElementChild)await settlementsModal();else render();break;
+    case 'more-history':await loadActivity(true);render();break;
     case 'edit-budget':openModal(tr('Disfrutar, sin sorpresas'),ui`<form id="budget-form"><label class="field">Presupuesto total del grupo (${currencyUnit(group())})<input type="number" name="budget" min="1" max="10000000" step="0.01" value="${group().budget/100}" required></label><p class="form-note">${icon('users')} Como referencia: ${money(Math.round(group().budget/group().members.length))} por persona con el presupuesto actual.</p>${actions(tr('Actualizar presupuesto'))}</form>`,esc(group().name));break;
     case 'new-task':openModal(tr('Una pequeña cosa por hacer'),ui`<form id="task-form" data-entity-id="${uid()}"><label class="field">¿Qué queda pendiente?<input name="title" placeholder="Ej. Reservar la excursión a Sintra" maxlength="120" required></label><label class="field">¿Quién se encarga?<select name="assignee">${memberOptions()}</select></label>${actions(tr('Añadir tarea'))}</form>`);break;
     case 'new-poll':openModal(tr('¿Cuál es el plan?'),ui`<form id="poll-form" data-entity-id="${uid()}"><label class="field">La gran pregunta<input name="title" placeholder="¿Dónde cenamos el viernes?" maxlength="120" required></label><label class="field">Un poco de contexto <span class="muted">(opcional)</span><input name="description" placeholder="Algo rico, cerca del apartamento" maxlength="160"></label><label class="field">Opción 1<input name="option" placeholder="Pizzería del barrio" maxlength="100" required></label><label class="field">Opción 2<input name="option" placeholder="Restaurante portugués" maxlength="100" required></label><label class="field">Opción 3 <span class="muted">(opcional)</span><input name="option" placeholder="Otra buena idea" maxlength="100"></label>${actions(tr('Crear votación'))}</form>`);break;
@@ -341,7 +410,7 @@ async function onAppChange(event) {
   if(el.matches('select[name=currency]')){const label=el.form.querySelector('.budget-currency-label');if(label)label.textContent=ui`Presupuesto total del grupo (${el.value==='RON'?'RON':'€'})`;return;}
   if(el.matches('input[name=receipt]')){await receiptChanged(el);return;}
   if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
-  if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();}
+  if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'){await loadActivity();render();}}
 }
 document.addEventListener('submit',async event=>{
   const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
@@ -671,7 +740,7 @@ async function handleAccountForm(form,data) {
   return true;
 }
 async function connectAccount() {
-  accountUser=cloud.user;demoMode=false;
+  accountUser=cloud.user;demoMode=false;activityCache.clear();
   state={version:1,activeGroup:null,groups:[]};remoteBaseline.clear();page='home';tab='summary';
   try {state.activeGroup=sessionStorage.getItem('nexo-active-'+accountUser.id);} catch {}
   await loadSharedGroups();await processRecurrences();setSync(tr('Actualizado'));
@@ -687,10 +756,10 @@ async function refreshShared() {
   if(!accountUser&&demoMode&&!remoteBusy&&!modalRoot.firstElementChild&&!document.hidden){const before=JSON.stringify(state.groups);await processRecurrences();if(before!==JSON.stringify(state.groups))render();return;}
   if (!accountUser||remoteBusy||authLoading||modalRoot.firstElementChild||document.hidden) return;
   remoteBusy=true;
-  const before=JSON.stringify(state.groups);
+  const before=JSON.stringify(state.groups),beforeActivity=JSON.stringify(activityData());
   try {
-    await loadSharedGroups();await processRecurrences();setSync(tr('Actualizado'));
-    if (before!==JSON.stringify(state.groups)) render();
+    await loadSharedGroups();await processRecurrences();if(page==='activity')await loadActivity(false,true);setSync(tr('Actualizado'));
+    if (before!==JSON.stringify(state.groups)||beforeActivity!==JSON.stringify(activityData())) render();
   } catch(error) {
     setSync(tr('Sin conexión · Reintentar'));
     if (!cloud.session) {accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();render();toast(tr('Tu sesión ha caducado. Vuelve a entrar.'));}
@@ -701,7 +770,7 @@ async function signOutAccount() {
   try {await cloud.signOut();}
   catch {toast(tr('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.'));}
   finally {
-    accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    activityCache.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }

@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=ocr-18';
+import {tr} from './i18n.js?v=collaboration-25';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -29,6 +29,8 @@ function messageFor(error, status) {
   if(code==='NEXO_CURRENCY')return tr('Moneda no disponible. Elige EUR o RON.');
   if (code === 'NEXO_CONFLICT') return tr('Alguien ha actualizado el grupo. Hemos recargado los datos; revisa tu cambio y vuelve a guardarlo.');
   if (code === 'NEXO_INVITE') return tr('Este enlace ha caducado, se ha revocado o ya no admite más personas. Pide uno nuevo.');
+  if (code === 'NEXO_PAYMENT_CHANGED') return tr('El saldo o el pago ha cambiado. Actualiza el grupo y revisa los pagos pendientes.');
+  if (code === 'NEXO_PAYMENT_FLOW') return tr('Este pago necesita la confirmación de quien recibe el dinero. Actualiza la aplicación.');
   if (code === 'NEXO_OWNER') return tr('Solo quien creó el grupo puede modificar sus detalles o gestionar invitaciones.');
   if (code === 'NEXO_FORBIDDEN' || status === 403) return tr('No tienes acceso a este grupo.');
   if (code === 'email_address_not_authorized') return tr('El servicio de correo todavía no permite enviar confirmaciones a esta dirección. Hace falta configurar el envío de correos de la aplicación.');
@@ -275,6 +277,41 @@ export class Cloud {
     const me=document.members.find(m=>m.id===this.user.id);
     if (me) {me.name=group.remote.memberName;}
     return this.groupRpc('nexo_save_group',{p_id:group.id,p_version:group.remote.version,p_document:document});
+  }
+  async collaborationAvailable() {
+    if(this.collaborationReady)return true;
+    try{this.collaborationReady=await this.rpc('divzplit_collaboration_support',{})===true;}
+    catch(error){if(error.status!==404&&error.code!=='PGRST202')throw error;return false;}
+    return this.collaborationReady;
+  }
+  async requireCollaboration() {
+    if(!await this.collaborationAvailable())throw new CloudError(tr('Los pagos con confirmación y el historial todavía no están activados.'));
+  }
+  async readActivity(groupId,cursor=null) {
+    await this.requireCollaboration();
+    const viewer=this.user?.id;
+    const filter=cursor?'&or='+encodeURIComponent(`(created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id}))`):'';
+    const [events,requests]=await Promise.all([
+      this.request('/rest/v1/divzplit_history?group_id=eq.'+encodeURIComponent(groupId)+'&select=*&order=created_at.desc,id.desc&limit=51'+filter),
+      this.request('/rest/v1/divzplit_payment_requests?group_id=eq.'+encodeURIComponent(groupId)+'&status=eq.pending&select=*&order=created_at.asc&limit=100')
+    ]);
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    const page=events.slice(0,50),last=page.at(-1);
+    return {events:page,requests,next:events.length>50?{created_at:last.created_at,id:last.id}:null};
+  }
+  async requestPayment(group,payment,requestId) {
+    await this.requireCollaboration();
+    if(payment.from!=='you')throw new CloudError(tr('Solo puedes marcar tus propios pagos.'));
+    return this.rpc('divzplit_request_payment',{p_id:group.id,p_version:group.remote.version,p_request_id:requestId,p_to:payment.to,p_amount:payment.amount,p_currency:currencyOf(group)});
+  }
+  async respondPayment(group,requestId,action) {
+    await this.requireCollaboration();
+    return this.groupRpc('divzplit_respond_payment',{p_id:group.id,p_request_id:requestId,p_action:action});
+  }
+  async deleteHistory(group,eventId) {
+    await this.requireCollaboration();
+    if(group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el administrador puede borrar entradas del historial.'));
+    return this.rpc('divzplit_delete_history',{p_id:group.id,p_event_id:eventId});
   }
   async requireExpenseTools() {
     if(this.expenseToolsReady)return;
