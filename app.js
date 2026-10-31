@@ -552,14 +552,17 @@ function startBrandIntro() {
   const headerBounds=header.getBoundingClientRect();
   const fontSize=parseFloat(getComputedStyle(brand).fontSize);
   const spacing=parseFloat(getComputedStyle(brand).letterSpacing)||0;
-  const ratio=Math.min(innerWidth-64,360)/bounds.width;
+  const viewport=window.visualViewport;
+  const visibleCentre=()=>({x:(viewport?.offsetLeft||0)+(viewport?.width||innerWidth)/2,y:(viewport?.offsetTop||0)+(viewport?.height||innerHeight)/2});
+  const ratio=Math.min((viewport?.width||innerWidth)-64,360)/bounds.width;
   // Anchor the centre of the text throughout the size change. A fixed left
   // edge lets the changing text width push the logo sideways mid-flight.
   header.style.height=`${headerBounds.height}px`;
   const finalX=bounds.left+bounds.width/2-headerBounds.left;
   const finalY=bounds.top+bounds.height/2-headerBounds.top;
-  const startX=innerWidth/2-headerBounds.left;
-  const startY=innerHeight/2-headerBounds.top;
+  const centre=visibleCentre();
+  const startX=centre.x-headerBounds.left;
+  const startY=centre.y-headerBounds.top;
   Object.assign(brand.style,{
     position:'absolute',left:`${finalX}px`,top:`${finalY}px`,
     transform:'translate(-50%,-50%)'
@@ -571,7 +574,7 @@ function startBrandIntro() {
   brandIntroActive=true;
   const content=[...root.querySelectorAll(root.querySelector('.welcome-entry')?'.entry-controls,.welcome-phone':'.auth-main,.auth-footer')];
   content.forEach(el=>el.inert=true);
-  const large={left:`${startX}px`,top:`${startY}px`,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`};
+  let large={left:`${startX}px`,top:`${startY}px`,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`};
   const movement=brand.animate([
     {...large,offset:0},
     {...large,offset:.57,easing:'cubic-bezier(.22,1,.36,1)'},
@@ -583,6 +586,17 @@ function startBrandIntro() {
   // Safari can emit resize while its browser bars settle on first paint.
   // Only a real width change (rotation/window resize) should skip the intro.
   const onResize=()=>{if(Math.abs(innerWidth-initialWidth)>40)finishBrandIntro();};
+  const onViewportChange=()=>{
+    if(!brandIntroActive)return;
+    const currentHeader=header.getBoundingClientRect();
+    const currentCentre=visibleCentre();
+    large={...large,left:`${currentCentre.x-currentHeader.left}px`,top:`${currentCentre.y-currentHeader.top}px`};
+    movement.effect.setKeyframes([
+      {...large,offset:0},
+      {...large,offset:.57,easing:'cubic-bezier(.22,1,.36,1)'},
+      {left:`${finalX}px`,top:`${finalY}px`,fontSize:`${fontSize}px`,letterSpacing:`${spacing}px`,offset:1}
+    ]);
+  };
   const onMotionChange=()=>{if(reduced.matches)finishBrandIntro();};
   let timeout;
   finishBrandIntro=()=>{
@@ -597,6 +611,8 @@ function startBrandIntro() {
     content.forEach(el=>el.inert=false);
     document.removeEventListener('keydown',onKey);
     window.removeEventListener('resize',onResize);
+    viewport?.removeEventListener('resize',onViewportChange);
+    viewport?.removeEventListener('scroll',onViewportChange);
     reduced.removeEventListener('change',onMotionChange);
     if(brandIntroPendingRender){
       brandIntroPendingRender=false;render();
@@ -605,6 +621,8 @@ function startBrandIntro() {
   };
   document.addEventListener('keydown',onKey);
   window.addEventListener('resize',onResize);
+  viewport?.addEventListener('resize',onViewportChange);
+  viewport?.addEventListener('scroll',onViewportChange);
   reduced.addEventListener('change',onMotionChange);
   timeout=setTimeout(()=>finishBrandIntro(),3300);
   movement.finished.then(()=>finishBrandIntro(),()=>{});

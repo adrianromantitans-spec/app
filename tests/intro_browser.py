@@ -47,6 +47,27 @@ with sync_playwright() as p:
         expect(page.locator('.brand-intro-curtain')).to_have_count(0)
         assert not errors,errors
         c.close()
+    # Mobile Safari can expose a visible viewport smaller than innerHeight.
+    c=browser.new_context(locale='es-ES',viewport={'width':393,'height':852})
+    c.add_init_script("""
+      const viewport=new EventTarget();
+      Object.assign(viewport,{width:393,height:700,offsetTop:12,offsetLeft:0});
+      Object.defineProperty(window,'visualViewport',{value:viewport});
+    """)
+    c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
+    page=c.new_page();page.goto(BASE)
+    page.wait_for_timeout(400)
+    def visible_centre():
+        return page.locator('.auth-header .brand').evaluate('(el)=>{const r=el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};}')
+    centre=visible_centre()
+    assert abs(centre['x']-196.5)<1 and abs(centre['y']-362)<1,centre
+    page.evaluate("Object.assign(visualViewport,{height:620,offsetTop:18});visualViewport.dispatchEvent(new Event('resize'))")
+    page.wait_for_timeout(100)
+    centre=visible_centre()
+    assert abs(centre['y']-328)<1,centre
+    expect(page.locator('.brand-intro-curtain')).to_have_count(0)
+    assert page.locator('.auth-header .brand').evaluate('(el)=>el.style.transform')==''
+    c.close()
     c=browser.new_context(locale='es-ES',reduced_motion='reduce')
     c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
     page=c.new_page();page.goto(BASE)
