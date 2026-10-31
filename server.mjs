@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const files = new Set(['index.html', 'styles.css', 'glass.css', 'app.js', 'auth-ui.js', 'extras.js', 'i18n.js', 'translations.js', 'model.js', 'cloud.js', 'config.js', 'favicon.svg', 'assets/lisbon.png', 'receipt-ocr.js', 'receipt-ui.js', 'receipt-image.js', 'receipt-crop.js']);
+const files = new Set(['index.html', 'styles.css', 'glass.css', 'welcome.css', 'assets/welcome-es.png', 'assets/welcome-en.png', 'assets/welcome-ro.png', 'app.js', 'auth-ui.js', 'extras.js', 'i18n.js', 'translations.js', 'model.js', 'cloud.js', 'config.js', 'favicon.svg', 'assets/lisbon.png', 'receipt-ocr.js', 'receipt-ui.js', 'receipt-image.js', 'receipt-crop.js']);
 const ocrFiles=new Set(['worker.min.js','tesseract-core-lstm.wasm.js','tesseract-core-simd-lstm.wasm.js','lang/eng.traineddata','lang/spa.traineddata','lang/ron.traineddata'].map(file=>'vendor/ocr/'+file));
 const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.traineddata':'application/octet-stream'};
 const port = Number(process.env.PORT || 3000);

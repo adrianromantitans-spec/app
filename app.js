@@ -4,7 +4,7 @@ import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
 import {Cloud} from './cloud.js?v=ocr-18';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=entry-19';
+import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
 initializeLanguage();
 
@@ -536,7 +536,7 @@ function renderWelcome() {
   let notice='';
   if(pendingInvite) notice=tr('<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>');
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
-  root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
+  root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:authStage==='welcome'}),notice});
   root.inert=!!modalRoot.firstElementChild;
   if(!brandIntroShown){brandIntroShown=true;startBrandIntro();}
 }
@@ -544,7 +544,7 @@ function renderWelcome() {
 function startBrandIntro() {
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const brand=root.querySelector('.auth-header .brand');
-  if(reduced.matches || !brand?.animate)return;
+  if(reduced.matches || !brand?.animate){root.classList.add('welcome-ready');return;}
   const bounds=brand.getBoundingClientRect();
   if(!bounds.width)return;
   root.classList.add('brand-intro-active');
@@ -568,9 +568,9 @@ function startBrandIntro() {
   const curtain=document.createElement('div');
   curtain.className='brand-intro-curtain';
   curtain.setAttribute('aria-hidden','true');
-  brand.closest('.auth-shell').prepend(curtain);
+  (root.querySelector('.welcome-stage')||brand.closest('.auth-shell')).prepend(curtain);
   brandIntroActive=true;
-  const content=[...root.querySelectorAll('.auth-main,.auth-footer')];
+  const content=[...root.querySelectorAll(root.querySelector('.welcome-entry')?'.entry-controls,.welcome-phone':'.auth-main,.auth-footer')];
   content.forEach(el=>el.inert=true);
   const movement=brand.animate([
     {transform:centred,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`,offset:0},
@@ -593,6 +593,7 @@ function startBrandIntro() {
     for(const property of ['position','left','top','font-size','letter-spacing'])brand.style.removeProperty(property);
     header.style.removeProperty('height');
     root.classList.remove('brand-intro-active');
+    root.classList.add('welcome-ready');
     content.forEach(el=>el.inert=false);
     document.removeEventListener('keydown',onKey);
     window.removeEventListener('resize',onResize);
