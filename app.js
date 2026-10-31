@@ -553,18 +553,17 @@ function startBrandIntro() {
   const fontSize=parseFloat(getComputedStyle(brand).fontSize);
   const spacing=parseFloat(getComputedStyle(brand).letterSpacing)||0;
   const ratio=Math.min(innerWidth-64,360)/bounds.width;
-  // Render large text at its real font size; scaling a small composited layer
-  // can blur the letters, especially in Safari.
+  // Anchor the centre of the text throughout the size change. A fixed left
+  // edge lets the changing text width push the logo sideways mid-flight.
   header.style.height=`${headerBounds.height}px`;
+  const finalX=bounds.left+bounds.width/2-headerBounds.left;
+  const finalY=bounds.top+bounds.height/2-headerBounds.top;
+  const startX=innerWidth/2-headerBounds.left;
+  const startY=innerHeight/2-headerBounds.top;
   Object.assign(brand.style,{
-    position:'absolute',left:`${bounds.left-headerBounds.left}px`,
-    top:`${bounds.top-headerBounds.top}px`,fontSize:`${fontSize*ratio}px`,
-    letterSpacing:`${spacing*ratio}px`
+    position:'absolute',left:`${finalX}px`,top:`${finalY}px`,
+    transform:'translate(-50%,-50%)'
   });
-  const largeBounds=brand.getBoundingClientRect();
-  const x=Math.round((innerWidth-largeBounds.width)/2-largeBounds.left);
-  const y=Math.round((innerHeight-largeBounds.height)/2-largeBounds.top);
-  const centred=`translate(${x}px,${y}px)`;
   const curtain=document.createElement('div');
   curtain.className='brand-intro-curtain';
   curtain.setAttribute('aria-hidden','true');
@@ -572,12 +571,13 @@ function startBrandIntro() {
   brandIntroActive=true;
   const content=[...root.querySelectorAll(root.querySelector('.welcome-entry')?'.entry-controls,.welcome-phone':'.auth-main,.auth-footer')];
   content.forEach(el=>el.inert=true);
+  const large={left:`${startX}px`,top:`${startY}px`,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`};
   const movement=brand.animate([
-    {transform:centred,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`,offset:0},
-    {transform:centred,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`,offset:.68,easing:'cubic-bezier(.65,0,.2,1)'},
-    {transform:'translate(0,0)',fontSize:`${fontSize}px`,letterSpacing:`${spacing}px`,offset:1}
-  ],{duration:2400,fill:'both'});
-  const fade=curtain.animate([{opacity:1,offset:0},{opacity:1,offset:.68},{opacity:0,offset:1}],{duration:2400,fill:'both'});
+    {...large,offset:0},
+    {...large,offset:.57,easing:'cubic-bezier(.22,1,.36,1)'},
+    {left:`${finalX}px`,top:`${finalY}px`,fontSize:`${fontSize}px`,letterSpacing:`${spacing}px`,offset:1}
+  ],{duration:2700,fill:'both'});
+  const fade=curtain.animate([{opacity:1,offset:0},{opacity:1,offset:.57},{opacity:0,offset:1}],{duration:2700,fill:'both'});
   const onKey=event=>{if(event.key==='Escape'){event.preventDefault();finishBrandIntro();}};
   const initialWidth=innerWidth;
   // Safari can emit resize while its browser bars settle on first paint.
@@ -590,7 +590,7 @@ function startBrandIntro() {
     brandIntroActive=false;
     clearTimeout(timeout);
     movement.cancel();fade.cancel();curtain.remove();
-    for(const property of ['position','left','top','font-size','letter-spacing'])brand.style.removeProperty(property);
+    for(const property of ['position','left','top','font-size','letter-spacing','transform'])brand.style.removeProperty(property);
     header.style.removeProperty('height');
     root.classList.remove('brand-intro-active');
     root.classList.add('welcome-ready');
@@ -606,7 +606,7 @@ function startBrandIntro() {
   document.addEventListener('keydown',onKey);
   window.addEventListener('resize',onResize);
   reduced.addEventListener('change',onMotionChange);
-  timeout=setTimeout(()=>finishBrandIntro(),3000);
+  timeout=setTimeout(()=>finishBrandIntro(),3300);
   movement.finished.then(()=>finishBrandIntro(),()=>{});
 }
 function accountModal() {

@@ -11,7 +11,7 @@ with sync_playwright() as p:
         page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(BASE)
         expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        expect(page.locator('.entry-controls')).to_be_hidden()
+        expect(page.locator('.entry-controls')).to_have_css('opacity','0')
         assert page.locator('.split-word').count()==1
         page.locator('.auth-header .brand').evaluate('(el)=>window.introLogo=el')
         page.wait_for_timeout(700)

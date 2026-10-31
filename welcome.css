@@ -3,7 +3,8 @@
 .welcome-entry:before{display:none}
 .welcome-entry main.auth-main{display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-height:100svh;max-width:none;padding:80px 24px;margin:0;gap:0!important;overflow:hidden}
 .welcome-stage{position:relative;width:min(100%,420px);isolation:isolate}
-.welcome-panel{position:relative;z-index:2;padding:40px 26px 30px;border:1px solid #ffffffed;border-radius:30px;background:linear-gradient(135deg,#ffffffed,#fffffff2);box-shadow:0 24px 80px #73509c0b;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.welcome-panel{position:relative;z-index:2;padding:40px 26px 30px;border:1px solid #ffffffed;border-radius:30px;background:transparent}
+.welcome-panel:before{content:"";position:absolute;inset:-1px;z-index:-1;border:1px solid #ffffffed;border-radius:inherit;background:linear-gradient(135deg,#ffffffed,#fffffff2);box-shadow:0 24px 80px #73509c0b;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .welcome-entry .auth-header{display:flex;justify-content:center;width:100%;padding:0;margin:0 0 42px;max-width:none}
 .welcome-title{margin:0;line-height:1.2}
 .welcome-entry .auth-header .brand{margin:0;font-size:clamp(37px,10vw,48px);letter-spacing:-2.5px;line-height:1.2;font-weight:800}
@@ -23,9 +24,10 @@
 .brand-intro-active .welcome-entry .auth-main{visibility:visible}
 .brand-intro-active .welcome-entry .auth-header{z-index:211}
 .brand-intro-active .welcome-panel{z-index:211;background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-.brand-intro-active .welcome-entry .entry-controls,.brand-intro-active .welcome-phone{visibility:hidden}
-.welcome-ready .welcome-phone{animation:welcome-phone-enter 1.25s cubic-bezier(.16,1,.3,1) both}
-.welcome-ready .entry-controls{animation:welcome-controls-enter .7s ease both}
+.brand-intro-active .welcome-entry .entry-controls{visibility:visible;animation:welcome-scene-reveal 2.7s both}
+.brand-intro-active .welcome-panel:before{animation:welcome-scene-reveal 2.7s both}
+.brand-intro-active .welcome-phone{visibility:visible;animation:welcome-phone-enter 1.1s 1.55s cubic-bezier(.16,1,.3,1) both}
+@keyframes welcome-scene-reveal{0%,57%{opacity:0}100%{opacity:1}}
 @keyframes welcome-phone-enter{from{opacity:0;transform:translate(160px,65px) rotate(-26deg) scale(.8)}to{opacity:.58;transform:translate(0,0) rotate(-14deg) scale(1)}}
 @keyframes welcome-controls-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(min-width:761px){.welcome-stage{width:460px}.welcome-entry main.auth-main{padding:140px 32px}.welcome-panel{padding:46px 38px 34px;border-radius:34px}.welcome-phone{width:330px;height:688px;right:-135px;top:-145px}.welcome-entry .auth-header .brand{font-size:52px}.welcome-entry .auth-header{margin-bottom:46px}}
