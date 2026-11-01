@@ -98,3 +98,12 @@ para instalar; al abrir la app instalada por primera vez se puede activar direct
 La invitación no interrumpe formularios, recuperación de cuenta ni invitaciones a grupos.
 Se recuerda por cuenta/dispositivo y se registra como presentada en los metadatos
 de la cuenta. No requiere ejecutar SQL adicional.
+
+## Borrar todos los avisos
+
+La campanita incluye **Borrar todo**, con confirmación. Borra todos los avisos de
+la cuenta conectada, tanto leídos como pendientes, no solo la página cargada.
+Conserva preferencias, grupos silenciados, suscripciones y avisos de otras cuentas.
+Las entregas aún en cola se eliminan junto con sus avisos; un aviso ya enviado al
+sistema del móvil puede permanecer allí. Para activar esta operación en proyectos
+existentes, ejecutar `supabase/clear-lists.sql`. No contiene claves privadas.

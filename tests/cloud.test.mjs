@@ -284,3 +284,13 @@ test('notification onboarding is acknowledged without changing profile data or a
  let switched;switched=authed(async()=>{switched.user={id:'different-account'};return response(user);});
  await switched.finishNotificationOnboarding();assert.equal(switched.user.id,'different-account');
 });
+
+test('bulk clear uses group-owner permissions and an account-scoped notification RPC',async()=>{
+ const calls=[];const c=authed(async(url,options)=>{calls.push([url,JSON.parse(options.body)]);return response(75);});
+ await assert.rejects(()=>c.clearHistory({id:'foreign-group',remote:{ownerId:'other'}}));assert.equal(calls.length,0);
+ assert.equal(await c.clearHistory({id:'owned-group',remote:{ownerId:actor}}),75);
+ assert.deepEqual(calls[0][1],{p_id:'owned-group'});assert.ok(calls[0][0].endsWith('divzplit_clear_history'));
+ assert.equal(await c.clearNotifications(),75);assert.deepEqual(calls[1][1],{});assert.ok(calls[1][0].endsWith('divzplit_clear_notifications'));
+ const missing=authed(async()=>response({code:'PGRST202'},404));await assert.rejects(()=>missing.clearNotifications(),/todavía no está activado/);
+ let changed;changed=authed(async()=>{changed.user={id:'new-user'};return response(1);});await assert.rejects(()=>changed.clearNotifications(),/cuenta ha cambiado/);
+});

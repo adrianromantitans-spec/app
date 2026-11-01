@@ -1,5 +1,15 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Ver historial": {"en": "View history", "ro": "Vezi istoricul"},
+  "Borrar todo": {"en": "Clear all", "ro": "Șterge tot"},
+  "¿Borrar todo el historial?": {"en": "Clear all history?", "ro": "Ștergi tot istoricul?"},
+  "Se borrarán todas las entradas del historial de este grupo. Los gastos, pagos y saldos se conservarán. No se puede deshacer.": {"en": "All history entries for this group will be deleted. Expenses, payments and balances will be kept. This cannot be undone.", "ro": "Se vor șterge toate înregistrările din istoricul acestui grup. Cheltuielile, plățile și soldurile se păstrează. Acțiunea nu poate fi anulată."},
+  "Historial borrado. Los gastos y saldos se conservan.": {"en": "History cleared. Expenses and balances are kept.", "ro": "Istoric șters. Cheltuielile și soldurile se păstrează."},
+  "¿Borrar todas tus notificaciones?": {"en": "Clear all your notifications?", "ro": "Ștergi toate notificările tale?"},
+  "Se borrarán todos tus avisos, leídos y pendientes. Las notificaciones de otras personas y tus preferencias se conservarán.": {"en": "All your notifications, read and unread, will be deleted. Other people’s notifications and your preferences will be kept.", "ro": "Se vor șterge toate notificările tale, citite și necitite. Notificările celorlalți și preferințele tale se păstrează."},
+  "Notificaciones borradas.": {"en": "Notifications cleared.", "ro": "Notificări șterse."},
+  "El borrado de listas todavía no está activado en el servidor.": {"en": "Clearing lists is not enabled on the server yet.", "ro": "Ștergerea listelor nu este încă activată pe server."},
+
   "No te pierdas las novedades": {"en": "Stay in the loop", "ro": "Nu rata noutățile"},
   "Recibe avisos cuando tu grupo añada gastos, cree votaciones o te asigne tareas.": {"en": "Get notified when your group adds expenses, creates polls or assigns you tasks.", "ro": "Primește notificări când grupul adaugă cheltuieli, creează sondaje sau îți atribuie sarcini."},
   "En iPhone, añade DivZplit a la pantalla de inicio para recibir avisos con la app cerrada.": {"en": "On iPhone, add DivZplit to your Home Screen to receive notifications when the app is closed.", "ro": "Pe iPhone, adaugă DivZplit pe ecranul principal pentru a primi notificări când aplicația este închisă."},

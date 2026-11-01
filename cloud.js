@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=onboarding-27';
+import {tr} from './i18n.js?v=lists-28';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -334,6 +334,19 @@ export class Cloud {
     await this.requireCollaboration();
     return this.groupRpc('divzplit_respond_payment',{p_id:group.id,p_request_id:requestId,p_action:action});
   }
+  async clearList(name,args) {
+    const viewer=this.user?.id;
+    try{
+      const removed=await this.rpc(name,args);
+      if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+      return removed;
+    }catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado de listas todavía no está activado en el servidor.'));throw error;}
+  }
+  async clearHistory(group) {
+    if(group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el administrador puede borrar entradas del historial.'));
+    return this.clearList('divzplit_clear_history',{p_id:group.id});
+  }
+  async clearNotifications() {return this.clearList('divzplit_clear_notifications',{});}
   async deleteHistory(group,eventId) {
     await this.requireCollaboration();
     if(group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el administrador puede borrar entradas del historial.'));

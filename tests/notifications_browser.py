@@ -9,7 +9,7 @@ with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  for locale,ios in [('es-ES',True),('en-GB',False),('ro-RO',False)]:
   c=b.new_context(locale=locale,viewport={'width':393,'height':852},reduced_motion='reduce',user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' if ios else None)
-  settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;saved=[];registered=[]
+  settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;deleted=False;saved=[];registered=[]
   c.add_init_script('localStorage.setItem("nexo-session-v1:nexo-test.supabase.co",'+json.dumps(json.dumps({'access_token':'fixture','refresh_token':'fixture-refresh','expires_at':int(time.time())+3600}))+');')
   c.add_init_script('''
    window.__permissionCalls=0;window.__binding=null;window.__subscription=null;window.__permission='default';
@@ -20,7 +20,7 @@ with sync_playwright() as p:
   ''')
   c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body="export const cloudConfig={url:'https://nexo-test.supabase.co',publishableKey:'sb_publishable_fixture'};"))
   def api(route):
-   global read
+   global read,deleted
    path=urlsplit(route.request.url).path;data=json.loads(route.request.post_data or '{}');value=None
    if path=='/auth/v1/user':value={'id':OWNER,'email':'test@example.test','user_metadata':{'display_name':'Ana'}}
    elif path=='/auth/v1/settings':value={'external':{'google':False,'apple':False}}
@@ -28,7 +28,8 @@ with sync_playwright() as p:
    elif path=='/rest/v1/nexo_groups':value=[group]
    elif path=='/rest/v1/nexo_deleted_groups':value=[]
    elif path.endswith('/divzplit_get_notification_settings'):value=settings
-   elif path.endswith('/divzplit_notification_inbox'):value={'items':[{'id':NID,'group_id':GID,'kind':'expenses.added','category':'expenses','actor_name':'Luis','group_name':group['document']['name'],'subject':'Cena <script>test</script>','created_at':'2026-11-01T12:00:00Z','read_at':'2026-11-01T12:00:01Z' if read else None}],'unread':0 if read else 1,'next':None}
+   elif path.endswith('/divzplit_notification_inbox'):value={'items':[] if deleted else [{'id':NID,'group_id':GID,'kind':'expenses.added','category':'expenses','actor_name':'Luis','group_name':group['document']['name'],'subject':'Cena <script>test</script>','created_at':'2026-11-01T12:00:00Z','read_at':'2026-11-01T12:00:01Z' if read else None}],'unread':0 if read or deleted else 1,'next':None}
+   elif path.endswith('/divzplit_clear_notifications'):deleted=True;value=1
    elif path.endswith('/divzplit_read_notifications'):read=True
    elif path.endswith('/divzplit_open_notification'):read=True;value={'group_id':GID,'kind':'expenses.added'}
    elif path.endswith('/divzplit_set_notification_settings'):saved.append(data);settings.update({key:data['p_'+key] for key in ['expenses','polls','tasks','payments']});settings['muted_groups']=data['p_muted'];value=settings
@@ -66,6 +67,14 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':393,'height':852});page.screenshot(path='work/notifications-'+locale[:2]+'.png',full_page=True)
   page.locator('[data-notification-action="open"]').click();expect(page.locator('[data-tab="expenses"]').first).to_have_class('active')
   assert page.locator('.notification-dialog').count()==0
+  page.locator('.notification-bell').click()
+  page.locator('[data-notification-action="clear"]').click()
+  assert deleted==False
+  page.locator('[data-notification-action="confirm-clear"]').click()
+  expect(page.locator('.notification-item')).to_have_count(0)
+  expect(page.locator('.notification-count')).to_be_hidden()
+  assert deleted and settings['expenses']==False and settings['muted_groups']==[GID]
+  page.locator('[data-action="close-modal"]').first.click()
   page.locator('[data-action="settings"]:visible').first.click()
   page.get_by_role('button',name={'es-ES':'Cerrar sesión','en-GB':'Sign out','ro-RO':'Deconectare'}[locale],exact=True).click()
   expect(page.locator('.welcome-entry')).to_be_visible()

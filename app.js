@@ -1,10 +1,10 @@
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-18';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=onboarding-27';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=lists-28';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
-import {Cloud} from './cloud.js?v=onboarding-27';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=collaboration-25';
-import {NotificationCentre} from './notifications.js?v=onboarding-27';
+import {Cloud} from './cloud.js?v=lists-28';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=lists-28';
+import {NotificationCentre} from './notifications.js?v=lists-28';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -37,6 +37,7 @@ let pendingInvite='';
 let inviteError='';
 const remoteBaseline=new Map();
 const activityCache=new Map();
+const activityRequests=new Map();
 
 const icons = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
@@ -211,22 +212,35 @@ function activityNotice(data) {
 }
 async function loadActivity(more=false,preservePages=false) {
   const g=group(),viewer=accountUser?.id;if(!viewer||!g)return;
-  const previous=activityCache.get(g.id);
+  const previous=activityCache.get(g.id),request=(activityRequests.get(g.id)||0)+1;activityRequests.set(g.id,request);
   try{
     const ready=await cloud.collaborationAvailable();
+    if(activityRequests.get(g.id)!==request||accountUser?.id!==viewer)return;
     if(!ready){activityCache.set(g.id,{ready:false,events:[],requests:[],next:null});return;}
     const result=await cloud.readActivity(g.id,more?previous?.next:null);
-    if(accountUser?.id!==viewer)return;
+    if(accountUser?.id!==viewer||activityRequests.get(g.id)!==request)return;
     const keepPages=preservePages&&previous?.events?.length>50&&JSON.stringify(previous.events.slice(0,50))===JSON.stringify(result.events);
-    activityCache.set(g.id,{ready:true,...result,events:more?[...(previous?.events||[]),...result.events]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
-  }catch(error){if(accountUser?.id===viewer)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}
+    activityCache.set(g.id,{ready:true,...result,events:more?[...new Map([...(previous?.events||[]),...result.events].map(event=>[event.id,event])).values()]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
+  }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}
 }
 function pendingPaymentsPanel(data) {
   return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(group()))}</section>`;
 }
 function activityView() {
   const g=group(),data=activityData();
-  return ui`<div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||historyView(data.events,canManage(),activityMemberName,!!data.next)}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${g.payments.length?g.payments.map(p=>ui`<div class="payment-row">${icon('check')}<span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${money(p.amount)}</strong><small>${dateLabel(p.date)}</small></div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>')}</section>`;
+  return ui`<div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${g.payments.length?g.payments.map(p=>ui`<div class="payment-row">${icon('check')}<span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${money(p.amount)}</strong><small>${dateLabel(p.date)}</small></div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>')}</section>`;
+}
+
+function renderHistoryModal() {
+  const container=modalRoot.querySelector('.history-dialog');
+  if(!container||container.dataset.historyGroup!==group()?.id)return;
+  const data=activityData();
+  container.innerHTML=`${data.ready===true&&canManage()&&data.events.length?`<div class="history-modal-controls"><button class="button secondary danger-text" data-action="clear-history">${tr('Borrar todo')}</button></div>`:''}<div class="history-scroll">${activityNotice(data)||historyView(data.events,canManage(),activityMemberName,!!data.next)}</div>`;
+}
+async function showHistory() {
+  const g=group();if(!g)return;
+  openModal(tr('Historial de cambios'),`<div class="history-dialog" data-history-group="${esc(g.id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,esc(g.name));
+  await loadActivity();renderHistoryModal();
 }
 
 function budgetView() {const g=group(); const spent=totalSpent(g); const categories=['Alojamiento','Transporte','Comida','Actividades','Otros'];return ui`<div class="welcome-row"><div><div class="eyebrow">DISFRUTAR, CON LAS CUENTAS CLARAS</div><h1>Un poquito de previsión<span class="purple-text">.</span></h1><p>El presupuesto de ${esc(g.name)}, de un vistazo.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><div class="budget-layout">${budgetCard()}<section class="panel">${sectionTitle(tr('¿En qué se va el plan?'),tr('Tus gastos agrupados por categoría.'))}${categories.map(cat=>{const sum=g.expenses.filter(e=>e.category===cat).reduce((s,e)=>s+e.amount,0);return `<div class="category-row"><span class="expense-icon lavender">${icon(categoryIcon(cat))}</span><div><span>${tr(cat)}</span><div class="progress-track"><span style="width:${spent?sum/spent*100:0}%"></span></div></div><strong>${money(sum)}</strong></div>`;}).join('')}</section></div>`;}
@@ -372,9 +386,15 @@ async function onAppClick(event) {
   if(el.dataset.resolvePayment){await respondToPayment(el.dataset.requestId,el.dataset.resolvePayment);return;}
   if(el.dataset.deleteHistory){
     if(!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));
-    openModal(tr('¿Borrar esta entrada del historial?'),ui`<p class="dialog-copy">Solo se eliminará esta entrada del historial. Los gastos, pagos y saldos no cambian. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button danger" data-confirm-history-delete="${esc(el.dataset.deleteHistory)}">Borrar entrada</button></div>`);return;
+    openModal(tr('¿Borrar esta entrada del historial?'),ui`<p class="dialog-copy">Solo se eliminará esta entrada del historial. Los gastos, pagos y saldos no cambian. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="show-history">Cancelar</button><button class="button danger" data-confirm-history-delete="${esc(el.dataset.deleteHistory)}">Borrar entrada</button></div>`);return;
   }
-  if(el.dataset.confirmHistoryDelete){remoteBusy=true;try{await cloud.deleteHistory(group(),el.dataset.confirmHistoryDelete);await loadActivity();closeModal();render();toast(tr('Entrada del historial borrada.'));}finally{remoteBusy=false;}return;}
+  if(el.dataset.confirmHistoryDelete){remoteBusy=true;try{await cloud.deleteHistory(group(),el.dataset.confirmHistoryDelete);await loadActivity();closeModal();render();await showHistory();toast(tr('Entrada del historial borrada.'));}finally{remoteBusy=false;}return;}
+  if(el.dataset.confirmClearHistory){
+    const g=group();if(g?.id!==el.dataset.confirmClearHistory||!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));
+    remoteBusy=true;
+    try{activityRequests.set(g.id,(activityRequests.get(g.id)||0)+1);await cloud.clearHistory(g);await loadActivity();closeModal();render();await showHistory();toast(tr('Historial borrado. Los gastos y saldos se conservan.'));}finally{remoteBusy=false;}return;
+  }
+
   if(el.dataset.viewReceipt){await viewReceipt(el.dataset.viewReceipt);return;}
   if(el.dataset.stopRecurrence){const e=group().expenses.find(e=>e.id===el.dataset.stopRecurrence);if(e?.recurrence&&(!accountUser||canManage()||e.createdBy===accountUser.id)){e.recurrence.active=false;await save();expenseDetails(e.id);toast(tr('Repetición detenida. Los gastos anteriores se conservan.'));}return;}
   switch(el.dataset.action){
@@ -385,8 +405,10 @@ async function onAppClick(event) {
     case 'new-group':groupModal();break;
     case 'edit-group':groupModal(true);break;
     case 'settlements':await settlementsModal();break;
-    case 'reload-activity':await loadActivity();if(modalRoot.firstElementChild)await settlementsModal();else render();break;
-    case 'more-history':await loadActivity(true);render();break;
+    case 'reload-activity':await loadActivity();if(modalRoot.querySelector('.history-dialog'))renderHistoryModal();else if(modalRoot.firstElementChild)await settlementsModal();else render();break;
+    case 'more-history':await loadActivity(true);renderHistoryModal();break;
+    case 'show-history':await showHistory();break;
+    case 'clear-history':if(!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));openModal(tr('¿Borrar todo el historial?'),ui`<p class="dialog-copy">Se borrarán todas las entradas del historial de este grupo. Los gastos, pagos y saldos se conservarán. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="show-history">Cancelar</button><button class="button danger" data-confirm-clear-history="${esc(group().id)}">Borrar todo</button></div>`);break;
     case 'edit-budget':openModal(tr('Disfrutar, sin sorpresas'),ui`<form id="budget-form"><label class="field">Presupuesto total del grupo (${currencyUnit(group())})<input type="number" name="budget" min="1" max="10000000" step="0.01" value="${group().budget/100}" required></label><p class="form-note">${icon('users')} Como referencia: ${money(Math.round(group().budget/group().members.length))} por persona con el presupuesto actual.</p>${actions(tr('Actualizar presupuesto'))}</form>`,esc(group().name));break;
     case 'new-task':openModal(tr('Una pequeña cosa por hacer'),ui`<form id="task-form" data-entity-id="${uid()}"><label class="field">¿Qué queda pendiente?<input name="title" placeholder="Ej. Reservar la excursión a Sintra" maxlength="120" required></label><label class="field">¿Quién se encarga?<select name="assignee">${memberOptions()}</select></label>${actions(tr('Añadir tarea'))}</form>`);break;
     case 'new-poll':openModal(tr('¿Cuál es el plan?'),ui`<form id="poll-form" data-entity-id="${uid()}"><label class="field">La gran pregunta<input name="title" placeholder="¿Dónde cenamos el viernes?" maxlength="120" required></label><label class="field">Un poco de contexto <span class="muted">(opcional)</span><input name="description" placeholder="Algo rico, cerca del apartamento" maxlength="160"></label><label class="field">Opción 1<input name="option" placeholder="Pizzería del barrio" maxlength="100" required></label><label class="field">Opción 2<input name="option" placeholder="Restaurante portugués" maxlength="100" required></label><label class="field">Opción 3 <span class="muted">(opcional)</span><input name="option" placeholder="Otra buena idea" maxlength="100"></label>${actions(tr('Crear votación'))}</form>`);break;

@@ -53,3 +53,15 @@ Eliminar el grupo completo sí elimina sus registros y solicitudes asociados.
 - `python3 tests/collaboration_browser.py`: servidor local en puerto 3003; transporte
   simulado, dos cuentas, recorrido completo, tamaños móviles y ES/EN/RO. No usa
   cuentas, correos ni datos de producción.
+
+## Historial compacto y borrado completo
+
+Actividad muestra un acceso **Ver historial**. El listado completo se abre en una
+ventana con altura limitada y paginación. El administrador puede borrar una entrada
+o **Borrar todo**, siempre con confirmación. Los demás miembros solo consultan.
+
+Para activar los borrados completos en un proyecto existente, ejecutar
+`supabase/clear-lists.sql` después de `collaboration.sql` y `notifications.sql`.
+El archivo define operaciones; ejecutarlo no borra datos existentes.
+El historial se vacía solo en el grupo elegido y no altera documentos ni versiones.
+Las nuevas modificaciones vuelven a registrarse normalmente después del borrado.
