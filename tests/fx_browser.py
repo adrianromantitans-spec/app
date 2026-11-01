@@ -74,8 +74,6 @@ with sync_playwright() as p:
  c,friend=context(b,FRIEND)
  friend.locator('[data-action="settlements"]').first.click()
  expect(friend.locator('[data-action="fx-euros"]')).to_be_visible()
- assert len(fx_calls)==0
- friend.locator('[data-action="fx-euros"]').click()
  expect(friend.locator('.settlement-amount>strong')).to_contain_text('10,00')
  expect(friend.locator('.settlement-amount>small')).to_contain_text('50,00')
  expect(friend.locator('.fx-panel')).to_contain_text('2026-10-30')
@@ -112,14 +110,14 @@ with sync_playwright() as p:
  # Provider failure cannot masquerade as a valid euro amount; original payment remains available.
  group['document']['payments']=[];requests.clear();fx_failure=True
  c,page=context(b,FRIEND)
- page.locator('[data-action="settlements"]').first.click();page.locator('[data-action="fx-euros"]').click()
+ page.locator('[data-action="settlements"]').first.click()
  expect(page.locator('.fx-panel [role="alert"]')).to_contain_text('No se ha podido consultar')
  expect(page.locator('[data-settle]')).to_be_disabled()
  page.locator('[data-action="fx-original"]').click();expect(page.locator('[data-settle]')).to_be_enabled()
  page.locator('[data-action="close-modal"]').first.click();c.close()
  # A subcent EUR amount remains payable only in the original currency.
  group['document']['expenses'][0]['amount']=1;group['document']['expenses'][0]['participants']=[FRIEND];fx_failure=False
- c,page=context(b,FRIEND);page.locator('[data-action="settlements"]').first.click();page.locator('[data-action="fx-euros"]').click()
+ c,page=context(b,FRIEND);page.locator('[data-action="settlements"]').first.click()
  expect(page.locator('.settlement-amount')).to_contain_text('Importe inferior a un céntimo')
  expect(page.locator('[data-settle]')).to_be_disabled();c.close()
  # New currency selection and integral ISK expense input.

@@ -1,5 +1,5 @@
-import {tr,ui,locale} from './i18n.js?v=fx-31';
-import {money} from './model.js?v=fx-31';
+import {tr,ui,locale} from './i18n.js?v=personal-32';
+import {money} from './model.js?v=personal-32';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={
  'tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación',

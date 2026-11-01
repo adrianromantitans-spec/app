@@ -1,5 +1,5 @@
 """Registration notification invitation and current-account expense payer fixtures."""
-import copy,json,time
+import copy,json,time,os
 from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright,expect
 OWNER='11111111-1111-4111-8111-111111111111';VIEWER='22222222-2222-4222-8222-222222222222';GID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -31,7 +31,7 @@ with sync_playwright() as p:
    else:route.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}');return
    route.fulfill(content_type='application/json',body=json.dumps(value))
   c.route('https://nexo-test.supabase.co/**',api)
-  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto('http://127.0.0.1:3005/')
+  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3005/'))
   expect(page.locator('.notification-onboarding')).to_be_visible()
   assert page.evaluate('window.__permissionCalls')==0
   page.wait_for_function("localStorage.getItem('divzplit-notification-intro:22222222-2222-4222-8222-222222222222')==='1'")
@@ -58,6 +58,7 @@ with sync_playwright() as p:
   expect(page.locator('#expense-form')).to_have_count(0)
   assert saved[-1]['p_document']['expenses'][0]['payer']==VIEWER
   assert [m['id'] for m in saved[-1]['p_document']['members']]==[OWNER,VIEWER]
+  page.locator('[data-tab="expenses"]').first.click()
   page.locator('[data-expense="old"]:visible').first.click();page.locator('[data-edit-expense="old"]').click()
   expect(page.locator('#expense-form [name="payer"]')).to_have_value(OWNER)
   page.locator('[data-action="close-modal"]').first.click();page.reload();expect(page.locator('.topbar')).to_be_visible();page.wait_for_timeout(1200)

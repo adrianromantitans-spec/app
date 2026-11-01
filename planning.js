@@ -1,5 +1,5 @@
-import {currencyScale,currencyDigits} from './currencies.js?v=fx-31';
-import {tr} from './i18n.js?v=fx-31';
+import {currencyScale,currencyDigits} from './currencies.js?v=personal-32';
+import {tr} from './i18n.js?v=personal-32';
 
 // Zero means no budget; monetary amounts remain integer minor units.
 export function optionalBudget(value,currency='EUR') {

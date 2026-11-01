@@ -95,19 +95,20 @@ with sync_playwright() as p:
  assert not page.locator('[name="budget"]').evaluate('(e)=>e.required')
  page.locator('[name="name"]').fill('Nuestra casa')
  page.locator('#group-form button[type=submit]').click()
- expect(page.locator('.budget-card')).to_contain_text('Sin presupuesto establecido')
+ expect(page.locator('.home-budget-line')).to_contain_text('Opcional')
  assert group['document']['budget']==0
- assert page.locator('.budget-card .over-budget').count()==0
+ assert page.locator('.home-budget-line .over-budget').count()==0
  page.locator('[data-action="edit-budget"]').click()
  page.locator('[name="budget"]').fill('1200')
  page.locator('#budget-form button[type=submit]').click()
- expect(page.locator('.budget-card .progress-track')).to_be_visible()
+ expect(page.locator('.home-budget-line')).to_contain_text('1200,00')
  assert group['document']['budget']==120000
  page.locator('[data-action="edit-budget"]').click()
  page.locator('[name="budget"]').fill('')
  page.locator('#budget-form button[type=submit]').click()
- expect(page.locator('.budget-card')).to_contain_text('Sin presupuesto establecido')
+ expect(page.locator('.home-budget-line')).to_contain_text('Opcional')
  # Create a task with optional deadline, reminder and important flag.
+ page.locator('[data-tab="tasks"]').first.click()
  page.locator('[data-action="new-task"]').first.click()
  page.locator('[name="title"]').fill('Revisar factura <b>luz</b>')
  page.locator('[name="dueAt"]').fill(future);page.locator('[name="remindAt"]').fill(remind)

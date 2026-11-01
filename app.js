@@ -1,12 +1,13 @@
-import {euroAmount,validQuote} from './fx.js?v=fx-31';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=fx-31';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=fx-31';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=fx-31';
+import {groupMode,homeSummary,dayOffset,groupForMode} from './home.js?v=personal-32';
+import {euroAmount,validQuote} from './fx.js?v=personal-32';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=personal-32';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=personal-32';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=personal-32';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=fx-31';
-import {Cloud} from './cloud.js?v=fx-31';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=fx-31';
-import {NotificationCentre} from './notifications.js?v=fx-31';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=personal-32';
+import {Cloud} from './cloud.js?v=personal-32';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=personal-32';
+import {NotificationCentre} from './notifications.js?v=personal-32';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -42,6 +43,7 @@ const remoteBaseline=new Map();
 const activityCache=new Map();
 const activityRequests=new Map();
 let fxSession={groupId:null,mode:false,quote:null,error:'',loading:false,request:0};
+let homeClock=0;
 let planningLimit=30;
 let recordedPaymentLimit=50;
 let showArchivedRepayments=false;
@@ -113,7 +115,7 @@ const today = () => {const d = new Date(); return `${d.getFullYear()}-${String(d
 const dateLabel = date => date ? new Intl.DateTimeFormat(locale,{day:'numeric',month:'short'}).format(new Date(`${date}T12:00:00`)) : tr('Sin fecha');
 const categoryIcon = category => ({Alojamiento:'bed',Transporte:'plane',Comida:'coffee',Actividades:'spark',Otros:'receipt'}[category] || 'receipt');
 let toastTimer;
-function toast(message) { const el=document.querySelector('#toast'); el.textContent=message; el.classList.add('visible'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('visible'),4500); }
+function toast(message,tone='neutral') { const el=document.querySelector('#toast'); el.textContent=message;el.classList.toggle('success',tone==='success'); el.classList.add('visible'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('visible'),4500); }
 async function save() {
   if (!accountUser) {
     try {localStorage.setItem(storageKey,JSON.stringify(state));}
@@ -147,8 +149,9 @@ function sectionTitle(title, subtitle, extra='') {return `<div class="section-he
 
 function render() {
   if(brandIntroActive){brandIntroPendingRender=true;return;}
-  if(cloud.recovering){renderRecovery(true);return;}
-  if (!accountUser&&!demoMode) {if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
+  if(cloud.recovering){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');renderRecovery(true);return;}
+  if (!accountUser&&!demoMode) {root.classList.remove('personal-shell');document.body.classList.remove('personal-app');if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
+  root.classList.add('personal-shell');document.body.classList.add('personal-app');
   const g = group();
   const navigation = [['home','home',tr('Inicio')],['groups','users',tr('Grupos')],['activity','chart',tr('Actividad')],['budget','wallet',tr('Presupuestos')],['profile','person',tr('Perfil')]];
   const mobileNavigation=navigation.filter(([id])=>id!=='budget');
@@ -162,28 +165,58 @@ function render() {
     <div class="sidebar-bottom"><div class="together-card"><span class="little-spark">✳</span><h3>Menos líos.<br>Más buenos momentos.</h3><p>Lo mejor de hacer planes<br>es hacerlos juntos.</p><button data-action="new-group">Empieza algo bonito ${icon('arrow')}</button></div>
     <button class="profile" data-action="settings">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${accountUser?tr('Tu cuenta compartida'):tr('Tu espacio de demo')}</small></span>${icon('settings')}</button></div>
   </aside>
-  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right">${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}${accountUser?notifications.bell():''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
+  <div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right">${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}${accountUser?notifications.bell():''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
   <main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>
   <footer class="page-footer"><span>Hecho para compartir algo más que gastos.</span><span>DivZplit ${icon('heart')}</span></footer>
   <nav class="mobile-nav" aria-label="Navegación móvil">${mobileNavigation.map(([id,ic,label],index)=>`${index===2?ui`<div class="nav-add-slot"><button class="nav-add" data-action="quick-add" aria-label="Añadir" aria-haspopup="dialog" aria-expanded="false">${icon('plus')}</button></div>`:''}<button class="mobile-nav-item ${mobileActive===id?'active':''}" data-page="${id}" ${mobileActive===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
   root.inert=authLoading || !!modalRoot.firstElementChild;
 }
 
+function homeGroupHeader(g) {
+  const travel=groupMode(g)==='travel';
+  const context=travel&&g.date?`${g.members.length} · ${dateLabel(g.date)}${g.endDate?' – '+dateLabel(g.endDate):''}`:ui`${g.members.length} personas · ${tr(g.type==='Convivencia'?'Gastos de casa':g.type)}`;
+  return `<div class="home-group-header"><button class="home-group-picker" data-action="choose-group" aria-label="${tr('Seleccionar grupo')}"><span class="home-group-symbol">${icon(travel?'plane':'home')}</span><span class="home-group-copy"><strong>${esc(g.name)} <span aria-hidden="true">⌄</span></strong><small>${esc(context)}</small></span></button><div class="home-modes" role="group" aria-label="${tr('Vistas de grupo')}"><button data-group-mode="home" aria-pressed="${!travel}">${tr('Casa')}</button><button data-group-mode="travel" aria-pressed="${travel}">${tr('Viaje')}</button></div></div>`;
+}
 function homeView() {
-  const g = group(); const spent = totalSpent(g); const ownBalance = balances(g).you || 0;
-  const ownShare = g.expenses.reduce((sum,e)=>sum+(expenseShares(e).you||0),0);
-  return ui`<div class="welcome-row"><div><div class="eyebrow">UN LUGAR PARA LO QUE COMPARTÍS</div><h1>${ui`Hola, ${esc(currentProfile().name)}`}</h1><p>Tus planes, en un mismo lugar.</p></div><button class="button secondary" data-action="new-group">${icon('plus')} Crear grupo</button></div>
-  <section class="trip-hero"><div class="hero-content"><div class="trip-badge"><span></span>${esc(tr(g.type).toUpperCase())} EN GRUPO</div><h2>${esc(g.name)}</h2><div class="trip-meta"><span>${icon('pin')}${esc(g.place || tr('Un plan por descubrir'))}</span>${g.date?`<span>${icon('calendar')}${dateLabel(g.date)}${g.endDate?` — ${dateLabel(g.endDate)}`:''} ${g.date.slice(0,4)}</span>`:''}</div><div class="hero-bottom">${avatars(g.members)}<span>${g.members.length} personas, un gran plan</span>${canManage()?ui`<button class="hero-edit" data-action="edit-group" aria-label="Editar detalles del grupo">${icon('settings')}</button>`:''}${accountUser&&canManage()?ui`<button class="button secondary invite-button" data-action="invite">${icon('users')} Invitar</button>`:''}</div></div><div class="hero-art" aria-hidden="true">${g.emoji==='🚋'||/lisboa|lisbon/i.test(g.place||'')?'<img class="hero-destination-image" src="./assets/lisbon.png" width="1536" height="1024" alt="" decoding="async" fetchpriority="low">':`<div class="hero-generic-scene"><span class="scene-circle"></span><span class="scene-group-emoji">${esc(g.emoji)}</span><span class="scene-little-star">✳</span></div>`}</div></section>
-  <section class="stats-grid" aria-label="Resumen del grupo"><article class="stat-card spent-stat"><span class="stat-icon lavender">${icon('wallet')}</span><div class="stat-copy"><span class="stat-label">Gastos del grupo</span><strong class="stat-amount" aria-label="${esc(money(spent))}">${statMoney(spent)}</strong><small>${ui`${g.expenses.length} gastos compartidos`}</small></div></article><article class="stat-card balance-stat ${ownBalance<0?'is-owed':ownBalance>0?'is-credit':'is-settled'}"><span class="stat-icon">${icon('arrow')}</span><div class="stat-copy"><span class="stat-label">${ownBalance>0?tr('Te deben'):ownBalance<0?tr('Tienes pendiente'):tr('Todo en equilibrio')}</span><strong class="stat-amount" aria-label="${esc(money(Math.abs(ownBalance)))}">${statMoney(Math.abs(ownBalance))}</strong><button class="text-button" data-action="settlements">${ownBalance===0?tr('Ver saldos del grupo'):tr('Vamos a dejarlo a cero')}</button></div></article></section>
-  <div class="stats-context"><span>${tr('Tu parte del plan')}: <strong>${money(ownShare)}</strong></span><button class="text-button" data-page="budget">${tr('Presupuestos')} ${icon('arrow')}</button></div>
-  <div class="group-toolbar" data-label="${tr('EL PLAN, EN MARCHA')}"><div class="tabs" role="tablist" aria-label="Secciones del grupo">${[['summary',tr('Resumen')],['expenses',tr('Gastos')],['plans',tr('Planes y votaciones')],['tasks',tr('Tareas')]].map(([id,label])=>`<button role="tab" aria-selected="${tab===id}" class="${tab===id?'active':''}" data-tab="${id}">${label}${id==='tasks'?`<span>${g.tasks.filter(t=>!t.done).length}</span>`:''}</button>`).join('')}</div><button class="button primary" data-action="new-expense">${icon('plus')} Añadir gasto</button></div>
-  <div class="tab-content" role="tabpanel">${tab==='summary'?summaryView():tab==='expenses'?expensesView():tab==='plans'?plansView():tasksView()}</div>`;
+  const g=group();homeClock=Math.floor(Date.now()/60000);
+  if(tab!=='summary')return `${homeGroupHeader(g)}<div class="home-detail-heading"><button class="text-button" data-tab="summary">${icon('arrow','back-arrow')} ${tr('Inicio')}</button><span>${esc(g.name)}</span></div><div class="home-detail-tabs tabs" role="tablist" aria-label="${tr('Secciones del grupo')}">${[['summary',tr('Resumen')],['expenses',tr('Gastos')],['plans',tr('Planes y votaciones')],['tasks',tr('Tareas')]].map(([id,label])=>`<button role="tab" aria-selected="${tab===id}" class="${tab===id?'active':''}" data-tab="${id}">${label}</button>`).join('')}</div><div class="tab-content" role="tabpanel">${tab==='expenses'?expensesView():tab==='plans'?plansView():tasksView()}</div>`;
+  const info=homeSummary(g),data=activityData(),toConfirm=data.requests.filter(r=>r.to_id===accountUser?.id),outgoing=data.requests.filter(r=>r.from_id===accountUser?.id),pending=toConfirm.length||outgoing.length;
+  const balanceLabel=info.ownBalance>0?'Te deben en este grupo':info.ownBalance<0?'Tienes pendiente':'Todo en equilibrio';
+  const detail=info.travel&&currencyOf(g)!=='EUR'?tr('Consulta el cambio para pagar en euros'):info.travel?ui`Tu parte del viaje: ${money(info.ownShare)}`:ui`Este mes · Tu parte: ${money(info.ownShare)}`;
+  const attention=data.ready===true&&pending?`<button class="home-attention" data-action="show-pending-payments"><span class="home-attention-count">${pending}</span><strong>${toConfirm.length?toConfirm.length===1?tr('Un pago espera tu confirmación'):ui`${toConfirm.length} pagos esperan tu confirmación`:outgoing.length===1?tr('Un pago espera confirmación'):ui`${outgoing.length} pagos esperan confirmación`}</strong>${icon('chevron')}</button>`:'';
+  return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<div class="home-greeting"><p>${info.travel?tr('Todo listo para el próximo plan'):ui`Hola, ${esc(currentProfile().name.split(/\s+/)[0])}`}</p><h1>${tr(info.travel?'Viajad. Lo demás, aquí.':'Tus cuentas, al día.')}</h1></div><div class="home-overview"><article class="home-balance balance-stat ${info.ownBalance<0?'is-owed':info.ownBalance>0?'is-credit':'is-settled'}"><div class="home-balance-top"><div class="stat-copy"><span class="stat-label">${tr(balanceLabel)}</span><strong class="stat-amount" aria-label="${esc(money(Math.abs(info.ownBalance)))}">${statMoney(Math.abs(info.ownBalance))}</strong></div><span class="home-wallet">${icon('wallet')}</span></div><div class="home-balance-bottom"><small>${detail}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':'Saldar')}${icon('arrow')}</button></div></article>${attention}${info.travel?homeBudgetLine(g):''}<button class="button primary home-add" data-action="new-expense">${icon('plus')}${tr('Añadir gasto')}</button></div><div class="home-summary-grid">${summaryView(info)}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Último gasto')}</h2><button class="text-button" data-tab="expenses">${tr('Ver todos')}${icon('arrow')}</button></div><div class="home-compact-card">${g.expenses.length?expenseList(g.expenses.slice(0,1)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</div></section></div><div class="home-shortcuts" aria-label="${tr('Secciones del grupo')}"><button data-tab="expenses">${icon('receipt')}${tr('Gastos')}</button><button data-tab="tasks">${icon('task')}${tr('Tareas')}</button><button data-tab="plans">${icon('vote')}${tr('Votaciones')}</button></div><div class="home-context"><span>${tr('Total compartido')}: <strong>${money(totalSpent(g))}</strong></span><button class="text-button" data-page="budget">${tr('Presupuestos')}${icon('arrow')}</button></div></section>`;
 }
-
-function summaryView() {
-  return ui`<div class="dashboard-grid"><div class="dashboard-main"><section class="panel expenses-panel">${sectionTitle(tr('Los últimos gastos'),tr('Cada cuenta, en su sitio.'),ui`<div class="section-actions"><button class="text-button" data-tab="expenses">Ver todos ${icon('arrow')}</button><button class="icon-button expense-add-inline" data-action="new-expense" aria-label="Añadir gasto">${icon('plus')}</button></div>`)}${expenseList(group().expenses.slice(0,4))}</section><section class="panel">${sectionTitle(tr('Lo próximo que decidimos'),tr('Porque el mejor plan se elige entre todos.'),ui`<span class="tiny-pill lavender">${icon('vote')} A votación</span>`)}${group().polls.length?pollCard(group().polls[0]):empty(tr('¿Por dónde empezamos?'),tr('Propón un plan y deja que el grupo decida.'),'new-poll',tr('Crear votación'))}</section></div><div class="dashboard-side">${budgetCard()}<section class="panel task-panel">${sectionTitle(tr('Pequeñas cosas por hacer'),tr('Un poco de cada uno, mucho de todos.'),ui`<button class="icon-button" data-action="new-task" aria-label="Añadir tarea">${icon('plus')}</button>`)}${taskList(group().tasks.slice(0,4))}<button class="text-button full-width" data-tab="tasks">Ver todas las tareas ${icon('arrow')}</button></section><div class="tip-card"><span>✧</span><p><strong>El plan es disfrutar.</strong> DivZplit se encarga de que nada se quede en el aire.</p></div></div></div>`;
+function homeBudgetLine(g) {
+ return `<div class="home-budget-line"><span>${g.budget?ui`Presupuesto: ${money(totalSpent(g))} de ${money(g.budget)}`:tr('Presupuesto de viaje · Opcional')}</span><button class="text-button" ${canManage()?'data-action="edit-budget"':'data-page="budget"'}>${tr(g.budget?canManage()?'Ajustar':'Ver':canManage()?'Añadir':'Ver')}${icon(g.budget?'arrow':'plus')}</button></div>`;
 }
-
+function homeDeadline(item) {
+ if(!item.dueAt)return '';
+ const date=new Date(item.dueAt),day=dayOffset(item.dueAt),time=new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit'}).format(date);
+ return day===0?ui`Hoy, ${time}`:day===1?ui`Mañana, ${time}`:day!==null&&day<0?tr('Fecha vencida'):new Intl.DateTimeFormat(locale,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(date);
+}
+function summaryView(info=homeSummary(group())) {
+ const entry=info.highlight,g=group(),isPoll=entry?.kind==='polls',item=entry?.item,deadline=item?homeDeadline(item):'',assigned=item&&!isPoll?memberName(member(item.assignee)):'';
+ const heading=info.travel?'Lo próximo':item?.dueAt&&dayOffset(item.dueAt)===0?'Para hoy':'Próximas tareas';
+ return `<section class="home-upcoming"><div class="home-section-heading"><h2>${tr(heading)}</h2><button class="text-button" data-tab="${info.travel?'plans':'tasks'}">${tr(info.travel?'Ver planes':'Ver tareas')}${icon('arrow')}</button></div><div class="home-compact-card">${item?`<div class="home-highlight">${isPoll?`<span class="home-poll-symbol">${icon('vote')}</span>`:`<label class="home-task-check"><input type="checkbox" data-task="${esc(item.id)}" aria-label="${esc(item.title)}"><span>${icon('check')}</span></label>`}<button class="home-highlight-copy" data-plan-detail="${esc(item.id)}" data-kind="${entry.kind}"><strong>${esc(item.title)}</strong><small>${esc(isPoll?tr('Votación'):assigned)}${deadline?' · '+esc(deadline):''}</small></button>${item.important?`<span class="home-important">${tr('Importante')}</span>`:isPoll?`<button class="home-row-action" data-plan-detail="${esc(item.id)}" data-kind="polls">${tr(item.votes.you?'Ver':'Votar')}</button>`:''}</div>`:`<button class="home-empty-action" data-action="${info.travel?'new-poll':'new-task'}">${icon(info.travel?'vote':'check')}<span>${tr(info.travel?'El próximo plan lo decidís juntos.':'Sin tareas pendientes. Todo al día.')}</span>${icon('plus')}</button>`}</div></section>`;
+}
+function rememberHomeMode(g) {
+ try{const key='divzplit-home-groups:'+ (accountUser?.id||'demo'),saved=JSON.parse(sessionStorage.getItem(key)||'{}');sessionStorage.setItem(key,JSON.stringify({...saved,[groupMode(g)]:g.id}));}catch{/* Navigation also works without browser storage. */}
+}
+async function activateHomeGroup(id) {
+ const selected=state.groups.find(g=>g.id===id);if(!selected)throw new Error(tr('No tienes acceso a este grupo.'));
+ closeModal();state.activeGroup=id;page='home';tab='summary';expenseFilter='all';rememberActiveGroup();rememberHomeMode(selected);if(!accountUser)await save();render();window.scrollTo({top:0});
+ await loadActivity();if(group()?.id===id&&page==='home')render();
+}
+function chooseGroup(mode=null) {
+ const groups=mode?state.groups.filter(g=>groupMode(g)===mode):state.groups;
+ openModal(tr('Seleccionar grupo'),`<div class="home-group-options">${groups.map(g=>`<button class="home-group-option" data-group="${esc(g.id)}"><span class="home-group-symbol">${icon(groupMode(g)==='travel'?'plane':'home')}</span><span><strong>${esc(g.name)}</strong><small>${esc(tr(g.type))} · ${g.members.length} ${tr('personas')}</small></span>${icon(g.id===group()?.id?'check':'chevron')}</button>`).join('')}${!groups.length?`<p class="dialog-copy">${tr(mode==='travel'?'Aún no tienes grupos de viaje.':'Aún no tienes grupos para el día a día.')}</p>`:''}<button class="button primary full-width" data-action="new-group" data-group-type="${mode==='home'?'Convivencia':'Viaje'}">${icon('plus')}${tr(mode==='home'?'Crear grupo de casa':mode==='travel'?'Crear grupo de viaje':'Crear grupo')}</button><div class="home-group-management">${canManage()?`<button class="text-button" data-action="edit-group">${tr('Detalles del grupo')}</button>`:''}${accountUser&&canManage()?`<button class="text-button" data-action="invite">${tr('Invitar')}</button>`:''}</div></div>`,group()?esc(group().name):'');
+}
+async function selectHomeMode(mode) {
+ if(!['home','travel'].includes(mode))return;
+ if(group())rememberHomeMode(group());
+ let remembered;try{remembered=JSON.parse(sessionStorage.getItem('divzplit-home-groups:'+(accountUser?.id||'demo'))||'{}')[mode];}catch{}
+ const selected=groupForMode(state.groups,mode,remembered);if(selected)await activateHomeGroup(selected.id);else chooseGroup(mode);
+}
 function expenseList(items) {
   if (!items.length) return empty(tr('Las cuentas empiezan aquí'),tr('Añade el primer gasto y DivZplit calculará el reparto.'),'new-expense',tr('Añadir gasto'));
   return `<div class="expense-list">${items.map(e=>ui`<div class="expense-row"><span class="expense-icon ${e.category==='Alojamiento'?'lavender':e.category==='Transporte'?'blue-bg':'peach'}">${icon(categoryIcon(e.category))}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?tr(' · Ticket'):''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><button class="icon-button expense-detail-button" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}">${icon('chevron')}</button></div>`).join('')}</div>`;
@@ -332,10 +365,10 @@ async function showHistory() {
 
 function budgetView() {const g=group(); const spent=totalSpent(g); const categories=['Alojamiento','Transporte','Comida','Actividades','Otros'];return ui`<div class="welcome-row"><div><div class="eyebrow">DISFRUTAR, CON LAS CUENTAS CLARAS</div><h1>Un poquito de previsión<span class="purple-text">.</span></h1><p>El presupuesto de ${esc(g.name)}, de un vistazo.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><div class="budget-layout">${budgetCard()}<section class="panel">${sectionTitle(tr('¿En qué se va el plan?'),tr('Tus gastos agrupados por categoría.'))}${categories.map(cat=>{const sum=g.expenses.filter(e=>e.category===cat).reduce((s,e)=>s+e.amount,0);return `<div class="category-row"><span class="expense-icon lavender">${icon(categoryIcon(cat))}</span><div><span>${tr(cat)}</span><div class="progress-track"><span style="width:${spent?sum/spent*100:0}%"></span></div></div><strong>${money(sum)}</strong></div>`;}).join('')}</section></div>`;}
 
-function openModal(title, content, subtitle='') {
+function openModal(title, content, subtitle='',kind='') {
   if (!modalRoot.contains(document.activeElement)) modalOpener = document.activeElement;
   root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');
-  modalRoot.innerHTML=ui`<div class="modal-overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-heading"><div><div class="eyebrow">TODO CONECTADO</div><h2 id="modal-title">${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div><button class="icon-button" data-action="close-modal" aria-label="Cerrar">${icon('close')}</button></div>${content}</section></div>`;
+  modalRoot.innerHTML=ui`<div class="modal-overlay"><section class="modal ${esc(kind)}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-heading"><div><div class="eyebrow">TODO CONECTADO</div><h2 id="modal-title">${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div><button class="icon-button" data-action="close-modal" aria-label="Cerrar">${icon('close')}</button></div>${content}</section></div>`;
   document.body.classList.add('modal-open');
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
@@ -352,7 +385,8 @@ function expenseModal(id=null) {
   if(id&&!canEditExpense(existing)){toast(tr('No puedes editar este gasto.'));return;}
   const editing=!!existing;
   const participantMembers=existing?[...existing.participants.map(id=>group().members.find(m=>m.id===id)).filter(Boolean),...group().members.filter(m=>!existing.participants.includes(m.id))]:group().members;
-  openModal(tr(editing?'Editar gasto':'Un gasto, bien repartido'),ui`<form id="expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}"><label class="field">¿Qué habéis pagado?<input name="title" placeholder="Ej. Cena de bienvenida" required maxlength="100"></label><div class="form-columns"><label class="field">Importe (${currencyUnit(group())})<input name="amount" type="number" min="${currencyStep(currencyOf(group()))}" max="1000000" step="${currencyStep(currencyOf(group()))}" placeholder="0,00" required inputmode="decimal"></label><label class="field">Pagado por<select name="payer">${memberOptions({selfFirst:true,selected:existing?.payer||'you',ownName:true})}</select></label></div><p class="form-note receipt-amount-status" role="status" aria-live="polite"></p><div class="form-columns"><label class="field">Categoría<select name="category">${['Comida','Transporte','Alojamiento','Actividades','Otros'].map(c=>`<option value="${esc(c)}">${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Tipo de reparto<select name="splitMode"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></label><fieldset class="participants"><legend>Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}>${avatar(m,true)}<span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div>${receiptTools()}<div class="form-note">${icon('spark')} Cada céntimo cuenta: el reparto se ajusta automáticamente.</div>${actions(tr(editing?'Guardar cambios':'Guardar gasto'))}</form>`,esc(group().name));
+  const g=group(),payer=member(existing?.payer||'you');
+  openModal(tr(editing?'Editar gasto':'Añadir gasto'),ui`<form id="expense-form" class="compact-expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}" data-expense-group="${esc(g.id)}"><label class="expense-amount-field"><span>Importe</span><div><input name="amount" type="number" min="${currencyStep(currencyOf(g))}" max="1000000" step="${currencyStep(currencyOf(g))}" placeholder="0,00" required inputmode="decimal" aria-label="${esc(ui`Importe (${currencyUnit(g)})`)}"><strong aria-hidden="true">${esc(currencyUnit(g))}</strong></div></label><label class="field expense-concept">Concepto<input name="title" placeholder="Ej. Cena del grupo" aria-label="${tr('¿Qué habéis pagado?')}" required maxlength="100"></label><label class="field expense-payer-field"><span>Pagado por</span><div class="expense-payer-select"><span class="expense-payer-avatar" aria-hidden="true">${avatar(payer,true)}</span><select name="payer" aria-label="${tr('Pagado por')}">${memberOptions({selfFirst:true,selected:existing?.payer||'you',ownName:true})}</select></div></label><div class="expense-participants-heading"><span>${tr('Repartir entre')}</span><select name="splitMode" aria-label="${tr('Tipo de reparto')}"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></div><fieldset class="participants compact-participants"><legend class="sr-only">Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant person-chip"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}><span class="chip-check">${icon('check')}</span><span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><p class="form-note receipt-amount-status" role="status" aria-live="polite"></p><details class="expense-more-options" ${existing?.receipt||existing?.recurrence||existing?.seriesId?'open':''}><summary>${tr('Más opciones')}<span>${tr('Fecha, categoría y ticket')}</span></summary><div class="expense-more-content"><div class="form-columns"><label class="field">Categoría<select name="category">${['Comida','Transporte','Alojamiento','Actividades','Otros'].map(c=>`<option value="${esc(c)}">${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div>${receiptTools()}</div></details><p class="form-error" role="alert"></p><div class="modal-actions expense-actions"><button class="button primary" type="submit">${icon('check')}${tr(editing?'Guardar cambios':'Guardar gasto')}</button></div></form>`,esc(g.name),'compact-expense-modal');
   const form=modalRoot.querySelector('#expense-form');
   form.splitDrafts={};
   if(existing){
@@ -391,10 +425,10 @@ function updateSplitTotal(form) {
     output.textContent=mode==='percent'?ui`Total: ${new Intl.NumberFormat(locale,{maximumFractionDigits:2}).format(sum/100)} % de 100 %`:mode==='amounts'?ui`Total asignado: ${money(sum)} de ${money(decimalUnits(form.elements.amount.value||'0',currencyOf(group())))}`:ui`Total de partes: ${sum}`;
   }catch{output.textContent=tr('Completa el reparto para comprobar el total.');}
 }
-function groupModal(edit=false) {
+function groupModal(edit=false,defaultType='Viaje') {
   const g=group() || {};
   const selectedCurrency=currencyOf(edit?g:undefined);
-  openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${edit&&g.type===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}"></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}"></label></div>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}>${currencies.map(code=>`<option value="${code}" ${selectedCurrency===code?'selected':''}>${esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))} (${code})</option>`).join('')}</select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='EUR'?'€':selectedCurrency})`}</span><input name="budget" type="number" min="1" max="10000000" step="${currencyStep(selectedCurrency)}" value="${edit&&g.budget?g.budget/currencyScale(selectedCurrency):''}" placeholder="1200"><span class="muted">${tr('Opcional. Déjalo vacío si no necesitas presupuesto.')}</span></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
+  openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${(edit?g.type:defaultType)===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}"></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}"></label></div>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}>${currencies.map(code=>`<option value="${code}" ${selectedCurrency===code?'selected':''}>${esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))} (${code})</option>`).join('')}</select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='EUR'?'€':selectedCurrency})`}</span><input name="budget" type="number" min="1" max="10000000" step="${currencyStep(selectedCurrency)}" value="${edit&&g.budget?g.budget/currencyScale(selectedCurrency):''}" placeholder="1200"><span class="muted">${tr('Opcional. Déjalo vacío si no necesitas presupuesto.')}</span></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
 }
 function paymentSuggestions() {
   const pending=activityData().ready===true?activityData().requests:[];
@@ -443,7 +477,7 @@ async function respondToPayment(requestId,action,returnToPending=false) {
     const saved=await cloud.respondPayment(group(),requestId,action);
     const index=state.groups.findIndex(g=>g.id===saved.id);state.groups[index]=saved;remoteBaseline.set(saved.id,JSON.stringify(saved));
     await loadActivity();closeModal();render();if(returnToPending)await showPaymentList('pending');
-    toast(tr(action==='confirm'?'Pago confirmado. Los saldos están actualizados.':action==='reject'?'Pago marcado como no recibido. Los saldos no han cambiado.':'Solicitud cancelada. Los saldos no han cambiado.'));
+    toast(tr(action==='confirm'?'Pago confirmado. Los saldos están actualizados.':action==='reject'?'Pago marcado como no recibido. Los saldos no han cambiado.':'Solicitud cancelada. Los saldos no han cambiado.'),action==='confirm'?'success':'neutral');
   }catch(error){await loadActivity();throw error;}finally{remoteBusy=false;}
 }
 
@@ -475,8 +509,9 @@ async function onAppClick(event) {
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.notificationAction){await notifications.handle(el);return;}
   if(el.dataset.receiptAction){await handleReceiptAction(el,currencyOf(group()),updateSplitTotal);return;}
-  if(el.dataset.page){page=el.dataset.page; render();if(page==='activity'){await loadActivity();render();}document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
-  if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
+  if(el.dataset.page){page=el.dataset.page; render();if(page==='activity'||page==='home'){await loadActivity();render();}document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
+  if(el.dataset.group){await activateHomeGroup(el.dataset.group);return;}
+  if(el.dataset.groupMode){await selectHomeMode(el.dataset.groupMode);return;}
   if(el.dataset.tab){tab=el.dataset.tab;render();return;}
   if(el.dataset.filter){expenseFilter=el.dataset.filter;render();return;}
   if(el.dataset.poll){const poll=group().polls.find(p=>p.id===el.dataset.poll);if(planClosed(poll))throw new Error(tr('Esta votación ya está cerrada.'));vote(poll,el.dataset.option,'you');await save();render();renderPlanningList();toast(poll.votes.you?tr('Tu voto está guardado. Puedes cambiarlo cuando quieras.'):tr('Has retirado tu voto.'));return;}
@@ -525,8 +560,8 @@ async function onAppClick(event) {
     const action=el.dataset.paymentResponse,id=el.dataset.requestId,returnToPending=!!modalRoot.querySelector('.payment-list-dialog[data-kind="pending"]');
     const request=activityData().requests.find(r=>r.id===id);
     const fxSummary=request?.fx?ui`<p class="dialog-copy">${money(request.fx.amount,'EUR')} · ${money(request.amount,request.currency)}</p>${fxDetails(request.fx,request.currency)}`:'';
-    const label=action==='confirm'?'¿Confirmas que has recibido el dinero?':action==='reject'?'¿Todavía no has recibido este pago?':'¿Cancelar esta solicitud de pago?';
-    openModal(tr(label),ui`${fxSummary}<p class="dialog-copy">${tr(action==='confirm'?'Confirma únicamente si el dinero ya ha llegado a su destino.':'Los saldos no cambiarán.')}</p><div class="modal-actions"><button class="button secondary" data-action="${returnToPending?'show-pending-payments':'close-modal'}">Volver</button><button class="button primary" data-resolve-payment="${esc(action)}" data-request-id="${esc(id)}" data-return-pending="${returnToPending}">Confirmar</button></div>`);return;
+    const label=action==='confirm'&&request?ui`¿Has recibido ${money(request.fx?.amount??request.amount,request.fx?'EUR':request.currency)}?`:action==='confirm'?tr('¿Confirmas que has recibido el dinero?'):action==='reject'?'¿Todavía no has recibido este pago?':'¿Cancelar esta solicitud de pago?';
+    openModal(tr(label),ui`${action==='confirm'?`<div class="payment-confirm-icon">${icon('wallet')}</div>`:''}${fxSummary}<p class="dialog-copy">${tr(action==='confirm'?'Confirma únicamente si el dinero ya ha llegado a su destino.':'Los saldos no cambiarán.')}</p><div class="modal-actions"><button class="button secondary" data-action="${returnToPending?'show-pending-payments':'close-modal'}">Volver</button><button class="button primary" data-resolve-payment="${esc(action)}" data-request-id="${esc(id)}" data-return-pending="${returnToPending}">${tr(action==='confirm'?'Sí, confirmar':'Confirmar')}</button></div>`);return;
   }
   if(el.dataset.resolvePayment){await respondToPayment(el.dataset.requestId,el.dataset.resolvePayment,el.dataset.returnPending==='true');return;}
   if(el.dataset.deleteHistory){
@@ -556,12 +591,13 @@ async function onAppClick(event) {
     case 'quick-add':quickAddModal();break;
     case 'delete-group':deleteGroupModal();break;
     case 'new-expense':expenseModal();break;
-    case 'new-group':groupModal();break;
+    case 'new-group':groupModal(false,el.dataset.groupType||'Viaje');break;
     case 'edit-group':groupModal(true);break;
     case 'fx-original':fxSession.mode=false;renderSettlements();break;
     case 'fx-euros':fxSession.mode=true;if(validQuote(fxSession.quote,currencyOf(group())))renderSettlements();else await loadFxQuote();break;
     case 'fx-refresh':await loadFxQuote();break;
-    case 'settlements':await settlementsModal();break;
+    case 'choose-group':chooseGroup();break;
+    case 'settlements':await settlementsModal();if(el.dataset.preferEuros==='true'){fxSession.mode=true;await loadFxQuote();}break;
     case 'reload-activity':await loadActivity();if(modalRoot.querySelector('.history-dialog'))renderHistoryModal();else if(modalRoot.querySelector('.payment-list-dialog'))renderPaymentList();else if(modalRoot.querySelector('.settlements-dialog'))renderSettlements();else if(modalRoot.firstElementChild)await settlementsModal();else render();break;
     case 'more-history':await loadActivity(true);renderHistoryModal();break;
     case 'show-pending-payments':await showPaymentList('pending');break;
@@ -604,9 +640,10 @@ async function onAppChange(event) {
   if(el.form?.id==='expense-form'&&(el.name==='splitMode'||el.name==='participants')){renderSplitFields(el.form);return;}
   if(el.name==='removeReceipt'&&el.checked){const file=el.form.elements.receipt;file.value='';await receiptChanged(file);return;}
   if(el.matches('select[name=currency]')){const label=el.form.querySelector('.budget-currency-label');if(label)label.textContent=ui`Presupuesto total del grupo (${el.value==='EUR'?'€':el.value})`;if(el.form.elements.budget)el.form.elements.budget.step=currencyStep(el.value);return;}
-  if(el.matches('input[name=receipt]')){await receiptChanged(el);return;}
+  if(el.matches('input[name=receipt]')){const details=el.form?.querySelector('.expense-more-options');if(details)details.open=true;await receiptChanged(el);return;}
+  if(el.form?.id==='expense-form'&&el.name==='payer'){const target=el.form.querySelector('.expense-payer-avatar');if(target)target.innerHTML=avatar(member(el.value),true);return;}
   if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();renderPlanningList();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
-  if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'){await loadActivity();render();}}
+  if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'||page==='home'){await loadActivity();render();}}
 }
 document.addEventListener('submit',async event=>{
   const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
@@ -615,6 +652,7 @@ document.addEventListener('submit',async event=>{
   if(await handleAccountForm(form,data))return;
   try {
     if(form.id==='expense-form'){
+      if(form.dataset.expenseGroup!==group()?.id)throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
       if(form.receiptPending)throw new Error(tr('Espera a que termine de prepararse la foto.'));
       remoteBusy=true;const submit=form.querySelector('[type=submit]');submit.disabled=true;
       try {
@@ -655,7 +693,7 @@ document.addEventListener('submit',async event=>{
         Object.assign(item,{description:data.get('description').trim(),options:previous?.options||options.map(label=>({id:uid(),label,emoji:'✦'})),votes:previous?.votes||{}});
       }
       if(accountUser)await cloud.requirePlanning(!!item.remindAt);
-      form.intendedPlan={...previous,...item};await applyPlanningAction(kind,'save',item);tab=kind==='tasks'?'tasks':'plans';closeModal();render();await showPlanningList(kind);toast(tr('Listo. Todo está actualizado.'));return;
+      form.intendedPlan={...previous,...item};await applyPlanningAction(kind,'save',item);tab=kind==='tasks'?'tasks':'plans';closeModal();render();await showPlanningList(kind);toast(tr('Listo. Todo está actualizado.'),'success');return;
     }
     if(form.id==='budget-form'){const budget=optionalBudget(data.get('budget'),currencyOf(group()));if(accountUser&&!budget)await cloud.requirePlanning();group().budget=budget;}
     if(form.id==='group-form'){
@@ -672,7 +710,7 @@ document.addEventListener('submit',async event=>{
         const colors=['pink','blue','orange','purple'];const g={...fields,id:accountUser?form.dataset.entityId:uid(),members:[{id:'you',name:'Tú',initials:'AL',color:'purple'},...names.map((name,i)=>({id:uid(),name,initials:name.split(/\s+/).map(n=>n[0]).join('').slice(0,2).toUpperCase(),color:colors[i%4]}))],expenses:[],payments:[],tasks:[],polls:[]};state.groups.push(g);state.activeGroup=g.id;page='home';tab='summary';
       }
     }
-    await save();if(form.oldReceipt&&accountUser)cloud.deleteReceipt(form.oldReceipt.groupId,form.oldReceipt.path).catch(()=>{});closeModal();render();toast(form.id==='group-form'?tr('El plan ya tiene su espacio.'):tr('Listo. Todo está actualizado.'));
+    await save();if(form.oldReceipt&&accountUser)cloud.deleteReceipt(form.oldReceipt.groupId,form.oldReceipt.path).catch(()=>{});closeModal();render();toast(form.id==='group-form'?tr('El plan ya tiene su espacio.'):tr('Listo. Todo está actualizado.'),'success');
   }catch(error){
     // A response can be lost after the server commits. Stable form IDs let a
     // reload confirm the saved record instead of creating another one on retry.
@@ -954,7 +992,7 @@ async function connectAccount() {
   accountUser=cloud.user;demoMode=false;activityCache.clear();paymentArchives.clear();
   state={version:1,activeGroup:null,groups:[]};remoteBaseline.clear();page='home';tab='summary';
   try {state.activeGroup=sessionStorage.getItem('nexo-active-'+accountUser.id);} catch {}
-  await loadSharedGroups();await processRecurrences();setSync(tr('Actualizado'));
+  await loadSharedGroups();await processRecurrences();await loadActivity();if(group())rememberHomeMode(group());setSync(tr('Actualizado'));
   cloud.cleanupDeletedGroups().catch(()=>{});
   const metadata=accountUser.user_metadata||{};
   const firstSocialLogin=metadata.notification_intro_pending!==false&&accountUser.created_at&&accountUser.last_sign_in_at&&Math.abs(Date.parse(accountUser.last_sign_in_at)-Date.parse(accountUser.created_at))<10000;
@@ -972,8 +1010,8 @@ async function refreshShared() {
   remoteBusy=true;
   const before=JSON.stringify(state.groups),beforeActivity=JSON.stringify(activityData());
   try {
-    await loadSharedGroups();await processRecurrences();await notifications.poll();if(page==='activity')await loadActivity(false,true);setSync(tr('Actualizado'));
-    if (before!==JSON.stringify(state.groups)||beforeActivity!==JSON.stringify(activityData())) render();
+    await loadSharedGroups();await processRecurrences();await notifications.poll();if(page==='activity'||page==='home')await loadActivity(false,true);setSync(tr('Actualizado'));
+    if (before!==JSON.stringify(state.groups)||beforeActivity!==JSON.stringify(activityData())||(page==='home'&&homeClock!==Math.floor(Date.now()/60000))) render();
   } catch(error) {
     setSync(tr('Sin conexión · Reintentar'));
     if (!cloud.session) {notifications.disconnect().catch(()=>{});accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();render();toast(tr('Tu sesión ha caducado. Vuelve a entrar.'));}

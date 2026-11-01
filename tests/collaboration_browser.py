@@ -62,6 +62,7 @@ with sync_playwright() as p:
  cf,friend=context(b,FRIEND)
  expect(friend.locator('.balance-stat .stat-number')).to_contain_text('50')
  friend.locator('[data-action="settlements"]').first.click()
+ friend.locator('[data-action="fx-original"]').click()
  friend.get_by_role('button',name='Marcar como pagado',exact=True).click()
  friend.get_by_role('button',name='Ya lo he enviado',exact=True).click()
  expect(friend.locator('#toast')).to_contain_text('para confirmar')
