@@ -1,6 +1,7 @@
+import {currencyDigits,currencyStep} from './currencies.js?v=fx-31';
 import {openReceiptCrop,closeReceiptCrop,applyReceiptCrop} from './receipt-crop.js?v=ocr-18';
-import {tr,ui,locale} from './i18n.js?v=ocr-18';
-import {readReceipt,parseReceipt} from './receipt-ocr.js?v=ocr-18';
+import {tr,ui,locale} from './i18n.js?v=fx-31';
+import {readReceipt,parseReceipt} from './receipt-ocr.js?v=fx-31';
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function setAutomaticValue(form,name,value) {
   form.receiptApplyingAuto=true;
@@ -16,7 +17,7 @@ export function clearReceiptAutofill(form) {
 function autofillReceipt(form,data,result,mismatch,revisions) {
   if(mismatch||data.amount===null||!result.reliable||(result.confidence<50&&!result.confirmedTotal)||form.dataset.edit==='true'||form.querySelector('[type=submit]')?.disabled)return [];
   const filled=[];
-  for(const [name,value] of Object.entries({amount:(data.amount/100).toFixed(2),title:data.title,date:data.date})){
+  for(const [name,value] of Object.entries({amount:(data.amount/100).toFixed(currencyDigits(data.currency)),title:data.title,date:data.date})){
     const input=form.elements[name],previous=form.receiptAutofilled?.[name];
     if(value===null||input.readOnly||(form.receiptFieldRevisions?.[name]||0)!==(revisions[name]||0))continue;
     const untouchedDate=name==='date'&&input.value===input.defaultValue&&!form.receiptEditedFields?.has(name);
@@ -93,19 +94,20 @@ export async function handleReceiptAction(button,currency,onApplied) {
     if(!active())return;
     const data=result.confidence>=25?{...(result.details||parseReceipt(result.text))}:{title:null,amount:null,date:null,currency:null,currencyAmbiguous:false};
     if(data.amount===null&&data.date===null)data.title=null;
-    const mismatch=data.currencyAmbiguous||(data.currency&&data.currency!==currency);
+    const fractionalWholeUnit=currency==='ISK'&&data.amount!==null&&data.amount%100!==0;
+    const mismatch=fractionalWholeUnit||(!data.currency&&!['EUR','RON'].includes(currency))||data.currencyAmbiguous||(data.currency&&data.currency!==currency);
     const filled=autofillReceipt(form,data,result,mismatch,revisions);
     if(filled.length)onApplied(form);
-    const formatted=data.amount===null?'':new Intl.NumberFormat(locale,{style:'currency',currency:data.currency||currency}).format(data.amount/100);
+    const formatted=data.amount===null?'':new Intl.NumberFormat(locale,{style:'currency',currency:data.currency||currency,maximumFractionDigits:fractionalWholeUnit?2:currencyDigits(data.currency||currency)}).format(data.amount/100);
     const labels={title:tr('Comercio o concepto'),amount:ui`Importe (${data.currency||currency})`,date:tr('Fecha')};
-    const rows=Object.entries({title:data.title,amount:data.amount===null?null:(data.amount/100).toFixed(2),date:data.date}).filter(([,value])=>value!==null);
+    const rows=Object.entries({title:data.title,amount:data.amount===null?null:(data.amount/100).toFixed(fractionalWholeUnit?2:currencyDigits(data.currency||currency)),date:data.date}).filter(([,value])=>value!==null);
     status.textContent=filled.includes('amount')?ui`Importe rellenado: ${formatted}. Revísalo antes de guardar.`:data.amount!==null?tr('Lectura terminada. Revisa los datos y elige cuáles usar.'):tr('No se ha podido identificar el total. Pulsa «Recortar para leer» y marca solo el ticket, sin el fondo.');
     if(amountStatus)amountStatus.textContent=filled.includes('amount')?tr('Importe leído del ticket. Puedes corregirlo antes de guardar.'):mismatch?tr('La moneda del ticket no coincide con la del grupo. Introduce el importe en la moneda del grupo.'):data.amount===null?tr('No se ha detectado el total. Puedes escribirlo o recortar la foto del ticket.'):form.elements.amount.value?tr('Se conserva el importe que has escrito. Puedes revisar el total detectado junto al ticket.'):tr('Revisa el total detectado junto al ticket y pulsa «Usar datos seleccionados».');
     results.innerHTML=(mismatch?tr('<p class="form-note receipt-currency-warning">La moneda del ticket no coincide o no está clara. Introduce el importe en la moneda del grupo; no se convierte automáticamente.</p>'):'')+
       (rows.length?`<div class="receipt-detected-fields">${rows.map(([name,value])=>{
         const locked=form.elements[name].readOnly||(name==='amount'&&mismatch);
         const checked=!filled.includes(name)&&result.confidence>=45&&!locked&&(!form.elements[name].value||name==='date'&&form.dataset.edit!=='true'&&!form.receiptEditedFields?.has('date'));
-        return `<div class="receipt-detected-field"><label class="participant"><input type="checkbox" data-ocr-use="${name}" ${locked?'disabled':''} ${checked?'checked':''}><span>${escapeHTML(labels[name])}</span></label><input class="receipt-detected-value" aria-label="${escapeHTML(labels[name])}" data-ocr-value="${name}" type="${name==='amount'?'number':name==='date'?'date':'text'}" value="${escapeHTML(value)}" ${locked?'disabled':''} ${name==='amount'?'min="0.01" max="1000000" step="0.01" inputmode="decimal"':name==='title'?'maxlength="100"':''}></div>`;
+        return `<div class="receipt-detected-field"><label class="participant"><input type="checkbox" data-ocr-use="${name}" ${locked?'disabled':''} ${checked?'checked':''}><span>${escapeHTML(labels[name])}</span></label><input class="receipt-detected-value" aria-label="${escapeHTML(labels[name])}" data-ocr-value="${name}" type="${name==='amount'?'number':name==='date'?'date':'text'}" value="${escapeHTML(value)}" ${locked?'disabled':''} ${name==='amount'?`min="${currencyStep(currency)}" max="1000000" step="${currencyStep(currency)}" inputmode="decimal"`:name==='title'?'maxlength="100"':''}></div>`;
       }).join('')}</div><button type="button" class="button secondary full-width" data-receipt-action="apply">${tr('Usar datos seleccionados')}</button>`:'')+
       `<details class="receipt-ocr-text"><summary>${tr('Ver texto reconocido')}</summary><pre>${escapeHTML(result.text.slice(0,20000))}</pre></details>`;
     if(filled.includes('amount')){

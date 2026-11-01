@@ -1,5 +1,5 @@
-import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=planning-30';
+import {currencyOf} from './model.js?v=fx-31';
+import {tr} from './i18n.js?v=fx-31';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -24,6 +24,8 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status) {
   const code = error?.error_code || error?.code;
+  if(code==='NEXO_FX_EXPIRED')return tr('El cambio ha caducado. Actualízalo antes de continuar.');
+  if(code==='NEXO_FX_AMOUNT'||code==='NEXO_FX_RATE')return tr('No se ha podido validar la conversión. Actualiza el cambio y vuelve a intentarlo.');
   if(code==='NEXO_POLL_CLOSED')return tr('Esta votación ya está cerrada.');
   if(code==='NEXO_PLAN_FIELDS')return tr('Revisa la fecha límite y el recordatorio.');
   if(code==='NEXO_PLAN_PAST')return tr('Elige una fecha y hora futuras.');
@@ -31,7 +33,7 @@ function messageFor(error, status) {
   if(code==='NEXO_REMINDER_WAIT')return tr('Espera 15 minutos entre recordatorios de la misma entrada.');
   if(code==='NEXO_SPLIT')return tr('Revisa el reparto personalizado: los importes o porcentajes deben sumar el total.');
   if(code==='NEXO_CURRENCY_LOCKED')return tr('La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.');
-  if(code==='NEXO_CURRENCY')return tr('Moneda no disponible. Elige EUR o RON.');
+  if(code==='NEXO_CURRENCY')return tr('Moneda no disponible. Elige una de la lista.');
   if (code === 'NEXO_CONFLICT') return tr('Alguien ha actualizado el grupo. Hemos recargado los datos; revisa tu cambio y vuelve a guardarlo.');
   if (code === 'NEXO_INVITE') return tr('Este enlace ha caducado, se ha revocado o ya no admite más personas. Pide uno nuevo.');
   if (code === 'NEXO_PUSH_NOT_READY') return tr('El envío de avisos al móvil todavía no está activado.');
@@ -270,14 +272,14 @@ export class Cloud {
     this.currenciesReady=true;
   }
   async createGroup(group) {
-    if(currencyOf(group)==='RON')await this.requireCurrencies();
+    if(!['EUR','RON'].includes(currencyOf(group)))await this.requireFx();else if(currencyOf(group)==='RON')await this.requireCurrencies();
     const fields=Object.fromEntries(['name','emoji','type','place','date','endDate','budget','currency'].map(key=>[key,group[key]]));
     fields.requestId=group.id;
     return this.groupRpc('nexo_create_group',{p_fields:fields});
   }
   async saveGroup(group) {
     if(group.expenses.some(e=>e.split&&e.split.mode!=='equal'))await this.requireExpenseTools();
-    if(currencyOf(group)==='RON')await this.requireCurrencies();
+    if(!['EUR','RON'].includes(currencyOf(group)))await this.requireFx();else if(currencyOf(group)==='RON')await this.requireCurrencies();
     const document=mapGroup(group,this.user.id,true);
     // The server owns names, membership and identity. Restore the canonical name.
     const me=document.members.find(m=>m.id===this.user.id);
@@ -331,9 +333,12 @@ export class Cloud {
     return {events:page,requests,next:events.length>50?{created_at:last.created_at,id:last.id}:null};
   }
   async requestPayment(group,payment,requestId) {
-    await this.requireCollaboration();
+    const viewer=this.user?.id;await this.requireCollaboration();
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'));
+    if(payment.fxQuoteId){const viewer=this.user?.id;await this.requireFx();if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'));}
     if(payment.from!=='you')throw new CloudError(tr('Solo puedes marcar tus propios pagos.'));
-    return this.rpc('divzplit_request_payment',{p_id:group.id,p_version:group.remote.version,p_request_id:requestId,p_to:payment.to,p_amount:payment.amount,p_currency:currencyOf(group)});
+    const args={p_id:group.id,p_version:group.remote.version,p_request_id:requestId,p_to:payment.to,p_amount:payment.amount,p_currency:currencyOf(group)};
+    return this.rpc(payment.fxQuoteId?'divzplit_request_payment_eur':'divzplit_request_payment',payment.fxQuoteId?{...args,p_quote:payment.fxQuoteId,p_eur_amount:payment.eurAmount}:args);
   }
   async respondPayment(group,requestId,action) {
     await this.requireCollaboration();
@@ -346,6 +351,20 @@ export class Cloud {
       if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
       return removed;
     }catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado de listas todavía no está activado en el servidor.'));throw error;}
+  }
+  async requireFx() {
+    if(this.fxReady)return;
+    let enabled=false;try{enabled=await this.rpc('divzplit_fx_support',{});}catch(error){if(error.status!==404&&error.code!=='PGRST202')throw error;}
+    if(enabled!==true)throw new CloudError(tr('Las nuevas monedas y la conversión a euros todavía no están activadas en el servidor.'));
+    this.fxReady=true;
+  }
+  async exchangeQuote(currency) {
+    const viewer=this.user?.id;await this.requireFx();
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    let quote;try{quote=await this.request('/functions/v1/exchange-rates',{method:'POST',body:{currency},timeoutMs:40000});}
+    catch(error){if(error.status===404)throw new CloudError(tr('El servicio de cambio todavía no está activado.'));if(error.status===503)throw new CloudError(tr('No se ha podido consultar el cambio. Puedes reintentar o usar la moneda original.'));throw error;}
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    return quote;
   }
   async requirePlanning(scheduled=false) {
     if(!this.planningReady){

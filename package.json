@@ -7,9 +7,9 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "test": "node tests/planning.test.mjs && node tests/model.test.mjs && node tests/cloud.test.mjs && node tests/extras.test.mjs && node tests/i18n.test.mjs && node tests/splits.test.mjs && node tests/receipt-ocr.test.mjs && node tests/notifications.test.mjs",
-    "test:database": "python3 tests/database_test.py && python3 tests/collaboration_database.py && python3 tests/notifications_database.py && python3 tests/clear_lists_database.py && python3 tests/payment_lists_database.py && python3 tests/planning_database.py",
-    "check": "node --check planning.js && node --check notifications.js && node --check sw.js && node --check supabase/functions/push-dispatch/dispatch.mjs && node --check activity-ui.js && node --check app.js && node --check auth-ui.js && node --check extras.js && node --check i18n.js && node --check translations.js && node --check model.js && node --check cloud.js && node --check config.js && node --check server.mjs && node --check receipt-ocr.js && node --check receipt-ui.js && node --check receipt-image.js && node --check receipt-crop.js"
+    "test": "node tests/fx.test.mjs && node tests/planning.test.mjs && node tests/model.test.mjs && node tests/cloud.test.mjs && node tests/extras.test.mjs && node tests/i18n.test.mjs && node tests/splits.test.mjs && node tests/receipt-ocr.test.mjs && node tests/notifications.test.mjs",
+    "test:database": "python3 tests/database_test.py && python3 tests/collaboration_database.py && python3 tests/notifications_database.py && python3 tests/clear_lists_database.py && python3 tests/payment_lists_database.py && python3 tests/planning_database.py && python3 tests/fx_database.py",
+    "check": "node --check currencies.js && node --check fx.js && node --check supabase/functions/exchange-rates/rates.mjs && node --check planning.js && node --check notifications.js && node --check sw.js && node --check supabase/functions/push-dispatch/dispatch.mjs && node --check activity-ui.js && node --check app.js && node --check auth-ui.js && node --check extras.js && node --check i18n.js && node --check translations.js && node --check model.js && node --check cloud.js && node --check config.js && node --check server.mjs && node --check receipt-ocr.js && node --check receipt-ui.js && node --check receipt-image.js && node --check receipt-crop.js"
   },
   "engines": { "node": ">=22" }
 }

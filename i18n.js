@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=planning-30';
+import {translations} from './translations.js?v=fx-31';
 
 const supported=new Set(['es','en','ro']);
 export function detectLanguage(preferences=[]) {

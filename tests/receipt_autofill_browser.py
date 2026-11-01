@@ -7,9 +7,11 @@ with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  for lang in ['es-ES','en-GB','ro-RO']:
   c=b.new_context(locale=lang,reduced_motion='reduce',viewport={'width':402,'height':874})
+  # Start the existing local demo directly; the current welcome page exposes account access only.
+  c.route('**/app.js*',lambda r:r.fulfill(content_type='text/javascript',body=Path('app.js').read_text().replace('let demoMode=false;','let demoMode=true;')))
   c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',body='export const cloudConfig={};'))
   page=c.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-  page.goto(BASE);page.locator('[data-action=demo]').click();page.locator('[data-action=new-expense]:visible').first.click()
+  page.goto(BASE);page.locator('[data-action=new-expense]:visible').first.click()
   f=page.locator('#expense-form')
   # EUR in all three interface languages, so the group currency matches.
   lines=list(fixtures[lang][0]);lines=[line.replace('LEI','EUR') for line in lines]
@@ -33,13 +35,14 @@ with sync_playwright() as p:
   c.close()
  # Deterministic worker responses exercise manual edits, replacing photos and mismatched currency.
  c=b.new_context(locale='es-ES',reduced_motion='reduce',viewport={'width':402,'height':874})
+ c.route('**/app.js*',lambda r:r.fulfill(content_type='text/javascript',body=Path('app.js').read_text().replace('let demoMode=false;','let demoMode=true;')))
  c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',body='export const cloudConfig={};'))
  workerText=['SUPERMERCADO SOL\n30/10/2026\nTOTAL A PAGAR 24,90 EUR']
  delay=[50]
  def worker(route):
   route.fulfill(content_type='text/javascript',body='const text='+json.dumps(workerText[0])+';self.onmessage=({data:m})=>setTimeout(()=>postMessage({...m,status:"resolve",data:m.action==="recognize"?{text,confidence:95}:{}}),'+str(delay[0])+');')
  c.route('**/vendor/ocr/worker.min.js',worker)
- page=c.new_page();page.goto(BASE);page.locator('[data-action=demo]').click()
+ page=c.new_page();page.goto(BASE);
  def open_form():
   page.locator('[data-action=new-expense]:visible').first.click();return page.locator('#expense-form')
  def upload(f):
@@ -79,4 +82,21 @@ with sync_playwright() as p:
  expect(f.locator('.receipt-suggestions')).to_contain_text('Usar datos seleccionados')
  for name,value in previous.items():expect(f.locator('[name='+name+']')).to_have_value(value)
  print('PASS: replacement updates only automatic values; typing wins; wrong currency/noise/cancel stay empty; existing expenses are preserved',flush=True)
+ # Whole-unit ISK receipts must populate an integer; fractional or foreign totals require review.
+ page.keyboard.press('Escape');page.locator('[data-page=groups]:visible').first.click()
+ page.locator('[data-action=new-group]:visible').first.click()
+ page.locator('#group-form [name=name]').fill('Islandia')
+ page.locator('#group-form [name=currency]').select_option('ISK')
+ page.locator('#group-form button[type=submit]').click()
+ workerText[0]='TIENDA ISLANDIA\n30/10/2026\nTOTAL 124 ISK'
+ f=open_form();upload(f);expect(f.locator('[name=amount]')).to_have_value('124')
+ expect(f.locator('[name=amount]')).to_have_attribute('step','1')
+ page.keyboard.press('Escape');workerText[0]='TIENDA ISLANDIA\n30/10/2026\nTOTAL 124.50 ISK'
+ f=open_form();upload(f);expect(f.locator('.receipt-currency-warning')).to_be_visible()
+ expect(f.locator('[name=amount]')).to_be_empty();expect(f.locator('[data-ocr-use=amount]')).to_be_disabled()
+ page.keyboard.press('Escape');workerText[0]='TIENDA ISLANDIA\n30/10/2026\nTOTAL 124 USD'
+ f=open_form();upload(f);expect(f.locator('.receipt-currency-warning')).to_be_visible()
+ expect(f.locator('[name=amount]')).to_be_empty()
+ print('PASS: ISK totals stay integral; fractional ISK and foreign USD receipts are never silently applied',flush=True)
+
  b.close()

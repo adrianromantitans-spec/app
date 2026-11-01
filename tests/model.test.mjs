@@ -61,5 +61,5 @@ test('currency defaults to EUR and supports RON without changing minor-unit calc
  assert.throws(()=>checkCurrencyChange(g,'EUR'));
  assert.throws(()=>checkCurrencyChange({expenses:[],payments:[{}]},'RON'));
  assert.doesNotThrow(()=>checkCurrencyChange({expenses:[],payments:[]},'RON'));
- assert.throws(()=>checkCurrencyChange(null,'USD'));
+ assert.throws(()=>checkCurrencyChange(null,'ZZZ'));
 });

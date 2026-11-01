@@ -1,19 +1,20 @@
-import {locale,tr} from './i18n.js?v=ocr-18';
-export const currencies = ['EUR','RON'];
+import {locale,tr} from './i18n.js?v=fx-31';
+import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=fx-31';
+export {currencies,currencyDigits,currencyScale,currencyStep};
 export function currencyOf(group) {
   const currency=group?.currency??'EUR';
-  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige EUR o RON.'));
+  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige una de la lista.'));
   return currency;
 }
-export const currencyUnit = group => currencyOf(group)==='RON'?'RON':'€';
+export const currencyUnit=group=>currencyOf(group)==='EUR'?'€':currencyOf(group);
 export const canChangeCurrency = group => !group?.expenses?.length&&!group?.payments?.length;
 export function checkCurrencyChange(group,currency) {
-  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige EUR o RON.'));
+  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige una de la lista.'));
   if(currency!==currencyOf(group)&&!canChangeCurrency(group))throw new Error(tr('La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.'));
 }
 export const money = (cents,currency='EUR') => {
-  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige EUR o RON.'));
-  return new Intl.NumberFormat(locale,{style:'currency',currency,maximumFractionDigits:2}).format(cents/100);
+  if(!currencies.includes(currency))throw new Error(tr('Moneda no disponible. Elige una de la lista.'));
+  return new Intl.NumberFormat(locale,{style:'currency',currency,minimumFractionDigits:currencyDigits(currency),maximumFractionDigits:currencyDigits(currency)}).format(cents/currencyScale(currency));
 };
 export const uid = () => globalThis.crypto.randomUUID();
 export const totalSpent = (group) => group.expenses.reduce((sum, item) => sum + item.amount, 0);
@@ -46,10 +47,11 @@ export function expenseShares(expense) {
   for(let i=0;i<left;i++)ranked[i].cents++;
   return Object.fromEntries(participants.map((id,i)=>[id,shares[i].cents]));
 }
-export function decimalUnits(value) {
+export function decimalUnits(value,currency='EUR') {
+  const digits=currencyDigits(currency);
   const text=String(value).trim().replace(',','.');
-  if(!/^\d+(?:\.\d{1,2})?$/.test(text))throw new Error(tr('Introduce un número válido con un máximo de dos decimales.'));
-  const [whole,fraction='']=text.split('.');const result=Number(whole)*100+Number(fraction.padEnd(2,'0'));
+  if(!(digits===0?/^\d+$/:/^\d+(?:\.\d{1,2})?$/).test(text))throw new Error(tr(digits===0?'Esta moneda utiliza importes sin decimales.':'Introduce un número válido con un máximo de dos decimales.'));
+  const [whole,fraction='']=text.split('.');const result=Number(whole)*currencyScale(currency)+Number(fraction.padEnd(digits,'0'));
   if(!Number.isSafeInteger(result))throw new Error(tr('Revisa el reparto personalizado.'));
   return result;
 }

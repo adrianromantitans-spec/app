@@ -44,3 +44,10 @@ test('item counts, units and loyalty points never replace the actual total',()=>
 test('scanner frame noise is removed from merchant labels',()=>{
  assert.equal(parseReceipt('| SHOP SOL “>\nTOTAL 145,00').title,'SHOP SOL');
 });
+
+
+test('new supported currency codes are detected before applying a foreign ticket total',()=>{
+ assert.equal(parseReceipt('TOTAL 50.00 USD').currency,'USD');
+ assert.equal(parseReceipt('TOTAL 1200 ISK').currency,'ISK');
+ assert.equal(parseReceipt('TOTAL 50 EUR\nUSD 55').currencyAmbiguous,true);
+});

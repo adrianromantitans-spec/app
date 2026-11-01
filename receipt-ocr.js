@@ -1,3 +1,4 @@
+import {currencies} from './currencies.js?v=fx-31';
 import {prepareOCRImage,receiptTextRows} from './receipt-image.js?v=ocr-18';
 // The pinned Tesseract 6 worker and language models are hosted with the app.
 // Only image bytes are sent to this local worker; OCR text is never persisted.
@@ -117,7 +118,8 @@ export function parseReceipt(text='') {
   const lines=String(text).slice(0,50000).split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
   const normal=plain(lines.join('\n'));
   const eur=/\bEUR\b|€/.test(normal),ron=/\bRON\b|\bLEI\b/.test(normal);
-  const currency=eur&&!ron?'EUR':ron&&!eur?'RON':null;
+  const detected=new Set(currencies.filter(code=>new RegExp('\\b'+code+'\\b').test(normal)));if(eur)detected.add('EUR');if(ron)detected.add('RON');
+  const currency=detected.size===1?[...detected][0]:null;
   const candidates=[];
   for(let index=0;index<lines.length;index++){
     const line=plain(lines[index]).replace(/\bT[O0]TA[L1I]\b/g,'TOTAL');
@@ -137,5 +139,5 @@ export function parseReceipt(text='') {
     const clean=plain(line).replace(/\bT[O0]TA[L1I]\b/g,'TOTAL');
     return line.length>=3&&line.length<=100&&(clean.match(/[A-Z]/g)||[]).length>=3&&(clean.match(/[A-Z0-9]/g)||[]).length/clean.replace(/\s/g,'').length>=.7&&!/\b(?:TOTAL|SUBTOTAL|RECEIPT|TICKET|FACTURA|FISCAL|BON|FECHA|DATE|DATA|HORA|TIME|TVA|IVA|VAT|CIF|CUI|NIF|TEL|TELEFON|PHONE|CLIENTE|CLIENT|DUPLICADO|COPIA|ADDRESS|ADRESA|STRADA|CALLE|CARRER)\b/.test(clean)&&!dateFromText(line)&&!/\d+[.,]\d{2}\b/.test(clean)&&!/^[\d\s#*\-]+$/.test(clean);
   })||null;
-  return {title,amount:candidates[0]?.amount??null,date:dateFromText(lines.join('\n')),currency,currencyAmbiguous:eur&&ron};
+  return {title,amount:candidates[0]?.amount??null,date:dateFromText(lines.join('\n')),currency,currencyAmbiguous:detected.size>1};
 }

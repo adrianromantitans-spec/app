@@ -1,12 +1,13 @@
-import {tr} from './i18n.js?v=planning-30';
+import {currencyScale,currencyDigits} from './currencies.js?v=fx-31';
+import {tr} from './i18n.js?v=fx-31';
 
 // Zero means no budget; monetary amounts remain integer minor units.
-export function optionalBudget(value) {
+export function optionalBudget(value,currency='EUR') {
  if(String(value??'').trim()==='')return 0;
  const text=String(value).trim();
- if(!/^\d+(?:\.\d{1,2})?$/.test(text))throw new Error(tr('Indica un presupuesto válido o deja el campo vacío.'));
- const amount=Math.round(Number(text)*100);
- if(!Number.isSafeInteger(amount)||amount<100||amount>1000000000)throw new Error(tr('Indica un presupuesto válido o deja el campo vacío.'));
+ if(!(currencyDigits(currency)===0?/^\d+$/:/^\d+(?:\.\d{1,2})?$/).test(text))throw new Error(tr('Indica un presupuesto válido o deja el campo vacío.'));
+ const amount=Math.round(Number(text)*currencyScale(currency));
+ if(!Number.isSafeInteger(amount)||amount<currencyScale(currency)||amount>10000000*currencyScale(currency))throw new Error(tr('Indica un presupuesto válido o deja el campo vacío.'));
  return amount;
 }
 export function localDateTime(iso) {

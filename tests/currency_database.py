@@ -23,7 +23,7 @@ doc=row['document'];doc['currency']='RON'
 save(row,doc,FRIEND,'NEXO_OWNER')
 row=save(row,doc,OWNER);assert row['document']['currency']=='RON'
 # Unsupported currencies are rejected; changing an empty group back is explicit.
-doc=row['document'];doc['currency']='USD';save(row,doc,OWNER,'NEXO_CURRENCY')
+doc=row['document'];doc['currency']='ZZZ';save(row,doc,OWNER,'NEXO_CURRENCY')
 doc['currency']='RON';doc['expenses']=[{'id':str(uuid.uuid4()),'title':'Dinner','payer':OWNER,'createdBy':OWNER,'participants':[OWNER,FRIEND],'date':'2026-10-30','amount':1001,'category':'Comida'}]
 row=save(row,doc,OWNER)
 doc=row['document'];doc['currency']='EUR';save(row,doc,OWNER,'NEXO_CURRENCY_LOCKED')
@@ -31,7 +31,7 @@ doc=row['document'];doc['currency']='EUR';save(row,doc,OWNER,'NEXO_CURRENCY_LOCK
 doc['expenses']=[];save(row,doc,OWNER,'NEXO_CURRENCY_LOCKED')
 ron=create('RON');assert ron['document']['currency']=='RON'
 eur=create();assert eur['document']['currency']=='EUR'
-try:create('USD');raise AssertionError('USD accepted')
+try:create('ZZZ');raise AssertionError('Invalid currency accepted')
 except AssertionError as e:assert 'NEXO_CURRENCY' in str(e),e
 for id in [gid,ron['id'],eur['id']]:sql('delete from public.nexo_groups where id='+literal(id)+';',role=None)
 print('PASS: currency upgrade preserves legacy data, accepts EUR/RON and rejects unsupported currencies')

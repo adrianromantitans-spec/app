@@ -318,3 +318,13 @@ test('planning actions preserve account identity, map assignees and require serv
  let changed;changed=authed(async()=>{changed.user={id:'other'};return response({enabled:true,scheduling:true});});
  await assert.rejects(()=>changed.planningAction(g,'tasks','save',{id:'task'}),/cuenta ha cambiado/);
 });
+
+test('EUR settlement requests bind the quote and exact amount while retaining the original debt',async()=>{
+ const calls=[];const c=authed(async(url,options)=>{calls.push([url,JSON.parse(options.body)]);return response(url.endsWith('support')?true:{status:'pending'});});
+ const g={...seed().groups[0],currency:'CZK',remote:{ownerId:actor,version:3}};
+ await c.requestPayment(g,{from:'you',to:'receiver',amount:5000,fxQuoteId:'quote-id',eurAmount:200},'request-id');
+ const last=calls.at(-1);assert.ok(last[0].endsWith('divzplit_request_payment_eur'));
+ assert.deepEqual(last[1],{p_id:g.id,p_version:3,p_request_id:'request-id',p_to:'receiver',p_amount:5000,p_currency:'CZK',p_quote:'quote-id',p_eur_amount:200});
+ const missing=authed(async()=>response({code:'PGRST202'},404));await assert.rejects(()=>missing.createGroup({...seed().groups[0],currency:'USD'}),/todavía no están activadas/);
+ let changed;changed=authed(async()=>{changed.user={id:'other'};return response(true);});await assert.rejects(()=>changed.requestPayment(g,{from:'you',amount:100},'x'),/cuenta ha cambiado/);
+});
