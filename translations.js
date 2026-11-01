@@ -1,5 +1,11 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "No te pierdas las novedades": {"en": "Stay in the loop", "ro": "Nu rata noutățile"},
+  "Recibe avisos cuando tu grupo añada gastos, cree votaciones o te asigne tareas.": {"en": "Get notified when your group adds expenses, creates polls or assigns you tasks.", "ro": "Primește notificări când grupul adaugă cheltuieli, creează sondaje sau îți atribuie sarcini."},
+  "En iPhone, añade DivZplit a la pantalla de inicio para recibir avisos con la app cerrada.": {"en": "On iPhone, add DivZplit to your Home Screen to receive notifications when the app is closed.", "ro": "Pe iPhone, adaugă DivZplit pe ecranul principal pentru a primi notificări când aplicația este închisă."},
+  "Ahora no": {"en": "Not now", "ro": "Nu acum"},
+  "Ver cómo activarlas": {"en": "See how to enable them", "ro": "Vezi cum le poți activa"},
+
   "No se han podido activar los avisos en este dispositivo. Vuelve a intentarlo.": {"en": "Notifications could not be enabled on this device. Please try again.", "ro": "Notificările nu au putut fi activate pe acest dispozitiv. Încearcă din nou."},
   "El envío de avisos al móvil todavía no está activado.": {"en": "Mobile notifications are not enabled yet.", "ro": "Notificările pe telefon nu sunt încă activate."},
   "Notificaciones": {"en": "Notifications", "ro": "Notificări"},

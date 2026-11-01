@@ -41,7 +41,7 @@ test('sign-in verifies the current user, persists a session and restores it',asy
 test('signup waiting for email confirmation does not invent a session',async()=>{
   let args;const c=new Cloud(config,{storage:storage(),fetcher:async(url,options)=>{args={url,body:JSON.parse(options.body)};return response({user});}});
   assert.equal(await c.signUp('ana@example.test','long-password','Ana','https://example.test/app/'),false);
-  assert.equal(c.session,null);assert.equal(c.user,null);assert.equal(args.body.data.display_name,'Ana');
+  assert.equal(c.session,null);assert.equal(c.user,null);assert.equal(args.body.data.display_name,'Ana');assert.equal(args.body.data.notification_intro_pending,true);
   assert.ok(args.url.includes('redirect_to='));
 });
 test('an email callback cannot log someone into an account supplied in a URL',async()=>{
@@ -274,4 +274,13 @@ test('activity uses a bounded cursor and never delivers data to an account that 
  const first=await c1.readActivity(actor);assert.equal(first.events.length,50);assert.deepEqual(first.next,{id:'49',created_at:'2026-10-31T10:00:00Z'});
  c=authed(async url=>{if(url.endsWith('divzplit_collaboration_support'))return response(true);c.user={id:'new-account'};return response([]);});
  await assert.rejects(()=>c.readActivity(actor),/cuenta ha cambiado/);
+});
+
+
+test('notification onboarding is acknowledged without changing profile data or a different session',async()=>{
+ let payload;
+ const c=authed(async(url,options)=>{payload=JSON.parse(options.body);return response({...user,user_metadata:{...user.user_metadata,notification_intro_pending:false}});});
+ await c.finishNotificationOnboarding();assert.deepEqual(payload,{data:{notification_intro_pending:false}});assert.equal(c.user.user_metadata.display_name,'Ana');assert.equal(c.user.user_metadata.notification_intro_pending,false);
+ let switched;switched=authed(async()=>{switched.user={id:'different-account'};return response(user);});
+ await switched.finishNotificationOnboarding();assert.equal(switched.user.id,'different-account');
 });

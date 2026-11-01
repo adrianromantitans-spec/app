@@ -1,5 +1,5 @@
 """Notification UI with local transport and Push API fixtures; no real push sent."""
-import json,time
+import json,time,os
 from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright,expect
 OWNER='11111111-1111-4111-8111-111111111111';OTHER='22222222-2222-4222-8222-222222222222';GID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';NID='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -37,7 +37,7 @@ with sync_playwright() as p:
    else:route.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}');return
    route.fulfill(content_type='application/json',body=json.dumps(value))
   c.route('https://nexo-test.supabase.co/**',api)
-  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto('http://127.0.0.1:3004/')
+  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3004/'))
   expect(page.locator('.notification-count')).to_have_text('1')
   assert page.evaluate('window.__permissionCalls')==0
   page.locator('.notification-bell').click();expect(page.locator('.notification-item')).to_be_visible()

@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=notifications-26';
+import {tr} from './i18n.js?v=onboarding-27';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -230,7 +230,7 @@ export class Cloud {
     this.persistSession(session);await this.loadUser();return this.user;
   }
   async signUp(email,password,name,redirect) {
-    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name}},authenticated:false,timeoutMs:45000});
+    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name,notification_intro_pending:true}},authenticated:false,timeoutMs:45000});
     const session=this.sessionFrom(result);
     if (session) {this.persistSession(session);await this.loadUser();}
     return !!session;
@@ -278,6 +278,11 @@ export class Cloud {
     const me=document.members.find(m=>m.id===this.user.id);
     if (me) {me.name=group.remote.memberName;}
     return this.groupRpc('nexo_save_group',{p_id:group.id,p_version:group.remote.version,p_document:document});
+  }
+  async finishNotificationOnboarding() {
+    const viewer=this.user?.id;
+    const updated=await this.request('/auth/v1/user',{method:'PUT',body:{data:{notification_intro_pending:false}}});
+    if(this.user?.id===viewer)this.user=updated;
   }
   async notificationSettings() {
     try{return await this.rpc('divzplit_get_notification_settings',{});}

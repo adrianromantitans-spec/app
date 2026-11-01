@@ -88,3 +88,13 @@ cuentas. La instalación no promete funcionamiento sin conexión.
 La prueba de navegador simula Push API y no contacta con proveedores ni pide permisos
 reales. `deno check --node-modules-dir=none supabase/functions/push-dispatch/index.ts`
 comprueba la función de Supabase. La entrega real requiere el paso 2 y dos dispositivos/cuentas.
+
+## Invitación después del registro
+
+Las cuentas nuevas reciben una invitación tras entrar con su identidad verificada,
+incluida la confirmación por correo. Se puede omitir con Ahora no; el permiso del
+navegador solo aparece al pulsar Activar. En Safari de iPhone se muestra la ayuda
+para instalar; al abrir la app instalada por primera vez se puede activar directamente.
+La invitación no interrumpe formularios, recuperación de cuenta ni invitaciones a grupos.
+Se recuerda por cuenta/dispositivo y se registra como presentada en los metadatos
+de la cuenta. No requiere ejecutar SQL adicional.
