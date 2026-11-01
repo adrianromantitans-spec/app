@@ -13,3 +13,9 @@ El gasto conserva importe, concepto, pagador y participantes en primer plano. «
 No requiere migraciones SQL ni cambios en Supabase. Se publica como actualización de los archivos estáticos.
 
 Validación: `npm run check`, `npm test`, y pruebas de navegador `personal_browser.py`, `fx_browser.py`, `collaboration_browser.py`, `planning_browser.py`, `notifications_browser.py`, `onboarding_payer_browser.py` y `receipt_autofill_browser.py`. Las pruebas del navegador usan datos locales de prueba, sin modificar cuentas reales.
+
+## Barra Liquid Glass
+
+La propuesta posterior añade una cápsula móvil flotante con márgenes de 16 px, altura de 66 px y separación inferior de al menos 22 px, respetando el área segura del dispositivo. El fondo aplica desenfoque y transparencia cuando el navegador los admite, con una alternativa opaca y soporte para reducir transparencias. El indicador acompaña el cambio de sección y respeta reducir movimiento. El botón central abre el menú existente con «Añadir gasto» destacado en morado. El contenido y los avisos tienen espacio inferior para quedar por encima de la barra.
+
+Verificación adicional en navegador: destinos, indicador durante las actualizaciones de pantalla, tamaños de 320 a 760 px, botones de al menos 44 px, menú y formulario, preferencias de movimiento, idiomas español/inglés/rumano y navegación de escritorio.
