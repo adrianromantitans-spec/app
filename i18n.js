@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=collaboration-25';
+import {translations} from './translations.js?v=notifications-26';
 
 const supported=new Set(['es','en','ro']);
 export function detectLanguage(preferences=[]) {

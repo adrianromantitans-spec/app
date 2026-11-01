@@ -1,0 +1,4 @@
+project_id = "divzplit"
+
+[functions.push-dispatch]
+verify_jwt = false

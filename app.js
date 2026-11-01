@@ -1,9 +1,10 @@
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-18';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=collaboration-25';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=notifications-26';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
-import {Cloud} from './cloud.js?v=collaboration-25';
+import {Cloud} from './cloud.js?v=notifications-26';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=collaboration-25';
+import {NotificationCentre} from './notifications.js?v=notifications-26';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -12,6 +13,13 @@ initializeLanguage();
 let cloud;
 let configError='';
 try {cloud=new Cloud(cloudConfig);} catch (error) {configError=error.message;cloud=new Cloud({});}
+const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>state.groups,openGroup:async(id,kind)=>{
+  if(!state.groups.some(g=>g.id===id))await loadSharedGroups();
+  if(!state.groups.some(g=>g.id===id))throw new Error(tr('No tienes acceso a este grupo.'));
+  closeModal();state.activeGroup=id;rememberActiveGroup();
+  page=kind.startsWith('payment')?'activity':'home';tab=kind.startsWith('polls.')?'plans':kind.startsWith('tasks.')?'tasks':'expenses';
+  if(page==='activity')await loadActivity();render();window.scrollTo({top:0});
+}});
 let accountUser=null;
 let remoteBusy=false;
 let authLoading=cloud.enabled;
@@ -115,7 +123,7 @@ async function save() {
     }
     rememberActiveGroup();setSync(tr('Actualizado'));
   } catch (error) {
-    if (!cloud.session) {accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();closeModal();}
+    if (!cloud.session) {notifications.disconnect().catch(()=>{});accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();closeModal();}
     else {
       state.groups=[...remoteBaseline.values()].map(value=>JSON.parse(value));
       if (!state.groups.some(g=>g.id===state.activeGroup)) state.activeGroup=state.groups[0]?.id || null;
@@ -144,7 +152,7 @@ function render() {
     <div class="sidebar-bottom"><div class="together-card"><span class="little-spark">✳</span><h3>Menos líos.<br>Más buenos momentos.</h3><p>Lo mejor de hacer planes<br>es hacerlos juntos.</p><button data-action="new-group">Empieza algo bonito ${icon('arrow')}</button></div>
     <button class="profile" data-action="settings">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${accountUser?tr('Tu cuenta compartida'):tr('Tu espacio de demo')}</small></span>${icon('settings')}</button></div>
   </aside>
-  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right">${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
+  <div class="main-shell"><header class="topbar"><div class="breadcrumb"><span class="mobile-logo brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span><span class="desktop-crumb">Tu espacio</span>${icon('chevron')}<strong>${navigation.find(n=>n[0]===page)?.[2]}</strong></div><div class="topbar-right">${!accountUser?tr('<button class="button secondary account-button" data-action="account">Entrar</button>'):''}${accountUser?notifications.bell():''}<button class="top-avatar" data-action="settings" aria-label="Tu perfil y datos">${avatar(currentProfile(),true)}</button></div></header>
   <main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>
   <footer class="page-footer"><span>Hecho para compartir algo más que gastos.</span><span>DivZplit ${icon('heart')}</span></footer>
   <nav class="mobile-nav" aria-label="Navegación móvil">${mobileNavigation.map(([id,ic,label],index)=>`${index===2?ui`<div class="nav-add-slot"><button class="nav-add" data-action="quick-add" aria-label="Añadir" aria-haspopup="dialog" aria-expanded="false">${icon('plus')}</button></div>`:''}<button class="mobile-nav-item ${mobileActive===id?'active':''}" data-page="${id}" ${mobileActive===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
@@ -333,6 +341,7 @@ async function onAppClick(event) {
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
   if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
+  if(el.dataset.notificationAction){await notifications.handle(el);return;}
   if(el.dataset.receiptAction){await handleReceiptAction(el,currencyOf(group()),updateSplitTotal);return;}
   if(el.dataset.page){page=el.dataset.page; render();if(page==='activity'){await loadActivity();render();}document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
   if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
@@ -493,7 +502,7 @@ function currentProfile() {
 }
 function handleActionError(error) {
   if (accountUser&&!cloud.session) {
-    accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();closeModal();render();
+    notifications.disconnect().catch(()=>{});accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();closeModal();render();
   }
   toast(error.message);
 }
@@ -740,11 +749,13 @@ async function handleAccountForm(form,data) {
   return true;
 }
 async function connectAccount() {
+  if(notifications.account&&notifications.account!==cloud.user?.id)await notifications.disconnect();
   accountUser=cloud.user;demoMode=false;activityCache.clear();
   state={version:1,activeGroup:null,groups:[]};remoteBaseline.clear();page='home';tab='summary';
   try {state.activeGroup=sessionStorage.getItem('nexo-active-'+accountUser.id);} catch {}
   await loadSharedGroups();await processRecurrences();setSync(tr('Actualizado'));
   cloud.cleanupDeletedGroups().catch(()=>{});
+  notifications.connect(accountUser.id).catch(()=>{});
 }
 async function loadSharedGroups() {
   const groups=await cloud.listGroups();
@@ -758,16 +769,16 @@ async function refreshShared() {
   remoteBusy=true;
   const before=JSON.stringify(state.groups),beforeActivity=JSON.stringify(activityData());
   try {
-    await loadSharedGroups();await processRecurrences();if(page==='activity')await loadActivity(false,true);setSync(tr('Actualizado'));
+    await loadSharedGroups();await processRecurrences();await notifications.poll();if(page==='activity')await loadActivity(false,true);setSync(tr('Actualizado'));
     if (before!==JSON.stringify(state.groups)||beforeActivity!==JSON.stringify(activityData())) render();
   } catch(error) {
     setSync(tr('Sin conexión · Reintentar'));
-    if (!cloud.session) {accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();render();toast(tr('Tu sesión ha caducado. Vuelve a entrar.'));}
+    if (!cloud.session) {notifications.disconnect().catch(()=>{});accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();render();toast(tr('Tu sesión ha caducado. Vuelve a entrar.'));}
   } finally {remoteBusy=false;}
 }
 async function signOutAccount() {
   remoteBusy=true;
-  try {await cloud.signOut();}
+  try {await notifications.disconnect();await cloud.signOut();}
   catch {toast(tr('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.'));}
   finally {
     activityCache.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
@@ -864,7 +875,8 @@ window.addEventListener('storage',event=>{
   if (event.key===cloud.storageKey && accountUser) {
     // Another tab may have refreshed its session or signed out. Do not restore
     // a stale refresh token or keep another account's groups on screen.
+    const cleanup=event.newValue===null?notifications.disconnect():Promise.resolve();
     authLoading=true;accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();closeModal();render();
-    startAccount();
+    cleanup.finally(()=>startAccount());
   }
 });

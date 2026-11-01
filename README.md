@@ -243,3 +243,12 @@ anteriores y nuevos. Solo el destinatario confirma la recepción; solo el creado
 del grupo puede borrar entradas del historial. Para activar en proyectos existentes,
 ejecutar `supabase/collaboration.sql` después de `expense-tools.sql`.
 Consultar [la guía de pagos e historial](docs/COLLABORATION.md).
+
+## Notificaciones e instalación
+
+Campanita con avisos por cuenta, preferencias y grupos silenciados, más instalación
+web y soporte Web Push. Ejecutar `supabase/notifications.sql` para activar los avisos
+internos. Para avisos con la web cerrada también hay que desplegar la función de
+Supabase, configurar VAPID y programar Cron: [guía completa](docs/NOTIFICATIONS.md).
+El permiso de cada dispositivo se pide solo al pulsar Activar; en iPhone requiere
+abrir DivZplit desde la pantalla de inicio (iOS 16.4 o posterior).

@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=collaboration-25';
+import {tr} from './i18n.js?v=notifications-26';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -29,6 +29,7 @@ function messageFor(error, status) {
   if(code==='NEXO_CURRENCY')return tr('Moneda no disponible. Elige EUR o RON.');
   if (code === 'NEXO_CONFLICT') return tr('Alguien ha actualizado el grupo. Hemos recargado los datos; revisa tu cambio y vuelve a guardarlo.');
   if (code === 'NEXO_INVITE') return tr('Este enlace ha caducado, se ha revocado o ya no admite más personas. Pide uno nuevo.');
+  if (code === 'NEXO_PUSH_NOT_READY') return tr('El envío de avisos al móvil todavía no está activado.');
   if (code === 'NEXO_PAYMENT_CHANGED') return tr('El saldo o el pago ha cambiado. Actualiza el grupo y revisa los pagos pendientes.');
   if (code === 'NEXO_PAYMENT_FLOW') return tr('Este pago necesita la confirmación de quien recibe el dinero. Actualiza la aplicación.');
   if (code === 'NEXO_OWNER') return tr('Solo quien creó el grupo puede modificar sus detalles o gestionar invitaciones.');
@@ -278,6 +279,26 @@ export class Cloud {
     if (me) {me.name=group.remote.memberName;}
     return this.groupRpc('nexo_save_group',{p_id:group.id,p_version:group.remote.version,p_document:document});
   }
+  async notificationSettings() {
+    try{return await this.rpc('divzplit_get_notification_settings',{});}
+    catch(error){if(error.status===404||error.code==='PGRST202')return null;throw error;}
+  }
+  async notificationInbox(cursor=null) {
+    const viewer=this.user?.id;
+    const result=await this.rpc('divzplit_notification_inbox',{p_before:cursor?.created_at||null,p_before_id:cursor?.id||null});
+    if(viewer!==this.user?.id)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    return result;
+  }
+  async saveNotificationSettings(settings,muted) {
+    return this.rpc('divzplit_set_notification_settings',{p_expenses:settings.expenses,p_polls:settings.polls,p_tasks:settings.tasks,p_payments:settings.payments,p_muted:muted});
+  }
+  async markNotificationsRead(ids=null) {return this.rpc('divzplit_read_notifications',{p_ids:ids});}
+  async openNotification(id) {return this.rpc('divzplit_open_notification',{p_id:id});}
+  async registerPush(subscription,language) {
+    const data=subscription.toJSON();
+    return this.rpc('divzplit_register_push',{p_endpoint:data.endpoint,p_p256dh:data.keys.p256dh,p_auth:data.keys.auth,p_language:language});
+  }
+  async removePush(endpoint) {return this.rpc('divzplit_remove_push',{p_endpoint:endpoint});}
   async collaborationAvailable() {
     if(this.collaborationReady)return true;
     try{this.collaborationReady=await this.rpc('divzplit_collaboration_support',{})===true;}

@@ -44,6 +44,7 @@ STRANGER='33333333-3333-4333-8333-333333333333'
 
 sql("""
 do $$ begin
+ if not exists(select from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if;
  if not exists(select from pg_roles where rolname='anon') then create role anon nologin; end if;
  if not exists(select from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
 end $$;
