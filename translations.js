@@ -1,5 +1,20 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Ver pagos pendientes": {"en": "View pending payments", "ro": "Vezi plățile în așteptare"},
+  "Ver devoluciones": {"en": "View repayments", "ro": "Vezi rambursările"},
+  "Ver más devoluciones": {"en": "Show more repayments", "ro": "Vezi mai multe rambursări"},
+  "Ver anteriores": {"en": "View earlier", "ro": "Vezi anterioarele"},
+  "Volver a recientes": {"en": "Back to recent", "ro": "Înapoi la recente"},
+  "Solo el administrador puede limpiar estas listas.": {"en": "Only the administrator can clear these lists.", "ro": "Doar administratorul poate curăța aceste liste."},
+  "Revisa la operación.": {"en": "Check the operation.", "ro": "Verifică operațiunea."},
+  "¿Cancelar todos los pagos pendientes?": {"en": "Cancel all pending payments?", "ro": "Anulezi toate plățile în așteptare?"},
+  "¿Limpiar las devoluciones registradas?": {"en": "Clear recorded repayments?", "ro": "Cureți rambursările înregistrate?"},
+  "Se cancelarán todas las solicitudes pendientes de este grupo. Los saldos no cambiarán y los pagos podrán volver a registrarse.": {"en": "All pending requests in this group will be cancelled. Balances will stay the same and payments can be submitted again.", "ro": "Toate cererile în așteptare ale grupului vor fi anulate. Soldurile nu se schimbă și plățile pot fi înregistrate din nou."},
+  "Se quitarán de la lista las devoluciones actuales. Los pagos y los saldos se conservarán. Podrás consultarlas en «Ver anteriores».": {"en": "Current repayments will be removed from the list. Payments and balances will be kept. You can find them under “View earlier”.", "ro": "Rambursările actuale vor fi scoase din listă. Plățile și soldurile se păstrează. Le poți consulta în „Vezi anterioarele”."},
+  "Solicitudes canceladas. Los saldos no han cambiado.": {"en": "Requests cancelled. Balances have not changed.", "ro": "Cereri anulate. Soldurile nu s-au schimbat."},
+  "Lista limpiada. Los pagos y los saldos se conservan.": {"en": "List cleared. Payments and balances are kept.", "ro": "Listă curățată. Plățile și soldurile se păstrează."},
+  "Devoluciones anteriores. Los pagos y los saldos se conservan.": {"en": "Earlier repayments. Payments and balances are kept.", "ro": "Rambursări anterioare. Plățile și soldurile se păstrează."},
+
   "Ver historial": {"en": "View history", "ro": "Vezi istoricul"},
   "Borrar todo": {"en": "Clear all", "ro": "Șterge tot"},
   "¿Borrar todo el historial?": {"en": "Clear all history?", "ro": "Ștergi tot istoricul?"},

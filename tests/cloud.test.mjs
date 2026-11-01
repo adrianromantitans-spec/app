@@ -294,3 +294,15 @@ test('bulk clear uses group-owner permissions and an account-scoped notification
  const missing=authed(async()=>response({code:'PGRST202'},404));await assert.rejects(()=>missing.clearNotifications(),/todavía no está activado/);
  let changed;changed=authed(async()=>{changed.user={id:'new-user'};return response(1);});await assert.rejects(()=>changed.clearNotifications(),/cuenta ha cambiado/);
 });
+
+test('payment list cleanup checks ownership, isolates operations and reports missing activation',async()=>{
+ const calls=[];const c=authed(async(url,options)=>{calls.push([url,JSON.parse(options.body)]);return response(12);});
+ const g={id:'owned',remote:{ownerId:actor}};
+ await assert.rejects(()=>c.clearPaymentList({...g,remote:{ownerId:'other'}},'pending'));
+ await assert.rejects(()=>c.clearPaymentList(g,'invalid'));assert.equal(calls.length,0);
+ assert.equal(await c.clearPaymentList(g,'pending'),12);assert.ok(calls[0][0].endsWith('divzplit_cancel_pending_payments'));
+ assert.equal(await c.clearPaymentList(g,'recorded'),12);assert.ok(calls[1][0].endsWith('divzplit_archive_repayments'));assert.deepEqual(calls[1][1],{p_id:'owned'});
+ const missing=authed(async()=>response({code:'PGRST202'},404));assert.equal(await missing.paymentArchives('owned'),null);
+ await assert.rejects(()=>missing.clearPaymentList(g,'recorded'),/todavía no está activado/);
+ let changed;changed=authed(async()=>{changed.user={id:'new-user'};return response([]);});await assert.rejects(()=>changed.paymentArchives('owned'),/cuenta ha cambiado/);
+});

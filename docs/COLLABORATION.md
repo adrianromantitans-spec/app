@@ -65,3 +65,10 @@ Para activar los borrados completos en un proyecto existente, ejecutar
 El archivo define operaciones; ejecutarlo no borra datos existentes.
 El historial se vacía solo en el grupo elegido y no altera documentos ni versiones.
 Las nuevas modificaciones vuelven a registrarse normalmente después del borrado.
+
+
+### Listas compactas de pagos
+
+En Actividad, los pagos pendientes y las devoluciones registradas se abren en listas con desplazamiento. Las devoluciones se muestran en bloques de 50. Ejecutar `supabase/payment-lists.sql` en SQL Editor para activar las dos operaciones de «Borrar todo»; no requiere cambiar secretos, cron ni Edge Functions.
+
+Solo el administrador puede limpiar listas. Los pendientes se cancelan en una operación bajo bloqueo del grupo, liberando las reservas sin modificar los saldos. Cada cancelación se registra en el historial y avisa a las partes, respetando sus preferencias. Las devoluciones confirmadas se archivan por identificador: el documento financiero y su versión se conservan íntegros. «Ver anteriores» permite consultar lo archivado y las nuevas confirmaciones siguen apareciendo en recientes. La migración es idempotente y por sí sola no cancela ni archiva entradas.

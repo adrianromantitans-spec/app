@@ -1,10 +1,10 @@
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-18';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=lists-28';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=payments-29';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
-import {Cloud} from './cloud.js?v=lists-28';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=lists-28';
-import {NotificationCentre} from './notifications.js?v=lists-28';
+import {Cloud} from './cloud.js?v=payments-29';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=payments-29';
+import {NotificationCentre} from './notifications.js?v=payments-29';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -38,6 +38,10 @@ let inviteError='';
 const remoteBaseline=new Map();
 const activityCache=new Map();
 const activityRequests=new Map();
+let recordedPaymentLimit=50;
+let showArchivedRepayments=false;
+const paymentArchives=new Map();
+const archiveRequests=new Map();
 
 const icons = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
@@ -218,17 +222,50 @@ async function loadActivity(more=false,preservePages=false) {
     if(activityRequests.get(g.id)!==request||accountUser?.id!==viewer)return;
     if(!ready){activityCache.set(g.id,{ready:false,events:[],requests:[],next:null});return;}
     const result=await cloud.readActivity(g.id,more?previous?.next:null);
+    await loadPaymentArchives(g);
     if(accountUser?.id!==viewer||activityRequests.get(g.id)!==request)return;
     const keepPages=preservePages&&previous?.events?.length>50&&JSON.stringify(previous.events.slice(0,50))===JSON.stringify(result.events);
     activityCache.set(g.id,{ready:true,...result,events:more?[...new Map([...(previous?.events||[]),...result.events].map(event=>[event.id,event])).values()]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
   }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}
 }
 function pendingPaymentsPanel(data) {
-  return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(group()))}</section>`;
+  return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||ui`<button class="button secondary" data-action="show-pending-payments">Ver pagos pendientes ${icon('arrow')}<span class="payment-list-count">${data.requests.length}</span></button>`}</section>`;
 }
 function activityView() {
   const g=group(),data=activityData();
-  return ui`<div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${g.payments.length?g.payments.map(p=>ui`<div class="payment-row">${icon('check')}<span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${money(p.amount)}</strong><small>${dateLabel(p.date)}</small></div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>')}</section>`;
+  return ui`<div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${ui`<button class="button secondary" data-action="show-recorded-payments">Ver devoluciones ${icon('arrow')}<span class="payment-list-count">${visibleRepayments(g).length}</span></button>`}</section>`;
+}
+
+async function loadPaymentArchives(g=group()) {
+  const viewer=accountUser?.id;if(!viewer||!g)return;
+  const request=(archiveRequests.get(g.id)||0)+1;archiveRequests.set(g.id,request);
+  try{
+    const ids=await cloud.paymentArchives(g.id);
+    if(accountUser?.id===viewer&&archiveRequests.get(g.id)===request)paymentArchives.set(g.id,{ids:ids||[],ready:ids!==null});
+  }catch(error){if(accountUser?.id===viewer&&archiveRequests.get(g.id)===request)paymentArchives.set(g.id,{...paymentArchives.get(g.id),error:error.message});}
+}
+function visibleRepayments(g=group(),archived=false) {
+  const ids=new Set(paymentArchives.get(g?.id)?.ids||[]);
+  return g.payments.filter(p=>ids.has(p.id)===archived);
+}
+
+function renderPaymentList() {
+  const container=modalRoot.querySelector('.payment-list-dialog'),g=group();
+  if(!container||container.dataset.paymentGroup!==g?.id)return;
+  const pending=container.dataset.kind==='pending',data=activityData(),archive=paymentArchives.get(g.id);
+  const items=pending?data.requests:visibleRepayments(g,showArchivedRepayments);
+  const notice=pending?activityNotice(data):archive?.error?`<p class="activity-error" role="alert">${esc(archive.error)}</p><button class="button secondary" data-action="show-recorded-payments">${tr('Volver a intentar')}</button>`:'';
+  const controls=`<div class="history-modal-controls payment-list-controls">${!notice&&canManage()&&items.length&&(!showArchivedRepayments||pending)?ui`<button class="button secondary danger-text" data-clear-payment-list="${pending?'pending':'recorded'}">Borrar todo</button>`:''}${!pending&&archive?.ids?.length?ui`<button class="text-button" data-action="toggle-recorded-archive">${tr(showArchivedRepayments?'Volver a recientes':'Ver anteriores')}</button>`:''}</div>`;
+  const recorded=items.length?items.slice(0,recordedPaymentLimit).map(p=>ui`<div class="payment-row"><span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${money(p.amount)}</strong><small>${dateLabel(p.date)}</small></div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>');
+  container.innerHTML=`${controls}${!pending&&showArchivedRepayments?`<p class="history-policy">${tr('Devoluciones anteriores. Los pagos y los saldos se conservan.')}</p>`:''}<div class="payment-list-scroll">${notice||(pending?paymentRequestsView(items,accountUser?.id,activityMemberName,currencyOf(g)):recorded)}${!pending&&!notice&&items.length>recordedPaymentLimit?ui`<button class="button secondary" data-action="more-recorded-payments">Ver más devoluciones</button>`:''}</div>`;
+}
+
+async function showPaymentList(kind) {
+  const g=group();if(!g||!['pending','recorded'].includes(kind))return;
+  recordedPaymentLimit=50;showArchivedRepayments=false;
+  openModal(tr(kind==='pending'?'Pagos pendientes de confirmar':'Devoluciones registradas'),`<div class="payment-list-dialog" data-kind="${kind}" data-payment-group="${esc(g.id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,esc(g.name));
+  if(kind==='pending')await loadActivity();else if(accountUser){await loadSharedGroups();await loadPaymentArchives(g);}
+  renderPaymentList();
 }
 
 function renderHistoryModal() {
@@ -319,7 +356,7 @@ async function settlementsModal() {
   const items=paymentSuggestions(),data=activityData();
   openModal(tr('Las cuentas claras'),ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(group())):''}<div class="settlement-list">${items.length?items.map((p,i)=>`<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div><strong>${money(p.amount)}</strong>${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}">Marcar como pagado</button>`:''}</div></div>`).join(''):data.requests.length?`<p class="pending-summary">${tr('Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.')}</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`,tr('Menos transferencias para equilibrar los saldos.'));
 }
-async function respondToPayment(requestId,action) {
+async function respondToPayment(requestId,action,returnToPending=false) {
   const request=activityData().requests.find(r=>r.id===requestId);
   if(!request||!['confirm','reject','cancel'].includes(action))return;
   if((action==='cancel'?request.from_id:request.to_id)!==accountUser?.id)throw new Error(tr('No puedes responder a este pago.'));
@@ -327,7 +364,7 @@ async function respondToPayment(requestId,action) {
   try{
     const saved=await cloud.respondPayment(group(),requestId,action);
     const index=state.groups.findIndex(g=>g.id===saved.id);state.groups[index]=saved;remoteBaseline.set(saved.id,JSON.stringify(saved));
-    await loadActivity();closeModal();render();
+    await loadActivity();closeModal();render();if(returnToPending)await showPaymentList('pending');
     toast(tr(action==='confirm'?'Pago confirmado. Los saldos están actualizados.':action==='reject'?'Pago marcado como no recibido. Los saldos no han cambiado.':'Solicitud cancelada. Los saldos no han cambiado.'));
   }catch(error){await loadActivity();throw error;}finally{remoteBusy=false;}
 }
@@ -379,16 +416,25 @@ async function onAppClick(event) {
     finally{remoteBusy=false;}return;
   }
   if(el.dataset.paymentResponse){
-    const action=el.dataset.paymentResponse,id=el.dataset.requestId;
+    const action=el.dataset.paymentResponse,id=el.dataset.requestId,returnToPending=!!modalRoot.querySelector('.payment-list-dialog[data-kind="pending"]');
     const label=action==='confirm'?'¿Confirmas que has recibido el dinero?':action==='reject'?'¿Todavía no has recibido este pago?':'¿Cancelar esta solicitud de pago?';
-    openModal(tr(label),ui`<p class="dialog-copy">${tr(action==='confirm'?'Confirma únicamente si el dinero ya ha llegado a su destino.':'Los saldos no cambiarán.')}</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Volver</button><button class="button primary" data-resolve-payment="${esc(action)}" data-request-id="${esc(id)}">Confirmar</button></div>`);return;
+    openModal(tr(label),ui`<p class="dialog-copy">${tr(action==='confirm'?'Confirma únicamente si el dinero ya ha llegado a su destino.':'Los saldos no cambiarán.')}</p><div class="modal-actions"><button class="button secondary" data-action="${returnToPending?'show-pending-payments':'close-modal'}">Volver</button><button class="button primary" data-resolve-payment="${esc(action)}" data-request-id="${esc(id)}" data-return-pending="${returnToPending}">Confirmar</button></div>`);return;
   }
-  if(el.dataset.resolvePayment){await respondToPayment(el.dataset.requestId,el.dataset.resolvePayment);return;}
+  if(el.dataset.resolvePayment){await respondToPayment(el.dataset.requestId,el.dataset.resolvePayment,el.dataset.returnPending==='true');return;}
   if(el.dataset.deleteHistory){
     if(!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));
     openModal(tr('¿Borrar esta entrada del historial?'),ui`<p class="dialog-copy">Solo se eliminará esta entrada del historial. Los gastos, pagos y saldos no cambian. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="show-history">Cancelar</button><button class="button danger" data-confirm-history-delete="${esc(el.dataset.deleteHistory)}">Borrar entrada</button></div>`);return;
   }
   if(el.dataset.confirmHistoryDelete){remoteBusy=true;try{await cloud.deleteHistory(group(),el.dataset.confirmHistoryDelete);await loadActivity();closeModal();render();await showHistory();toast(tr('Entrada del historial borrada.'));}finally{remoteBusy=false;}return;}
+  if(el.dataset.clearPaymentList){
+    const kind=el.dataset.clearPaymentList;if(!canManage()||!['pending','recorded'].includes(kind))throw new Error(tr('Solo el administrador puede limpiar estas listas.'));
+    openModal(tr(kind==='pending'?'¿Cancelar todos los pagos pendientes?':'¿Limpiar las devoluciones registradas?'),ui`<p class="dialog-copy">${tr(kind==='pending'?'Se cancelarán todas las solicitudes pendientes de este grupo. Los saldos no cambiarán y los pagos podrán volver a registrarse.':'Se quitarán de la lista las devoluciones actuales. Los pagos y los saldos se conservarán. Podrás consultarlas en «Ver anteriores».')}</p><div class="modal-actions"><button class="button secondary" data-action="${kind==='pending'?'show-pending-payments':'show-recorded-payments'}">Cancelar</button><button class="button danger" data-confirm-clear-payments="${kind}" data-payment-group="${esc(group().id)}">Borrar todo</button></div>`);return;
+  }
+  if(el.dataset.confirmClearPayments){
+    const g=group(),kind=el.dataset.confirmClearPayments;if(g?.id!==el.dataset.paymentGroup||!canManage())throw new Error(tr('Solo el administrador puede limpiar estas listas.'));
+    remoteBusy=true;
+    try{activityRequests.set(g.id,(activityRequests.get(g.id)||0)+1);archiveRequests.set(g.id,(archiveRequests.get(g.id)||0)+1);await cloud.clearPaymentList(g,kind);await loadActivity();closeModal();render();await showPaymentList(kind);toast(tr(kind==='pending'?'Solicitudes canceladas. Los saldos no han cambiado.':'Lista limpiada. Los pagos y los saldos se conservan.'));}finally{remoteBusy=false;}return;
+  }
   if(el.dataset.confirmClearHistory){
     const g=group();if(g?.id!==el.dataset.confirmClearHistory||!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));
     remoteBusy=true;
@@ -405,8 +451,12 @@ async function onAppClick(event) {
     case 'new-group':groupModal();break;
     case 'edit-group':groupModal(true);break;
     case 'settlements':await settlementsModal();break;
-    case 'reload-activity':await loadActivity();if(modalRoot.querySelector('.history-dialog'))renderHistoryModal();else if(modalRoot.firstElementChild)await settlementsModal();else render();break;
+    case 'reload-activity':await loadActivity();if(modalRoot.querySelector('.history-dialog'))renderHistoryModal();else if(modalRoot.querySelector('.payment-list-dialog'))renderPaymentList();else if(modalRoot.firstElementChild)await settlementsModal();else render();break;
     case 'more-history':await loadActivity(true);renderHistoryModal();break;
+    case 'show-pending-payments':await showPaymentList('pending');break;
+    case 'show-recorded-payments':await showPaymentList('recorded');break;
+    case 'toggle-recorded-archive':showArchivedRepayments=!showArchivedRepayments;recordedPaymentLimit=50;renderPaymentList();break;
+    case 'more-recorded-payments':recordedPaymentLimit+=50;renderPaymentList();break;
     case 'show-history':await showHistory();break;
     case 'clear-history':if(!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));openModal(tr('¿Borrar todo el historial?'),ui`<p class="dialog-copy">Se borrarán todas las entradas del historial de este grupo. Los gastos, pagos y saldos se conservarán. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="show-history">Cancelar</button><button class="button danger" data-confirm-clear-history="${esc(group().id)}">Borrar todo</button></div>`);break;
     case 'edit-budget':openModal(tr('Disfrutar, sin sorpresas'),ui`<form id="budget-form"><label class="field">Presupuesto total del grupo (${currencyUnit(group())})<input type="number" name="budget" min="1" max="10000000" step="0.01" value="${group().budget/100}" required></label><p class="form-note">${icon('users')} Como referencia: ${money(Math.round(group().budget/group().members.length))} por persona con el presupuesto actual.</p>${actions(tr('Actualizar presupuesto'))}</form>`,esc(group().name));break;
@@ -775,7 +825,7 @@ async function handleAccountForm(form,data) {
 }
 async function connectAccount() {
   if(notifications.account&&notifications.account!==cloud.user?.id)await notifications.disconnect();
-  accountUser=cloud.user;demoMode=false;activityCache.clear();
+  accountUser=cloud.user;demoMode=false;activityCache.clear();paymentArchives.clear();
   state={version:1,activeGroup:null,groups:[]};remoteBaseline.clear();page='home';tab='summary';
   try {state.activeGroup=sessionStorage.getItem('nexo-active-'+accountUser.id);} catch {}
   await loadSharedGroups();await processRecurrences();setSync(tr('Actualizado'));
@@ -808,7 +858,7 @@ async function signOutAccount() {
   try {await notifications.disconnect();await cloud.signOut();}
   catch {toast(tr('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.'));}
   finally {
-    activityCache.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }

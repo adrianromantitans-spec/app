@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=lists-28';
+import {tr} from './i18n.js?v=payments-29';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -341,6 +341,19 @@ export class Cloud {
       if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
       return removed;
     }catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado de listas todavía no está activado en el servidor.'));throw error;}
+  }
+  async paymentArchives(groupId) {
+    const viewer=this.user?.id;
+    try{
+      const ids=await this.rpc('divzplit_get_payment_archives',{p_id:groupId});
+      if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+      return ids;
+    }catch(error){if(error.status===404||error.code==='PGRST202')return null;throw error;}
+  }
+  async clearPaymentList(group,kind) {
+    if(group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el administrador puede limpiar estas listas.'));
+    if(!['pending','recorded'].includes(kind))throw new CloudError(tr('Revisa la operación.'));
+    return this.clearList(kind==='pending'?'divzplit_cancel_pending_payments':'divzplit_archive_repayments',{p_id:group.id});
   }
   async clearHistory(group) {
     if(group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el administrador puede borrar entradas del historial.'));

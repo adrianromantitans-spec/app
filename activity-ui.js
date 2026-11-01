@@ -1,4 +1,4 @@
-import {tr,ui,locale} from './i18n.js?v=lists-28';
+import {tr,ui,locale} from './i18n.js?v=payments-29';
 import {money} from './model.js?v=ocr-18';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={
