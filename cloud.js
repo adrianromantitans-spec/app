@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=ocr-18';
-import {tr} from './i18n.js?v=payments-29';
+import {tr} from './i18n.js?v=planning-30';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -24,6 +24,11 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status) {
   const code = error?.error_code || error?.code;
+  if(code==='NEXO_POLL_CLOSED')return tr('Esta votación ya está cerrada.');
+  if(code==='NEXO_PLAN_FIELDS')return tr('Revisa la fecha límite y el recordatorio.');
+  if(code==='NEXO_PLAN_PAST')return tr('Elige una fecha y hora futuras.');
+  if(code==='NEXO_PLAN_FINISHED')return tr('Esta tarea o votación ya ha terminado.');
+  if(code==='NEXO_REMINDER_WAIT')return tr('Espera 15 minutos entre recordatorios de la misma entrada.');
   if(code==='NEXO_SPLIT')return tr('Revisa el reparto personalizado: los importes o porcentajes deben sumar el total.');
   if(code==='NEXO_CURRENCY_LOCKED')return tr('La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.');
   if(code==='NEXO_CURRENCY')return tr('Moneda no disponible. Elige EUR o RON.');
@@ -341,6 +346,31 @@ export class Cloud {
       if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
       return removed;
     }catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado de listas todavía no está activado en el servidor.'));throw error;}
+  }
+  async requirePlanning(scheduled=false) {
+    if(!this.planningReady){
+      const viewer=this.user?.id;let support;
+      try{support=await this.rpc('divzplit_planning_support',{});}catch(error){if(error.status!==404&&error.code!=='PGRST202')throw error;}
+      if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+      if(support?.enabled!==true)throw new CloudError(tr('El presupuesto opcional, las fechas y los recordatorios todavía no están activados en el servidor.'));
+      this.planningReady=support;
+    }
+    if(scheduled&&this.planningReady.scheduling!==true)throw new CloudError(tr('Los recordatorios programados todavía no están activados.'));
+  }
+  async planningAction(group,kind,action,item={}) {
+    if(!['tasks','polls'].includes(kind)||!['save','delete','clear'].includes(action))throw new CloudError(tr('Revisa la operación.'));
+    if(action==='clear'&&group.remote?.ownerId!==this.user?.id)throw new CloudError(tr('Solo el administrador puede limpiar estas listas.'));
+    const viewer=this.user?.id;await this.requirePlanning(action==='save'&&!!item.remindAt);
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    const payload=structuredClone(item);delete payload.votes;delete payload.done;delete payload.createdBy;
+    if(payload.assignee==='you')payload.assignee=this.user.id;
+    return this.groupRpc('divzplit_plan_action',{p_id:group.id,p_version:group.remote.version,p_kind:kind,p_action:action,p_item:payload});
+  }
+  async remindPlan(group,kind,itemId) {
+    if(!['tasks','polls'].includes(kind))throw new CloudError(tr('Revisa la operación.'));
+    const viewer=this.user?.id;await this.requirePlanning();
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    return this.clearList('divzplit_remind_plan',{p_id:group.id,p_kind:kind,p_item_id:itemId});
   }
   async paymentArchives(groupId) {
     const viewer=this.user?.id;

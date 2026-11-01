@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=payments-29';
+import {translations} from './translations.js?v=planning-30';
 
 const supported=new Set(['es','en','ro']);
 export function detectLanguage(preferences=[]) {

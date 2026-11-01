@@ -9,7 +9,7 @@ with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  for locale,ios in [('es-ES',True),('en-GB',False),('ro-RO',False)]:
   c=b.new_context(locale=locale,viewport={'width':393,'height':852},reduced_motion='reduce',user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' if ios else None)
-  settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;deleted=False;saved=[];registered=[]
+  settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;deleted=False;saved=[];registered=[];open_kind='expenses.added'
   c.add_init_script('localStorage.setItem("nexo-session-v1:nexo-test.supabase.co",'+json.dumps(json.dumps({'access_token':'fixture','refresh_token':'fixture-refresh','expires_at':int(time.time())+3600}))+');')
   c.add_init_script('''
    window.__permissionCalls=0;window.__binding=null;window.__subscription=null;window.__permission='default';
@@ -31,7 +31,7 @@ with sync_playwright() as p:
    elif path.endswith('/divzplit_notification_inbox'):value={'items':[] if deleted else [{'id':NID,'group_id':GID,'kind':'expenses.added','category':'expenses','actor_name':'Luis','group_name':group['document']['name'],'subject':'Cena <script>test</script>','created_at':'2026-11-01T12:00:00Z','read_at':'2026-11-01T12:00:01Z' if read else None}],'unread':0 if read or deleted else 1,'next':None}
    elif path.endswith('/divzplit_clear_notifications'):deleted=True;value=1
    elif path.endswith('/divzplit_read_notifications'):read=True
-   elif path.endswith('/divzplit_open_notification'):read=True;value={'group_id':GID,'kind':'expenses.added'}
+   elif path.endswith('/divzplit_open_notification'):read=True;value={'group_id':GID,'kind':open_kind}
    elif path.endswith('/divzplit_set_notification_settings'):saved.append(data);settings.update({key:data['p_'+key] for key in ['expenses','polls','tasks','payments']});settings['muted_groups']=data['p_muted'];value=settings
    elif path.endswith('/divzplit_register_push'):registered.append(data)
    elif path.endswith('/divzplit_remove_push'):value=None
@@ -67,6 +67,12 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':393,'height':852});page.screenshot(path='work/notifications-'+locale[:2]+'.png',full_page=True)
   page.locator('[data-notification-action="open"]').click();expect(page.locator('[data-tab="expenses"]').first).to_have_class('active')
   assert page.locator('.notification-dialog').count()==0
+  for kind in ['tasks.reminder','polls.reminder']:
+   open_kind=kind
+   page.locator('.notification-bell').click();page.locator('[data-notification-action="open"]').click()
+   expect(page.locator('.planning-list-dialog')).to_have_attribute('data-kind',kind.split('.')[0])
+   page.locator('[data-action="close-modal"]').first.click()
+
   page.locator('.notification-bell').click()
   page.locator('[data-notification-action="clear"]').click()
   assert deleted==False

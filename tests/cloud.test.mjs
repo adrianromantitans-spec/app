@@ -306,3 +306,15 @@ test('payment list cleanup checks ownership, isolates operations and reports mis
  await assert.rejects(()=>missing.clearPaymentList(g,'recorded'),/todavía no está activado/);
  let changed;changed=authed(async()=>{changed.user={id:'new-user'};return response([]);});await assert.rejects(()=>changed.paymentArchives('owned'),/cuenta ha cambiado/);
 });
+
+test('planning actions preserve account identity, map assignees and require server scheduling support',async()=>{
+ const calls=[];const g={...seed().groups[0],remote:{ownerId:actor,version:6}};
+ const c=authed(async(url,options)=>{calls.push([url,JSON.parse(options.body)]);return response(url.endsWith('divzplit_planning_support')?{enabled:true,scheduling:true}:{id:g.id,owner_id:actor,version:7,document:{...g,id:g.id}});});
+ await c.planningAction(g,'tasks','save',{id:'task',title:'Test',assignee:'you',done:true,createdBy:'forged',votes:{other:'fake'}});
+ assert.deepEqual(calls[1][1],{p_id:g.id,p_version:6,p_kind:'tasks',p_action:'save',p_item:{id:'task',title:'Test',assignee:actor}});
+ await assert.rejects(()=>c.planningAction({...g,remote:{ownerId:'other',version:6}},'tasks','clear'));
+ const missing=authed(async()=>response({code:'PGRST202'},404));await assert.rejects(()=>missing.requirePlanning(),/todavía no están activados/);
+ const noCron=authed(async()=>response({enabled:true,scheduling:false}));await assert.rejects(()=>noCron.requirePlanning(true),/programados/);
+ let changed;changed=authed(async()=>{changed.user={id:'other'};return response({enabled:true,scheduling:true});});
+ await assert.rejects(()=>changed.planningAction(g,'tasks','save',{id:'task'}),/cuenta ha cambiado/);
+});

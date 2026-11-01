@@ -1,10 +1,11 @@
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=planning-30';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=ocr-18';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=payments-29';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=planning-30';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=ocr-18';
-import {Cloud} from './cloud.js?v=payments-29';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=payments-29';
-import {NotificationCentre} from './notifications.js?v=payments-29';
+import {Cloud} from './cloud.js?v=planning-30';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=planning-30';
+import {NotificationCentre} from './notifications.js?v=planning-30';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -19,6 +20,7 @@ const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>sta
   closeModal();state.activeGroup=id;rememberActiveGroup();
   page=kind.startsWith('payment')?'activity':'home';tab=kind.startsWith('polls.')?'plans':kind.startsWith('tasks.')?'tasks':'expenses';
   if(page==='activity')await loadActivity();render();window.scrollTo({top:0});
+  if(kind.startsWith('tasks.'))await showPlanningList('tasks');else if(kind.startsWith('polls.'))await showPlanningList('polls');
 }});
 let accountUser=null;
 let remoteBusy=false;
@@ -38,6 +40,7 @@ let inviteError='';
 const remoteBaseline=new Map();
 const activityCache=new Map();
 const activityRequests=new Map();
+let planningLimit=30;
 let recordedPaymentLimit=50;
 let showArchivedRepayments=false;
 const paymentArchives=new Map();
@@ -191,19 +194,64 @@ function expensesView() {
 
 function budgetCard() {
   const g=group(); const spent=totalSpent(g); const percentage=g.budget?Math.round(spent/g.budget*100):0;
+  if(!g.budget)return ui`<section class="panel budget-card">${sectionTitle(tr('Gastos sin presupuesto'),tr('Lleva las cuentas sin fijar un límite.'))}<div class="budget-numbers"><strong>${money(spent)}</strong><span>Total compartido</span></div><p class="form-note">Sin presupuesto establecido.</p>${canManage()?ui`<button class="text-button" data-action="edit-budget">Añadir presupuesto ${icon('arrow')}</button>`:''}</section>`;
   return ui`<section class="panel budget-card">${sectionTitle(tr('Un plan, un presupuesto'),tr('Sin sorpresas al volver.'),`<span class="mini-icon">${icon('wallet')}</span>`)}<div class="budget-numbers"><strong>${money(spent)}</strong><span>de ${money(g.budget)}</span></div><div class="progress-track ${spent>g.budget?'over-budget':''}" role="progressbar" aria-label="Presupuesto utilizado" aria-valuenow="${Math.min(percentage,100)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Math.min(percentage,100)}%"></span></div><div class="progress-labels"><span>${percentage}% del presupuesto</span><span>${spent>g.budget?tr('Por encima del plan'):tr('Vamos bien ✨')}</span></div><div class="budget-remaining">${icon('spark')}<span>${spent>g.budget?tr('Habéis superado el presupuesto en'):tr('Todavía quedan')} <strong>${money(Math.abs(g.budget-spent))}</strong>${spent>g.budget?'': tr(' para disfrutar.')}</span></div>${canManage()?ui`<button class="text-button" data-action="edit-budget">Ajustar presupuesto ${icon('arrow')}</button>`:''}</section>`;
 }
 
 function pollCard(poll) {
-  const entries=Object.values(poll.votes); const own=poll.votes.you;
-  return ui`<article class="poll-card"><div class="poll-title"><span class="poll-symbol">💭</span><div><h3>${esc(poll.title)}</h3><p>${esc(poll.description || tr('Tu opinión también cuenta.'))}</p></div></div><div class="poll-options">${poll.options.map(option=>{const count=entries.filter(v=>v===option.id).length;return `<button class="poll-option ${own===option.id?'chosen':''}" data-poll="${esc(poll.id)}" data-option="${esc(option.id)}" aria-pressed="${own===option.id}"><span class="poll-fill" style="width:${entries.length?count/entries.length*100:0}%"></span><span class="option-text"><span>${esc(option.emoji || '✦')}</span>${esc(option.label)}</span><span class="option-count">${count}${own===option.id?icon('check'):'<span class="radio-dot"></span>'}</span></button>`;}).join('')}</div><div class="poll-footer">${avatars(group().members.filter(m=>poll.votes[m.id]))}<span>${entries.length} de ${group().members.length} han votado</span><span class="vote-status">${own?tr('Tu voto está guardado'): tr('¡Solo faltas tú!')}</span></div></article>`;
+  const entries=Object.values(poll.votes); const own=poll.votes.you;const closed=planClosed(poll);
+  return ui`<article class="poll-card" data-plan-card="${esc(poll.id)}">${planningMeta(poll,'polls')}<div class="poll-title"><span class="poll-symbol">💭</span><div><h3>${esc(poll.title)}</h3><p>${esc(poll.description || tr('Tu opinión también cuenta.'))}</p></div></div><div class="poll-options">${poll.options.map(option=>{const count=entries.filter(v=>v===option.id).length;return `<button class="poll-option ${own===option.id?'chosen':''}" data-poll="${esc(poll.id)}" ${closed?'disabled':''} data-option="${esc(option.id)}" aria-pressed="${own===option.id}"><span class="poll-fill" style="width:${entries.length?count/entries.length*100:0}%"></span><span class="option-text"><span>${esc(option.emoji || '✦')}</span>${esc(option.label)}</span><span class="option-count">${count}${own===option.id?icon('check'):'<span class="radio-dot"></span>'}</span></button>`;}).join('')}</div><div class="poll-footer">${avatars(group().members.filter(m=>poll.votes[m.id]))}<span>${entries.length} de ${group().members.length} han votado</span><span class="vote-status">${closed?tr('Votación cerrada'):own?tr('Tu voto está guardado'): tr('¡Solo faltas tú!')}</span></div>${planningControls(poll,'polls')}</article>`;
 }
-function plansView() {return `<section class="panel">${sectionTitle(tr('Los planes se hacen juntos'),tr('Propón, vota y encontrad vuestro próximo sí.'),ui`<button class="button primary small-button" data-action="new-poll">${icon('plus')} Nueva votación</button>`)}${group().polls.length?`<div class="polls-grid">${group().polls.map(pollCard).join('')}</div>`:empty(tr('Hay un plan por descubrir'),tr('Crea una votación con al menos dos opciones.'),'new-poll',tr('Crear votación'))}</section>`;}
+function plansView() {return `<section class="panel">${sectionTitle(tr('Los planes se hacen juntos'),tr('Propón, vota y encontrad vuestro próximo sí.'),ui`<button class="button primary small-button" data-action="new-poll">${icon('plus')} Nueva votación</button>`)}${ui`<button class="button secondary" data-show-planning="polls">Ver votaciones ${icon('arrow')}<span class="payment-list-count">${group().polls.length}</span></button>`}</section>`;}
 function taskList(items) {
-  if (!items.length) return empty(tr('Por ahora, todo hecho'),tr('Añade una tarea para repartir la organización.'),'new-task',tr('Añadir tarea'));
-  return `<div class="task-list">${items.map(t=>`<div class="task-row ${t.done?'done':''}"><label><input type="checkbox" data-task="${esc(t.id)}" ${t.done?'checked':''}><span class="custom-check">${icon('check')}</span><span>${esc(t.title)}</span></label>${avatar(member(t.assignee),true)}</div>`).join('')}</div>`;
+  if(!items.length)return empty(tr('Por ahora, todo hecho'),tr('Añade una tarea para repartir la organización.'),'new-task',tr('Añadir tarea'));
+  return `<div class="task-list">${items.map(t=>`<div class="task-row planning-task ${t.done?'done':''}"><label><input type="checkbox" data-task="${esc(t.id)}" ${t.done?'checked':''} aria-label="${esc(t.title)}"><span class="custom-check">${icon('check')}</span></label><div class="planning-task-body"><button class="text-button task-detail-button" data-plan-detail="${esc(t.id)}" data-kind="tasks">${esc(t.title)}</button>${planningMeta(t,'tasks')}</div>${avatar(member(t.assignee),true)}</div>`).join('')}</div>`;
 }
-function tasksView() {const done=group().tasks.filter(t=>t.done).length;return `<section class="panel">${sectionTitle(tr('Un equipo para todo'),ui`${done} de ${group().tasks.length} tareas completadas.`, ui`<button class="button primary small-button" data-action="new-task">${icon('plus')} Añadir tarea</button>`)}${taskList(group().tasks)}</section>`;}
+function tasksView() {const done=group().tasks.filter(t=>t.done).length;return `<section class="panel">${sectionTitle(tr('Un equipo para todo'),ui`${done} de ${group().tasks.length} tareas completadas.`,ui`<button class="button primary small-button" data-action="new-task">${icon('plus')} Añadir tarea</button>`)}${ui`<button class="button secondary" data-show-planning="tasks">Ver tareas ${icon('arrow')}<span class="payment-list-count">${group().tasks.length}</span></button>`}</section>`;}
+function canEditPlan(item) {return !!item&&(!accountUser||canManage()||item.createdBy===accountUser.id);}
+function planningMeta(item,kind) {
+ const date=item.dueAt?new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(new Date(item.dueAt)):'';
+ return `<div class="planning-meta">${item.important?`<span class="important-pill">${tr('Importante')}</span>`:''}${date?`<span class="${planClosed(item)&&!item.done?'deadline-overdue':''}">${tr(planClosed(item)?kind==='polls'?'Votación cerrada':'Fecha vencida':'Fecha límite')}: ${esc(date)}</span>`:''}${item.remindAt&&!item.done&&!planClosed(item)?`<span>${tr('Recordatorio')}: ${esc(new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(new Date(item.remindAt)))}</span>`:''}</div>`;
+}
+function planningControls(item,kind) {
+ if(!canEditPlan(item))return '';
+ return ui`<div class="planning-controls"><button class="text-button" data-plan-edit="${esc(item.id)}" data-kind="${kind}">Editar</button>${!item.done&&!(kind==='polls'&&planClosed(item))?ui`<button class="text-button" data-plan-remind="${esc(item.id)}" data-kind="${kind}">Enviar recordatorio</button>`:''}<button class="text-button danger-text" data-plan-delete="${esc(item.id)}" data-kind="${kind}">Borrar</button></div>`;
+}
+function renderPlanningList() {
+ const container=modalRoot.querySelector('.planning-list-dialog'),g=group();if(!container||container.dataset.group!==g?.id)return;
+ const kind=container.dataset.kind,items=g[kind];
+ container.innerHTML=`${canManage()&&items.length?ui`<div class="history-modal-controls"><button class="button secondary danger-text" data-plan-clear="${kind}">Borrar todo</button></div>`:''}<div class="planning-list-scroll">${kind==='tasks'?taskList(items.slice(0,planningLimit)):items.length?items.slice(0,planningLimit).map(pollCard).join(''):empty(tr('Hay un plan por descubrir'),tr('Crea una votación con al menos dos opciones.'),'new-poll',tr('Crear votación'))}${items.length>planningLimit?ui`<button class="button secondary" data-action="more-planning">Ver más</button>`:''}</div>`;
+}
+async function showPlanningList(kind) {
+ if(!['tasks','polls'].includes(kind)||!group())return;
+ planningLimit=30;openModal(tr(kind==='tasks'?'Tareas':'Votaciones'),`<div class="planning-list-dialog" data-kind="${kind}" data-group="${esc(group().id)}"><p role="status">${tr('Cargando…')}</p></div>`,esc(group().name));
+ if(accountUser)await loadSharedGroups();renderPlanningList();
+}
+function planDetails(id,kind) {
+ const item=group()?.[kind]?.find(x=>x.id===id);if(!item)return;
+ openModal(esc(item.title),`${planningMeta(item,kind)}${kind==='tasks'?ui`<p class="dialog-copy">${esc(member(item.assignee).name)} · ${tr(item.done?'Completada':'Pendiente')}</p>`:pollCard(item)}${kind==='tasks'?planningControls(item,kind):''}<div class="modal-actions"><button class="button secondary" data-show-planning="${kind}">${tr('Volver a la lista')}</button></div>`);
+}
+function planningInputs(item={}) {
+ return ui`<div class="form-columns"><label class="field">Fecha límite (opcional)<input type="datetime-local" name="dueAt" value="${esc(localDateTime(item.dueAt))}"></label><label class="field">Recordatorio programado (opcional)<input type="datetime-local" name="remindAt" value="${esc(localDateTime(item.remindAt))}"></label></div><p class="form-note">Las horas corresponden a este dispositivo. El recordatorio debe ser anterior a la fecha límite.</p><label class="planning-important"><input type="checkbox" name="important" ${item.important?'checked':''}>Marcar como importante</label><p class="form-note">Los recordatorios avisarán al resto del grupo, respetando sus preferencias de notificaciones.</p>`;
+}
+function planningModal(kind,id=null) {
+ const item=id?group()[kind].find(x=>x.id===id):null;if(id&&!canEditPlan(item))throw new Error(tr('No puedes editar esta entrada.'));
+ const task=kind==='tasks';
+ openModal(tr(item?task?'Editar tarea':'Editar votación':task?'Una pequeña cosa por hacer':'¿Cuál es el plan?'),ui`<form id="${task?'task':'poll'}-form" data-entity-id="${item?.id||uid()}" data-edit="${!!item}" data-group="${esc(group().id)}"><label class="field">${tr(task?'¿Qué queda pendiente?':'La gran pregunta')}<input name="title" maxlength="120" value="${esc(item?.title||'')}" required></label>${task?ui`<label class="field">¿Quién se encarga?<select name="assignee">${memberOptions({selfFirst:true,selected:item?.assignee||'you'})}</select></label>`:ui`<label class="field">Un poco de contexto <span class="muted">(opcional)</span><input name="description" maxlength="160" value="${esc(item?.description||'')}"></label>${item?`<p class="form-note">${tr('Las opciones se conservan para mantener los votos existentes.')}</p>`:[1,2,3].map(n=>ui`<label class="field">${tr('Opción')} ${n}<input name="option" maxlength="100" ${n<3?'required':''}></label>`).join('')}`}${planningInputs(item||{})}${actions(tr(item?'Guardar cambios':task?'Añadir tarea':'Crear votación'))}</form>`);
+}
+async function applyPlanningAction(kind,action,item={}) {
+ const g=group();if(!['tasks','polls'].includes(kind))return;
+ if(accountUser){
+  remoteBusy=true;
+  try{const saved=await cloud.planningAction(g,kind,action,item);if(group()?.id===saved.id){state.groups[state.groups.findIndex(x=>x.id===saved.id)]=saved;remoteBaseline.set(saved.id,JSON.stringify(saved));}}
+  catch(error){await loadSharedGroups().catch(()=>{});render();throw error;}finally{remoteBusy=false;}
+ }else{
+  if(action==='clear')g[kind]=[];
+  else if(action==='delete')g[kind]=g[kind].filter(x=>x.id!==item.id);
+  else{const old=g[kind].find(x=>x.id===item.id);if(old)Object.assign(old,item);else g[kind].unshift({...item,createdBy:'you'});}
+  await save();
+ }
+}
 function groupsView() {return ui`<div class="welcome-row"><div><div class="eyebrow">CADA GRUPO, SU HISTORIA</div><h1>La gente con la que compartes<span class="purple-text">.</span></h1><p>De la escapada del finde a las cuentas de casa.</p></div><button class="button primary" data-action="new-group">${icon('plus')} Crear grupo</button></div><div class="group-cards">${state.groups.map((g,i)=>ui`<button class="group-card" data-group="${esc(g.id)}"><div class="group-card-cover cover-${i%3}"><span>${esc(g.emoji)}</span><span class="tiny-pill">${esc(tr(g.type))}</span></div><div class="group-card-body"><h2>${esc(g.name)} ${icon('arrow')}</h2><p>${icon('pin')}${esc(g.place || tr('El próximo gran plan'))}</p><div class="group-card-footer">${avatars(g.members)}<span>${g.members.length} personas</span></div><div class="group-card-total"><span>Compartido hasta ahora</span><strong>${money(totalSpent(g),currencyOf(g))}</strong></div></div></button>`).join('')}<button class="new-group-card" data-action="new-group"><span>${icon('plus')}</span><h3>El siguiente buen plan</h3><p>Empieza con un grupo.</p></button></div>`;}
 function activityData() {return activityCache.get(group()?.id)||{ready:null,events:[],requests:[],next:null};}
 const activityMemberName=id=>id===accountUser?.id?tr('Tú'):group()?.members.find(m=>m.id===id)?.name||tr('Miembro');
@@ -344,7 +392,7 @@ function updateSplitTotal(form) {
 function groupModal(edit=false) {
   const g=group() || {};
   const selectedCurrency=currencyOf(edit?g:undefined);
-  openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${edit&&g.type===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}"></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}"></label></div>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}><option value="EUR" ${selectedCurrency==='EUR'?'selected':''}>${tr('Euro (€)')}</option><option value="RON" ${selectedCurrency==='RON'?'selected':''}>${tr('Leu rumano (RON)')}</option></select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='RON'?'RON':'€'})`}</span><input name="budget" type="number" min="1" max="10000000" step="0.01" value="${edit?g.budget/100:''}" placeholder="1200" required></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
+  openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${edit&&g.type===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}"></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}"></label></div>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}><option value="EUR" ${selectedCurrency==='EUR'?'selected':''}>${tr('Euro (€)')}</option><option value="RON" ${selectedCurrency==='RON'?'selected':''}>${tr('Leu rumano (RON)')}</option></select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='RON'?'RON':'€'})`}</span><input name="budget" type="number" min="1" max="10000000" step="0.01" value="${edit&&g.budget?g.budget/100:''}" placeholder="1200"><span class="muted">${tr('Opcional. Déjalo vacío si no necesitas presupuesto.')}</span></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
 }
 function paymentSuggestions() {
   const pending=activityData().ready===true?activityData().requests:[];
@@ -401,8 +449,29 @@ async function onAppClick(event) {
   if(el.dataset.group){state.activeGroup=el.dataset.group;page='home';tab='summary';expenseFilter='all';await save();render();window.scrollTo({top:0});return;}
   if(el.dataset.tab){tab=el.dataset.tab;render();return;}
   if(el.dataset.filter){expenseFilter=el.dataset.filter;render();return;}
-  if(el.dataset.poll){const poll=group().polls.find(p=>p.id===el.dataset.poll);vote(poll,el.dataset.option,'you');await save();render();toast(poll.votes.you?tr('Tu voto está guardado. Puedes cambiarlo cuando quieras.'):tr('Has retirado tu voto.'));return;}
+  if(el.dataset.poll){const poll=group().polls.find(p=>p.id===el.dataset.poll);if(planClosed(poll))throw new Error(tr('Esta votación ya está cerrada.'));vote(poll,el.dataset.option,'you');await save();render();renderPlanningList();toast(poll.votes.you?tr('Tu voto está guardado. Puedes cambiarlo cuando quieras.'):tr('Has retirado tu voto.'));return;}
   if(el.dataset.editExpense){expenseModal(el.dataset.editExpense);return;}
+  if(el.dataset.showPlanning){await showPlanningList(el.dataset.showPlanning);return;}
+  if(el.dataset.planDetail){planDetails(el.dataset.planDetail,el.dataset.kind);return;}
+  if(el.dataset.planEdit){planningModal(el.dataset.kind,el.dataset.planEdit);return;}
+  if(el.dataset.planClear||el.dataset.planDelete){
+    const kind=el.dataset.planClear||el.dataset.kind,all=!!el.dataset.planClear,item=group()?.[kind]?.find(x=>x.id===el.dataset.planDelete);
+    if(all?!canManage():!canEditPlan(item))throw new Error(tr('No puedes borrar esta entrada.'));
+    openModal(tr(all?'¿Borrar toda la lista?':'¿Borrar esta entrada?'),ui`<p class="dialog-copy">Se eliminarán ${all?tr('todas las entradas de esta lista'):tr('esta entrada')}. Los gastos, pagos y saldos se conservarán. También se cancelarán sus recordatorios programados. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-show-planning="${kind}">Cancelar</button><button class="button danger" data-confirm-plan-delete="${all?'clear':'delete'}" data-kind="${kind}" data-item="${esc(item?.id||'')}" data-planning-group="${esc(group().id)}">${tr(all?'Borrar todo':'Borrar')}</button></div>`);return;
+  }
+  if(el.dataset.confirmPlanDelete){
+    if(el.dataset.planningGroup!==group()?.id)return;
+    const kind=el.dataset.kind;await applyPlanningAction(kind,el.dataset.confirmPlanDelete,{id:el.dataset.item});closeModal();render();await showPlanningList(kind);toast(tr('Lista actualizada. Los saldos se conservan.'));return;
+  }
+  if(el.dataset.planRemind){
+    if(!accountUser){toast(tr('Entra con tu cuenta para enviar recordatorios al grupo.'));return;}
+    const kind=el.dataset.kind,item=group()?.[kind]?.find(x=>x.id===el.dataset.planRemind);if(!canEditPlan(item))return;
+    openModal(tr('¿Enviar un recordatorio al grupo?'),ui`<p class="dialog-copy">Avisaremos al resto del grupo sobre <strong>${esc(item.title)}</strong>, respetando sus preferencias. Podrás enviar otro recordatorio dentro de 15 minutos.</p><div class="modal-actions"><button class="button secondary" data-show-planning="${kind}">Cancelar</button><button class="button primary" data-confirm-plan-remind="${esc(item.id)}" data-kind="${kind}" data-planning-group="${esc(group().id)}">Enviar recordatorio</button></div>`);return;
+  }
+  if(el.dataset.confirmPlanRemind){
+    if(el.dataset.planningGroup!==group()?.id)return;remoteBusy=true;
+    try{await cloud.remindPlan(group(),el.dataset.kind,el.dataset.confirmPlanRemind);closeModal();await showPlanningList(el.dataset.kind);toast(tr('Recordatorio enviado a las personas con estos avisos activados.'));}finally{remoteBusy=false;}return;
+  }
   if(el.dataset.expense){expenseDetails(el.dataset.expense);return;}
   if(el.dataset.deleteExpense){const id=el.dataset.deleteExpense;openModal(tr('¿Eliminar este gasto?'),ui`<p class="dialog-copy">El reparto y los saldos del grupo se volverán a calcular. Esta acción no se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cancelar</button><button class="button danger" data-confirm-delete="${esc(id)}">Sí, eliminar</button></div>`);return;}
   if(el.dataset.confirmDelete){const g=group();const receipt=g.expenses.find(e=>e.id===el.dataset.confirmDelete)?.receipt;g.expenses=g.expenses.filter(e=>e.id!==el.dataset.confirmDelete);await save();let removed=true;if(accountUser&&receipt?.path){try{await cloud.deleteReceipt(g.id,receipt.path);}catch{removed=false;}}closeModal();render();toast(removed?tr('Gasto eliminado. Los saldos están actualizados.'):tr('Gasto eliminado; no se pudo borrar su foto del almacenamiento.'));return;}
@@ -457,11 +526,12 @@ async function onAppClick(event) {
     case 'show-recorded-payments':await showPaymentList('recorded');break;
     case 'toggle-recorded-archive':showArchivedRepayments=!showArchivedRepayments;recordedPaymentLimit=50;renderPaymentList();break;
     case 'more-recorded-payments':recordedPaymentLimit+=50;renderPaymentList();break;
+    case 'more-planning':planningLimit+=30;renderPlanningList();break;
     case 'show-history':await showHistory();break;
     case 'clear-history':if(!canManage())throw new Error(tr('Solo el administrador puede borrar entradas del historial.'));openModal(tr('¿Borrar todo el historial?'),ui`<p class="dialog-copy">Se borrarán todas las entradas del historial de este grupo. Los gastos, pagos y saldos se conservarán. No se puede deshacer.</p><div class="modal-actions"><button class="button secondary" data-action="show-history">Cancelar</button><button class="button danger" data-confirm-clear-history="${esc(group().id)}">Borrar todo</button></div>`);break;
-    case 'edit-budget':openModal(tr('Disfrutar, sin sorpresas'),ui`<form id="budget-form"><label class="field">Presupuesto total del grupo (${currencyUnit(group())})<input type="number" name="budget" min="1" max="10000000" step="0.01" value="${group().budget/100}" required></label><p class="form-note">${icon('users')} Como referencia: ${money(Math.round(group().budget/group().members.length))} por persona con el presupuesto actual.</p>${actions(tr('Actualizar presupuesto'))}</form>`,esc(group().name));break;
-    case 'new-task':openModal(tr('Una pequeña cosa por hacer'),ui`<form id="task-form" data-entity-id="${uid()}"><label class="field">¿Qué queda pendiente?<input name="title" placeholder="Ej. Reservar la excursión a Sintra" maxlength="120" required></label><label class="field">¿Quién se encarga?<select name="assignee">${memberOptions()}</select></label>${actions(tr('Añadir tarea'))}</form>`);break;
-    case 'new-poll':openModal(tr('¿Cuál es el plan?'),ui`<form id="poll-form" data-entity-id="${uid()}"><label class="field">La gran pregunta<input name="title" placeholder="¿Dónde cenamos el viernes?" maxlength="120" required></label><label class="field">Un poco de contexto <span class="muted">(opcional)</span><input name="description" placeholder="Algo rico, cerca del apartamento" maxlength="160"></label><label class="field">Opción 1<input name="option" placeholder="Pizzería del barrio" maxlength="100" required></label><label class="field">Opción 2<input name="option" placeholder="Restaurante portugués" maxlength="100" required></label><label class="field">Opción 3 <span class="muted">(opcional)</span><input name="option" placeholder="Otra buena idea" maxlength="100"></label>${actions(tr('Crear votación'))}</form>`);break;
+    case 'edit-budget':openModal(tr('Disfrutar, sin sorpresas'),ui`<form id="budget-form"><label class="field">Presupuesto total del grupo (${currencyUnit(group())})<input type="number" name="budget" min="1" max="10000000" step="0.01" value="${group().budget?group().budget/100:''}"></label><p class="form-note">Opcional. Déjalo vacío si no necesitas presupuesto.</p>${actions(tr('Actualizar presupuesto'))}</form>`,esc(group().name));break;
+    case 'new-task':planningModal('tasks');break;
+    case 'new-poll':planningModal('polls');break;
     case 'settings':settingsModal();break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
@@ -493,7 +563,7 @@ async function onAppChange(event) {
   if(el.name==='removeReceipt'&&el.checked){const file=el.form.elements.receipt;file.value='';await receiptChanged(file);return;}
   if(el.matches('select[name=currency]')){const label=el.form.querySelector('.budget-currency-label');if(label)label.textContent=ui`Presupuesto total del grupo (${el.value==='RON'?'RON':'€'})`;return;}
   if(el.matches('input[name=receipt]')){await receiptChanged(el);return;}
-  if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
+  if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();renderPlanningList();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'){await loadActivity();render();}}
 }
 document.addEventListener('submit',async event=>{
@@ -530,16 +600,30 @@ document.addEventListener('submit',async event=>{
         if(existing?.receipt?.path&&existing.receipt.path!==receipt?.path)form.oldReceipt={groupId:group().id,path:existing.receipt.path};
       }finally{remoteBusy=false;submit.disabled=false;submit.innerHTML=tr(form.dataset.edit==='true'?'Guardar cambios':'Guardar gasto')+icon('arrow');}
     }
-    if(form.id==='task-form'){const title=data.get('title').trim();if(!title)throw new Error(tr('Escribe qué hay que hacer.'));group().tasks.push({id:accountUser?form.dataset.entityId:uid(),title,assignee:data.get('assignee'),done:false});}
-    if(form.id==='poll-form'){const title=data.get('title').trim();const options=data.getAll('option').map(s=>s.trim()).filter(Boolean);if(!title||options.length<2)throw new Error(tr('Escribe una pregunta y al menos dos opciones.'));if(new Set(options.map(s=>s.toLowerCase())).size!==options.length)throw new Error(tr('Las opciones deben ser diferentes.'));group().polls.unshift({id:accountUser?form.dataset.entityId:uid(),title,description:data.get('description').trim(),options:options.map(label=>({id:uid(),label,emoji:'✦'})),votes:{}});tab='plans';}
-    if(form.id==='budget-form'){const budget=Math.round(Number(data.get('budget'))*100);if(!Number.isSafeInteger(budget)||budget<100)throw new Error(ui`El presupuesto debe ser de al menos 1 ${currencyUnit(group())}.`);group().budget=budget;}
+    if(['task-form','poll-form'].includes(form.id)) {
+      const kind=form.id==='task-form'?'tasks':'polls';
+      if(form.dataset.group!==group()?.id)throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
+      const previous=group()[kind].find(x=>x.id===form.dataset.entityId),title=data.get('title').trim();
+      if(!title)throw new Error(tr('Escribe un título.'));
+      const item={id:form.dataset.entityId,title,...planningFields({dueAt:data.get('dueAt'),remindAt:data.get('remindAt'),important:data.has('important')},previous)};
+      if(kind==='tasks')Object.assign(item,{assignee:data.get('assignee'),done:previous?.done||false});
+      else {
+        const options=data.getAll('option').map(x=>x.trim()).filter(Boolean);
+        if(!previous&&(options.length<2||new Set(options.map(x=>x.toLowerCase())).size!==options.length))throw new Error(tr('Escribe una pregunta y al menos dos opciones diferentes.'));
+        Object.assign(item,{description:data.get('description').trim(),options:previous?.options||options.map(label=>({id:uid(),label,emoji:'✦'})),votes:previous?.votes||{}});
+      }
+      if(accountUser)await cloud.requirePlanning(!!item.remindAt);
+      form.intendedPlan={...previous,...item};await applyPlanningAction(kind,'save',item);tab=kind==='tasks'?'tasks':'plans';closeModal();render();await showPlanningList(kind);toast(tr('Listo. Todo está actualizado.'));return;
+    }
+    if(form.id==='budget-form'){const budget=optionalBudget(data.get('budget'));if(accountUser&&!budget)await cloud.requirePlanning();group().budget=budget;}
     if(form.id==='group-form'){
       const name=data.get('name').trim();if(!name)throw new Error(tr('Ponle un nombre al grupo.'));
       if(data.get('endDate')&&!data.get('date'))throw new Error(tr('Indica también la fecha de inicio.'));
       if(data.get('date')&&data.get('endDate')&&data.get('endDate')<data.get('date'))throw new Error(tr('La fecha final debe ser posterior a la inicial.'));
       const currency=data.get('currency')||(form.dataset.edit==='true'?currencyOf(group()):'EUR');
       checkCurrencyChange(form.dataset.edit==='true'?group():null,currency);
-      const fields={currency,name,emoji:data.get('emoji'),type:data.get('type'),place:data.get('place').trim(),date:data.get('date'),endDate:data.get('endDate'),budget:Math.round(Number(data.get('budget'))*100)};
+      const fields={currency,name,emoji:data.get('emoji'),type:data.get('type'),place:data.get('place').trim(),date:data.get('date'),endDate:data.get('endDate'),budget:optionalBudget(data.get('budget'))};
+      if(accountUser&&!fields.budget)await cloud.requirePlanning();
       if(form.dataset.edit==='true')Object.assign(group(),fields);
       else {
         const names=String(data.get('members') || '').split(',').map(n=>n.trim()).filter(Boolean);if(names.length>19)throw new Error(tr('Puedes añadir hasta 19 personas más.'));
@@ -552,7 +636,7 @@ document.addEventListener('submit',async event=>{
     // reload confirm the saved record instead of creating another one on retry.
     const id=form.dataset.entityId;
     const collection={'expense-form':'expenses','task-form':'tasks','poll-form':'polls'}[form.id];
-    const confirmed=accountUser&&id&&((form.id==='group-form'&&form.dataset.edit!=='true'&&state.groups.some(g=>g.id===id))||(collection&&group()?.[collection]?.some(item=>item.id===id&&(form.dataset.edit!=='true'||sameJSON(item,form.intendedExpense)))));
+    const confirmed=accountUser&&id&&((form.id==='group-form'&&form.dataset.edit!=='true'&&state.groups.some(g=>g.id===id))||(collection&&group()?.[collection]?.some(item=>item.id===id&&(form.dataset.edit!=='true'||sameJSON(item,form.intendedExpense||form.intendedPlan)))));
     if(confirmed){closeModal();render();toast(tr('El servidor ha confirmado el registro. No se ha creado ningún duplicado.'));}
     else if(form.isConnected) form.querySelector('.form-error').textContent=error.message;
     else toast(error.message);

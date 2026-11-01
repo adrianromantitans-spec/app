@@ -51,3 +51,11 @@ test('deployment preparation keeps secrets local, pairs VAPID keys and refuses k
   const second=run();assert.equal(second.status,1);assert.ok((await read(path.join(directory,'push.env'),'utf8')).includes(env.VAPID_PRIVATE_KEY));
  }finally{await rm(parent,{recursive:true,force:true});}
 });
+
+test('task and poll reminder pushes use reminder copy in all supported languages',()=>{
+ for(const kind of ['tasks.reminder','polls.reminder'])for(const language of ['es','en','ro']){
+  const payload=JSON.parse(pushPayload({...job,kind,language}));
+  assert.match(payload.body,language==='es'?/recordatorio/:language==='en'?/reminder/:/memento/);
+  assert.equal(payload.notificationId,notificationId);assert.equal(payload.userId,userId);
+ }
+});

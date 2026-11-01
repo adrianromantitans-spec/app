@@ -1,7 +1,7 @@
-import {tr,ui,language,locale} from './i18n.js?v=payments-29';
+import {tr,ui,language,locale} from './i18n.js?v=planning-30';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const idPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const titles={'expenses.added':'Nuevo gasto','expenses.updated':'Gasto modificado','expenses.deleted':'Gasto eliminado','polls.added':'Nueva votación','tasks.added':'Nueva tarea asignada','tasks.updated':'Tarea asignada','payment.requested':'Pago pendiente de confirmar','payments.added':'Pago confirmado','payment.rejected':'Pago no recibido','payment.cancelled':'Solicitud de pago cancelada'};
+const titles={'tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación','expenses.added':'Nuevo gasto','expenses.updated':'Gasto modificado','expenses.deleted':'Gasto eliminado','polls.added':'Nueva votación','tasks.added':'Nueva tarea asignada','tasks.updated':'Tarea asignada','payment.requested':'Pago pendiente de confirmar','payments.added':'Pago confirmado','payment.rejected':'Pago no recibido','payment.cancelled':'Solicitud de pago cancelada'};
 const categoryLabels={expenses:'Gastos',polls:'Votaciones',tasks:'Tareas',payments:'Pagos'};
 export function pushEnvironment(nav=globalThis.navigator,standalone=globalThis.matchMedia?.('(display-mode: standalone)').matches){const ios=/iPad|iPhone|iPod/.test(nav?.userAgent||'')||(nav?.platform==='MacIntel'&&nav?.maxTouchPoints>1);return {ios,installed:!!standalone||nav?.standalone===true,supported:!!globalThis.isSecureContext&&'serviceWorker' in (nav||{})&&'PushManager' in globalThis&&'Notification' in globalThis};}
 function keyBytes(value){return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(value.length/4)*4,'=')),c=>c.charCodeAt(0));}

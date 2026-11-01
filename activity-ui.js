@@ -1,7 +1,8 @@
-import {tr,ui,locale} from './i18n.js?v=payments-29';
+import {tr,ui,locale} from './i18n.js?v=planning-30';
 import {money} from './model.js?v=ocr-18';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={
+ 'tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación',
  'group.created':'Grupo creado','group.updated':'Detalles del grupo modificados',
  'expenses.added':'Gasto añadido','expenses.updated':'Gasto modificado','expenses.deleted':'Gasto eliminado',
  'payments.added':'Pago confirmado','tasks.added':'Tarea añadida','tasks.updated':'Tarea modificada','tasks.deleted':'Tarea eliminada',
@@ -9,7 +10,7 @@ const labels={
  'members.added':'Miembro incorporado','members.updated':'Miembro actualizado','members.deleted':'Miembro eliminado',
  'payment.requested':'Pago marcado como enviado','payment.rejected':'Pago no recibido','payment.cancelled':'Solicitud de pago cancelada'
 };
-const fields={title:'Concepto',amount:'Importe',payer:'Pagado por',participants:'Participantes',split:'Reparto',date:'Fecha',category:'Categoría',receipt:'Ticket',recurrence:'Repetición',done:'Completada',assignee:'Responsable',votes:'Votos',options:'Opciones',name:'Nombre',place:'Lugar',budget:'Presupuesto',currency:'Moneda',emoji:'Icono',type:'Tipo de grupo',endDate:'Fecha de vuelta',from:'De',to:'Para',from_id:'De',to_id:'Para',status:'Estado'};
+const fields={dueAt:'Fecha límite',remindAt:'Recordatorio',important:'Importante',title:'Concepto',amount:'Importe',payer:'Pagado por',participants:'Participantes',split:'Reparto',date:'Fecha',category:'Categoría',receipt:'Ticket',recurrence:'Repetición',done:'Completada',assignee:'Responsable',votes:'Votos',options:'Opciones',name:'Nombre',place:'Lugar',budget:'Presupuesto',currency:'Moneda',emoji:'Icono',type:'Tipo de grupo',endDate:'Fecha de vuelta',from:'De',to:'Para',from_id:'De',to_id:'Para',status:'Estado'};
 export function paymentRequestsView(requests,viewerId,name,currency) {
  if(!requests.length)return `<p class="muted">${tr('No hay pagos pendientes de confirmar.')}</p>`;
  return `<div class="payment-requests">${requests.map(r=>`<article class="payment-request"><div><strong>${esc(name(r.from_id))} → ${esc(name(r.to_id))}</strong><span>${esc(money(r.amount,r.currency||currency))}</span><small>${tr('Pendiente de confirmar por quien recibe el dinero')}</small></div>${r.to_id===viewerId?ui`<div class="payment-actions"><button class="button primary small-button" data-payment-response="confirm" data-request-id="${esc(r.id)}">Confirmar recepción</button><button class="button secondary small-button" data-payment-response="reject" data-request-id="${esc(r.id)}">No lo he recibido</button></div>`:r.from_id===viewerId?ui`<button class="text-button" data-payment-response="cancel" data-request-id="${esc(r.id)}">Cancelar solicitud</button>`:''}</article>`).join('')}</div>`;
@@ -18,9 +19,12 @@ function valueText(key,value,event,name,snapshot) {
  if((value===null||value===undefined)&&snapshot&&key==='split')return tr('A partes iguales');
  if((value===null||value===undefined)&&snapshot&&key==='receipt')return tr('Sin ticket');
  if(value===null||value===undefined)return '—';
+ if(key==='budget'&&!value)return tr('Sin presupuesto establecido.');
  if(key==='amount'||key==='budget')return money(value,event.currency);
  if(['payer','assignee','from','to','from_id','to_id'].includes(key))return name(value);
  if(key==='participants')return value.map(name).join(', ');
+ if(['dueAt','remindAt'].includes(key))return value?new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(new Date(value)):tr('Sin fecha');
+ if(key==='important')return tr(value?'Sí':'No');
  if(key==='done')return tr(value?'Sí':'No');
  if(key==='receipt')return tr('Con ticket');
  if(key==='recurrence')return tr(value.active?'Activa':'Detenida');

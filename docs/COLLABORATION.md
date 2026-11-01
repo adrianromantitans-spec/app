@@ -72,3 +72,40 @@ Las nuevas modificaciones vuelven a registrarse normalmente después del borrado
 En Actividad, los pagos pendientes y las devoluciones registradas se abren en listas con desplazamiento. Las devoluciones se muestran en bloques de 50. Ejecutar `supabase/payment-lists.sql` en SQL Editor para activar las dos operaciones de «Borrar todo»; no requiere cambiar secretos, cron ni Edge Functions.
 
 Solo el administrador puede limpiar listas. Los pendientes se cancelan en una operación bajo bloqueo del grupo, liberando las reservas sin modificar los saldos. Cada cancelación se registra en el historial y avisa a las partes, respetando sus preferencias. Las devoluciones confirmadas se archivan por identificador: el documento financiero y su versión se conservan íntegros. «Ver anteriores» permite consultar lo archivado y las nuevas confirmaciones siguen apareciendo en recientes. La migración es idempotente y por sí sola no cancela ni archiva entradas.
+
+### Presupuesto opcional, tareas y votaciones
+
+Ejecutar `supabase/planning.sql` después de las migraciones anteriores. Un presupuesto
+vacío se guarda como `0` (sin límite): no muestra porcentajes ni exceso, y el
+administrador puede establecerlo o quitarlo después. No modifica gastos ni pagos.
+
+Tareas y Votaciones tienen accesos compactos y listas de 30 entradas por página,
+con desplazamiento. El autor o el administrador puede editar y borrar una entrada;
+solo el administrador puede borrar la lista entera, siempre con confirmación.
+Las entradas antiguas sin autor las gestiona el administrador. Borrar conserva
+el historial y los saldos y evita que se generen recordatorios de lo eliminado.
+Las opciones de una votación existente se conservan junto con sus votos.
+
+Las fechas son opcionales y se convierten desde la zona horaria del dispositivo
+a UTC. La votación se cierra al vencer su fecha, también en el servidor; una tarea
+vencida se puede completar. El recordatorio programado requiere una fecha límite
+posterior. El indicador Importante destaca la entrada y el asunto de su aviso.
+
+El autor o administrador puede enviar un recordatorio manual al resto del grupo,
+con confirmación y una espera compartida de 15 minutos por entrada. Los avisos
+respetan categorías y grupos silenciados y excluyen al remitente. Cron ejecuta
+`divzplit_run_plan_reminders` cada minuto: reclama grupos con bloqueo, consume cada
+ocurrencia una sola vez y omite tareas completadas y votaciones cerradas. No
+depende de tener abierta la app. La migración instala/programa pg_cron cuando está
+disponible en Supabase; la capacidad de programación se comprueba antes de guardar.
+
+El envío al móvil usa la cola y las suscripciones ya activadas. Volver a desplegar
+`push-dispatch` para actualizar el texto de los nuevos recordatorios; conservar
+los secretos existentes y Verify JWT desactivado. Para el editor del panel se
+puede generar un único archivo con `node scripts/bundle-push.mjs RUTA_SALIDA`.
+No volver a ejecutar `prepare-push.mjs` ni cambiar las claves VAPID.
+
+Pruebas: `npm test`, `npm run test:database`,
+`python3 tests/planning_browser.py` con servidor local en puerto 3003. Cubren
+presupuesto vacío, permisos, cierre de votaciones, votos conservados, avisos,
+preferencias, duplicados y tamaños móviles en ES/EN/RO. No usan cuentas reales.
