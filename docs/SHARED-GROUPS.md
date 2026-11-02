@@ -150,3 +150,10 @@ navegadores usa PostgreSQL real, pero intercepta el transporte HTTP y simula
 Auth; **no envía correos ni verifica el servicio alojado de Supabase**. Requiere
 Python Playwright, Chromium y el servidor de desarrollo. No ejecutes las
 fixtures sobre una base de datos real o de producción.
+
+## Privacidad y solicitudes de datos
+
+Consultar [el procedimiento operativo y los puntos pendientes](privacy/OPERATIONS.md).
+La actualización `supabase/privacy-operations.sql` añade exportación de cuenta
+y retención de datos temporales. Ejecutarla en SQL Editor, no en Edge Functions.
+No equivale a verificar cumplimiento legal ni a autorizar automáticamente menores.

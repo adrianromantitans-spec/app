@@ -1,5 +1,6 @@
+import {legalMetadata} from './legal.js?v=privacy-46';
 import {currencyOf} from './model.js?v=simplify-42';
-import {tr,language} from './i18n.js?v=simplify-42';
+import {tr,language} from './i18n.js?v=privacy-46';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -137,7 +138,7 @@ export class Cloud {
     const settings=await this.request('/auth/v1/settings',{authenticated:false});
     return {google:settings.external?.google===true,apple:settings.external?.apple===true};
   }
-  async oauthURL(provider,redirect) {
+  async oauthURL(provider,redirect,acknowledgement=null) {
     if (!['google','apple','recovery'].includes(provider)) throw new CloudError(tr('Esta forma de acceso no está disponible.'));
     if (!this.enabled) throw new CloudError(tr('El acceso con cuenta todavía no está disponible.'));
     if (!globalThis.crypto?.subtle) throw new CloudError(tr('Abre DivZplit en un navegador con conexión segura para continuar.'));
@@ -148,8 +149,9 @@ export class Cloud {
     const base64url=bytes=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
     const challenge=base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))));
+    const legal=acknowledgement?legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,provider):null;
     try {
-      const record=JSON.stringify({verifier,provider,redirect:redirectURL.href,createdAt:Date.now()});
+      const record=JSON.stringify({verifier,provider,redirect:redirectURL.href,createdAt:Date.now(),...(legal?{legal}: {})});
       this.temporaryStorage.setItem(this.storageKey+':oauth',record);
       if (this.temporaryStorage.getItem(this.storageKey+':oauth')!==record) throw new Error();
     } catch {throw new CloudError(tr('Permite el almacenamiento de este sitio para continuar con Google o Apple.'));}
@@ -173,6 +175,11 @@ export class Cloud {
     if (!session) throw new CloudError(tr('No se ha podido abrir la sesión. Vuelve a intentarlo.'));
     this.persistSession(session);await this.loadUser();
     if(record.provider==='recovery'){this.temporaryStorage.setItem(this.storageKey+':recovery',this.user.id);return true;}
+    if(record.legal){
+      const accepted=legalMetadata(true,record.legal.declared_age_band,record.provider);
+      accepted.terms_accepted_at=record.legal.terms_accepted_at;
+      this.user=await this.request('/auth/v1/user',{method:'PUT',body:{data:accepted}});
+    }
     const metadata=this.user.user_metadata || {};
     const name=metadata.full_name || metadata.name;
     if (!metadata.display_name && typeof name==='string' && name.trim()) {
@@ -242,8 +249,9 @@ export class Cloud {
     const session=this.sessionFrom(result);if (!session) throw new CloudError(tr('No se ha podido abrir la sesión.'));
     this.persistSession(session);await this.loadUser();return this.user;
   }
-  async signUp(email,password,name,redirect) {
-    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name,notification_intro_pending:true,language}},authenticated:false,timeoutMs:45000});
+  async signUp(email,password,name,redirect,acknowledgement=null) {
+    const legal=acknowledgement?legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,'email'):{};
+    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name,notification_intro_pending:true,language,...legal}},authenticated:false,timeoutMs:45000});
     const session=this.sessionFrom(result);
     if (session) {this.persistSession(session);await this.loadUser();}
     return !!session;
@@ -311,6 +319,15 @@ export class Cloud {
     const viewer=this.user?.id;
     const updated=await this.request('/auth/v1/user',{method:'PUT',body:{data:{notification_intro_pending:false}}});
     if(this.user?.id===viewer)this.user=updated;
+  }
+  async personalExport() {
+    const viewer=this.user?.id;
+    if(!viewer)throw new CloudError(tr('Vuelve a entrar en tu cuenta.'),'session',401);
+    let result;
+    try{result=await this.rpc('divzplit_privacy_export',{});}
+    catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('La descarga ampliada no está disponible todavía. Puedes solicitar una copia a soporte.'));throw error;}
+    if(this.user?.id!==viewer||result?.account?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    return result;
   }
   async notificationSettings() {
     try{return await this.rpc('divzplit_get_notification_settings',{});}

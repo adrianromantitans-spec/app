@@ -1,16 +1,17 @@
+import {legalFields,legalLinks,legalMetadata,privacyRequest,requestTypes} from './legal.js?v=privacy-46';
 import {settlementPlan} from './settlement-plan.js?v=simplify-42';
 import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
 import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=legal-44';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=privacy-46';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
-import {Cloud} from './cloud.js?v=email-43';
+import {Cloud} from './cloud.js?v=privacy-46';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
 import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=legal-45';
+import {welcomePage,socialButtons} from './auth-ui.js?v=privacy-46';
 
 initializeLanguage();
 
@@ -607,8 +608,48 @@ function expenseDetails(id) {
 }
 function profileContent() {
   const profile=currentProfile();
-  return ui`<div class="profile-detail">${avatar(profile)}<div><h3>${esc(profile.name)}${accountUser?'':tr(' · Tu perfil de demo')}</h3><p>${accountUser?esc(accountUser.email):tr('Moneda:')+' '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(currencyOf(group())))+' · '+tr('Idioma:')+' '+languageName}</p></div></div><div class="privacy-note"><h3>${accountUser?tr('Vuestros planes, en el mismo sitio'):tr('Explora DivZplit a tu ritmo')}</h3><p>${accountUser?tr('Tus grupos se guardan en tu cuenta. Los cambios se comprueban cada ocho segundos mientras usas DivZplit. Solo sus miembros pueden acceder. Los grupos de ejemplo de la demo no se suben a tu cuenta.'):tr('Esta demo guarda los cambios en este navegador. Entra o crea una cuenta para organizar grupos compartidos con otras personas.')}</p></div>${accountUser?ui`<button class="button secondary full-width" data-action="signout">Cerrar sesión</button>`:ui`<button class="button primary full-width" data-action="account">Entrar o crear una cuenta</button>`}<button class="button secondary full-width export-account" data-action="export">${icon('logout')} Exportar mis datos (JSON)</button>${!accountUser?ui`<button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`:''}`;
+  return ui`<div class="profile-detail">${avatar(profile)}<div><h3>${esc(profile.name)}${accountUser?'':tr(' · Tu perfil de demo')}</h3><p>${accountUser?esc(accountUser.email):tr('Moneda:')+' '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(currencyOf(group())))+' · '+tr('Idioma:')+' '+languageName}</p></div></div><div class="privacy-note"><h3>${accountUser?tr('Vuestros planes, en el mismo sitio'):tr('Explora DivZplit a tu ritmo')}</h3><p>${accountUser?tr('Tus grupos se guardan en tu cuenta. Los cambios se comprueban cada ocho segundos mientras usas DivZplit. Solo sus miembros pueden acceder. Los grupos de ejemplo de la demo no se suben a tu cuenta.'):tr('Esta demo guarda los cambios en este navegador. Entra o crea una cuenta para organizar grupos compartidos con otras personas.')}</p></div>${accountUser?ui`<button class="button secondary full-width" data-action="signout">Cerrar sesión</button>`:ui`<button class="button primary full-width" data-action="account">Entrar o crear una cuenta</button>`}<button class="button secondary full-width" data-action="privacy">Privacidad y mis datos</button><button class="button secondary full-width export-account" data-action="export">${icon('logout')} Exportar mis grupos (JSON)</button>${!accountUser?ui`<button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`:''}`;
 }
+let privacyDraft=null;
+function oauthConsentModal(provider){
+ if(!['google','apple'].includes(provider))return;
+ openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`);
+}
+function guardianRequestModal(){
+ openModal(tr('Registro con un tutor'),ui`<p>Antes de crear una cuenta para una persona menor de 16 años, soporte debe revisar la autorización de su tutor. No basta con marcar una casilla.</p><p>No envíes documentos de identidad ni fotos por este formulario. Soporte explicará qué verificación es necesaria.</p><button class="button primary full-width" data-action="privacy-request" data-kind="guardian">Contactar con soporte</button>${legalLinks()}`);
+}
+async function exportAccountData(){
+ if(!accountUser)return;
+ remoteBusy=true;
+ try{
+  const data=await cloud.personalExport();
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  const link=document.createElement('a');link.href=url;link.download='divzplit-cuenta.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast(tr('Datos de cuenta descargados. Los archivos de tickets y los registros de proveedores se solicitan a soporte.'));
+ }finally{remoteBusy=false;}
+}
+function privacyModal(){
+ openModal(tr('Privacidad y mis datos'),ui`<p>Consulta tus documentos, descarga tus grupos o prepara una solicitud para soporte.</p>${legalLinks()}<div class="privacy-actions">${accountUser?ui`<button class="button primary full-width" data-action="privacy-export-full">Descargar datos de mi cuenta</button>`:''}<button class="button secondary full-width" data-action="export">Exportar mis grupos (JSON)</button>${Object.entries(requestTypes).filter(([kind])=>kind!=='guardian').map(([kind,label])=>'<button class="button secondary full-width" data-action="privacy-request" data-kind="'+kind+'">'+esc(tr(label))+'</button>').join('')}</div><p class="form-note">La descarga contiene los grupos disponibles en este dispositivo. Para una copia completa de tus datos, utiliza la solicitud de acceso. Una solicitud de borrado no elimina datos hasta que soporte la revise y la tramite.</p><p class="form-note">Puedes gestionar las notificaciones desde la campanita y revocar el permiso en tu navegador.</p>`);
+}
+function privacyRequestModal(kind='access'){
+ if(kind!=='guardian'&&!Object.hasOwn(requestTypes,kind))return;
+ const title=kind==='guardian'?tr('Registro con un tutor'):tr(requestTypes[kind]);
+ openModal(title,ui`<form id="privacy-request-form" data-kind="${kind}"><p>El envío se realiza desde tu aplicación de correo. Utiliza la dirección de tu cuenta o indica cómo podemos localizarla.</p><label class="field">Información adicional (opcional)<textarea name="details" maxlength="2000" rows="4"></textarea></label><p class="form-note">No incluyas contraseñas, números de tarjeta ni documentos de identidad.</p>${kind==='deletion'?tr('<p class="form-note">El cierre y el borrado se revisan con los datos compartidos y las obligaciones aplicables. No se eliminan las deudas de otros miembros por enviar esta solicitud.</p>'):''}${actions(tr('Preparar correo'))}</form>`);
+}
+async function handlePrivacyForm(form,data){
+ if(form.id==='oauth-consent-form'){
+  if(data.get('ageBand')==='under_16'){guardianRequestModal();return true;}
+  try{const acknowledgement={accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')};legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,form.dataset.provider);await beginOAuth(form.dataset.provider,acknowledgement);}
+  catch(error){form.querySelector('.form-error').textContent=error.message;}
+  return true;
+ }
+ if(form.id!=='privacy-request-form')return false;
+ const kind=form.dataset.kind;
+ privacyDraft=privacyRequest(kind,accountUser,String(data.get('details')||''));
+ openModal(tr('Enviar solicitud'),ui`<p>Tu solicitud todavía no se ha enviado. Abre tu correo, revisa el mensaje y pulsa Enviar.</p><a class="button primary full-width" href="${esc(privacyDraft.url)}">Abrir mi correo</a><button class="button secondary full-width" data-action="privacy-copy">Copiar solicitud</button><p class="form-note">Si no se abre tu aplicación, copia la solicitud y envíala a support@divzplit.com. Conserva el mensaje enviado. El plazo empieza cuando soporte recibe la solicitud; normalmente responderemos en un mes, con las excepciones legales aplicables.</p>`);
+ return true;
+}
+
 function settingsModal() {openModal(tr('Tu espacio, a tu manera'),profileContent());}
 function profileView() {
   return ui`<div class="welcome-row"><div><div class="eyebrow">TU ESPACIO</div><h1>Tu perfil, a tu manera.</h1><p>Tu cuenta y tus datos, siempre a mano.</p></div></div><section class="panel profile-panel">${profileContent()}</section>`;
@@ -734,11 +775,15 @@ async function onAppClick(event) {
     case 'new-task':planningModal('tasks');break;
     case 'new-poll':planningModal('polls');break;
     case 'settings':settingsModal();break;
+    case 'privacy':privacyModal();break;
+    case 'privacy-export-full':await exportAccountData();break;
+    case 'privacy-request':privacyRequestModal(el.dataset.kind||'access');break;
+    case 'privacy-copy':await navigator.clipboard.writeText(privacyDraft.text);toast(tr('Solicitud copiada. Envíala a soporte desde tu correo.'));break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
     case 'welcome':demoMode=false;authStage='welcome';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
-    case 'oauth-google':await beginOAuth('google');break;
-    case 'oauth-apple':await beginOAuth('apple');break;
+    case 'oauth-google':oauthConsentModal('google');break;
+    case 'oauth-apple':oauthConsentModal('apple');break;
     case 'retry-providers':await refreshProviders();break;
     case 'signup':authMode='signup';authStage='signup';if(!demoMode)history.pushState(null,'','#registro');accountModal();break;
     case 'login':authMode='login';authStage='login';if(!demoMode)history.pushState(null,'','#acceso');accountModal();break;
@@ -758,6 +803,7 @@ async function onAppClick(event) {
 document.addEventListener('change',event=>{onAppChange(event).catch(handleActionError);});
 async function onAppChange(event) {
   const el=event.target;
+  if(el.name==='ageBand'&&el.value==='under_16'){guardianRequestModal();return;}
   if(remoteBusy || authLoading){if(el.dataset.shoppingCheck){el.checked=!!shoppingState.items.find(i=>i.id===el.dataset.shoppingCheck)?.bought;return;}render();return;}
   if(el.matches('[data-fx-target]')){if(!currencies.includes(el.value)||el.value===currencyOf(group()))return;fxSession.target=el.value;fxSession.mode=true;await loadFxQuote();return;}
   if(el.matches('[data-quick-group]')){state.activeGroup=el.value;await save();render();modalOpener=[...root.querySelectorAll('[data-action=quick-add]')].find(button=>button.getClientRects().length);quickAddModal();return;}
@@ -774,6 +820,7 @@ document.addEventListener('submit',async event=>{
   const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
   if(await handleDeleteGroupForm(form,data))return;
   if(await handleRecoveryForm(form,data))return;
+  if(await handlePrivacyForm(form,data))return;
   if(await handleAccountForm(form,data))return;
   try {
     if(form.id==='shopping-item-form'){
@@ -979,7 +1026,7 @@ function accountBanner() {
 function accountForm() {
   const signup=authMode==='signup';
   if(!cloud.enabled) return tr('<div class="privacy-note"><p>El acceso con cuenta todavía no está disponible. Puedes explorar DivZplit con la demo.</p></div>');
-  return ui`<form id="account-form" data-mode="${authMode}">${signup?tr('<label class="field">¿Cómo te llamas?<input name="name" autocomplete="nickname" maxlength="40" placeholder="Tu nombre" required></label>'):''}<label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required></label><label class="field">Contraseña<input type="password" name="password" autocomplete="${signup?'new-password':'current-password'}" minlength="${signup?10:1}" maxlength="128" placeholder="${signup?tr('Al menos 10 caracteres'):tr('Tu contraseña')}" required></label><p class="form-note">${signup?tr('Te enviaremos un correo para confirmar tu cuenta.'):tr('Entra para recuperar tus grupos, también en otro móvil.')}</p><p class="form-error" role="alert"></p><button class="button primary full-width auth-submit" type="submit">${signup?tr('Crear cuenta'):tr('Iniciar sesión')} ${icon('arrow')}</button>${signup?'':tr('<button type="button" class="text-button forgot-password" data-action="recover">¿Has olvidado tu contraseña?</button>')}</form>`;
+  return ui`<form id="account-form" data-mode="${authMode}">${signup?tr('<label class="field">¿Cómo te llamas?<input name="name" autocomplete="nickname" maxlength="40" placeholder="Tu nombre" required></label>'):''}<label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required></label><label class="field">Contraseña<input type="password" name="password" autocomplete="${signup?'new-password':'current-password'}" minlength="${signup?10:1}" maxlength="128" placeholder="${signup?tr('Al menos 10 caracteres'):tr('Tu contraseña')}" required></label><p class="form-note">${signup?tr('Te enviaremos un correo para confirmar tu cuenta.'):tr('Entra para recuperar tus grupos, también en otro móvil.')}</p>${signup?legalFields():legalLinks()}<p class="form-error" role="alert"></p><button class="button primary full-width auth-submit" type="submit">${signup?tr('Crear cuenta'):tr('Iniciar sesión')} ${icon('arrow')}</button>${signup?'':tr('<button type="button" class="text-button forgot-password" data-action="recover">¿Has olvidado tu contraseña?</button>')}</form>`;
 }
 function renderWelcome() {
   let notice='';
@@ -1087,12 +1134,12 @@ async function refreshProviders() {
   catch {providerError=true;}
   document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:!!el.closest('.welcome-entry')}));
 }
-async function beginOAuth(provider) {
+async function beginOAuth(provider,acknowledgement) {
   remoteBusy=true;
   try {
     const latest=await cloud.providers();providers=latest;
     if(!latest[provider]) {await refreshProviders();throw new Error(ui`${provider==='google'?'Google':'Apple'} todavía no está disponible. Puedes usar tu correo.`);}
-    const url=await cloud.oauthURL(provider,new URL('./',location.href).href);
+    const url=await cloud.oauthURL(provider,new URL('./',location.href).href,acknowledgement);
     location.assign(url);
   } finally {remoteBusy=false;}
 }
@@ -1104,8 +1151,9 @@ async function handleAccountForm(form,data) {
     const email=data.get('email').trim();
     const password=data.get('password');
     if (form.dataset.mode==='signup') {
+      if(data.get('ageBand')==='under_16'){guardianRequestModal();return true;}
       const name=data.get('name').trim();if (!name) throw new Error(tr('Escribe tu nombre.'));
-      const signedIn=await cloud.signUp(email,password,name,new URL('./',location.href).href);
+      const signedIn=await cloud.signUp(email,password,name,new URL('./',location.href).href,{accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')});
       if (!signedIn) {
         openModal(tr('Revisa tu correo'),ui`<div class="privacy-note"><h3>Un paso más para empezar</h3><p>Si el correo puede registrarse, recibirás un enlace para confirmar tu cuenta. Revisa también la carpeta de spam. Si ya tienes cuenta, puedes entrar directamente.</p></div><button class="button primary full-width" data-action="login">Ya he confirmado: entrar</button>`);
         return true;
@@ -1151,10 +1199,11 @@ async function refreshShared() {
 }
 async function signOutAccount() {
   remoteBusy=true;
-  try {await notifications.disconnect();await cloud.signOut();}
+  try {await notifications.disconnect();}catch{/* A notification cleanup failure must not prevent local logout. */}
+  try {await cloud.signOut();}
   catch {toast(tr('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.'));}
   finally {
-    activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    activityCache.clear();paymentArchives.clear();privacyDraft=null;accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }

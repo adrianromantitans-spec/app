@@ -96,6 +96,8 @@ with sync_playwright() as p:
     form.get_by_label('¿Cómo te llamas?').fill('Ana')
     form.get_by_label('Correo electrónico').fill(USER['email'])
     form.get_by_label('Contraseña',exact=True).fill('fixture-password')
+    form.locator('select[name=ageBand]').select_option('16_or_over')
+    form.locator('input[name=acceptTerms]').check()
     form.get_by_role('button',name='Crear cuenta',exact=True).click()
     expect(page.get_by_role('heading',name='Revisa tu correo')).to_be_visible()
     assert seen['signup'][0]['data']['display_name']=='Ana'
@@ -110,7 +112,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('heading',name='Tu próximo plan empieza aquí')).to_be_visible()
     page.reload()
     expect(page.get_by_role('heading',name='Tu próximo plan empieza aquí')).to_be_visible()
-    page.get_by_role('button',name='Tu perfil y datos').click()
+    page.locator('.drawer-profile').click()
     page.get_by_role('button',name='Cerrar sesión',exact=True).click()
     expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
     print('PASS: signup, confirmation guidance, login errors, session restoration and logout')
@@ -121,6 +123,10 @@ with sync_playwright() as p:
         page=c.new_page();page.goto(BASE+'#invite='+'a'*64)
         expect(page.get_by_text('Te han invitado a un grupo.',exact=False)).to_be_visible()
         page.get_by_role('button',name='Continuar con '+provider.title(),exact=True).click()
+        assert not seen['oauth']
+        page.locator('#oauth-consent-form select[name=ageBand]').select_option('16_or_over')
+        page.locator('#oauth-consent-form input[name=acceptTerms]').check()
+        page.locator('#oauth-consent-form').get_by_role('button',name='Continuar',exact=True).click()
         expect(page.get_by_role('heading',name='Tu próximo plan empieza aquí')).to_be_visible()
         expect(page.get_by_role('button',name='Aceptar invitación')).to_be_visible()
         assert seen['oauth'][0]['provider']==[provider]
