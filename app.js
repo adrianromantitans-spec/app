@@ -172,25 +172,19 @@ async function navigateWorkspace(route){
  render();window.scrollTo({top:0});document.querySelector('#main')?.focus({preventScroll:true});
  if(page==='home'||page==='activity'){const target=group()?.id,targetPage=page,targetTab=tab;await loadActivity();if(group()?.id===target&&page===targetPage&&tab===targetTab&&!modalRoot.firstElementChild){render();document.querySelector('#main')?.focus({preventScroll:true});}}
 }
-function quickNavigation(){
- const section=currentSection(),active=section==='home'?0:section==='groups'?1:['expenses','activity'].includes(section)?3:section==='profile'?4:-1;
- return `<nav class="mobile-nav" style="--nav-index:${Math.max(0,active)}" data-active="${active}" aria-label="${tr('Navegación móvil')}"><span class="mobile-nav-indicator" aria-hidden="true"></span>${[['home','home','Inicio'],['groups','users','Grupos'],['add','plus',''],['activity','chart','Actividad'],['profile','person','Perfil']].map(([route,ic,label],index)=>route==='add'?`<div class="nav-add-slot"><button class="nav-add" data-action="quick-add" aria-label="${tr('Añadir')}" aria-haspopup="dialog" aria-expanded="false">${icon('plus')}</button></div>`:`<button class="mobile-nav-item ${index===active?'active':''}" data-route="${route}" ${index===active?'aria-current="page"':''}>${icon(ic)}<span>${tr(label)}</span></button>`).join('')}</nav>`;
+function quickAddButton(){
+ return '<div class="mobile-quick-add"><button class="nav-add" data-action="quick-add" aria-label="'+tr('Añadir')+'" aria-haspopup="dialog" aria-expanded="false">'+icon('plus')+'</button></div>';
 }
 function render() {
  if(brandIntroActive){brandIntroPendingRender=true;return;}
  if(cloud.recovering){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');renderRecovery(true);return;}
  if(!accountUser&&!demoMode){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
  root.classList.add('personal-shell');document.body.classList.add('personal-app');
- const previousIndicatorBox=root.querySelector('.mobile-nav-indicator')?.getBoundingClientRect();
- const g=group(),section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Perfil',activity:'Gastos y pagos'}[page])||'Inicio';
- root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${g&&page==='home'&&tab==='summary'?`<div class="floating-expense-action"><button class="button primary home-add" data-action="new-expense">${icon('plus')}${tr('Añadir gasto')}</button></div>`:''}${quickNavigation()}</div>`;
+ const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Perfil',activity:'Gastos y pagos'}[page])||'Inicio';
+ root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
  root.inert=authLoading||!!modalRoot.firstElementChild;
  if(page==='shopping')renderShoppingList();
- const indicator=root.querySelector('.mobile-nav-indicator'),box=indicator?.getBoundingClientRect();
- if(previousIndicatorBox?.width&&box?.width&&Math.abs(previousIndicatorBox.width-box.width)<1&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
-  const offset=previousIndicatorBox.left-box.left;
-  if(Math.abs(offset)>.5)indicator.animate([{transform:`translateX(${offset}px)`},{transform:'translateX(0)'}],{duration:300,easing:'cubic-bezier(.22,1,.36,1)'});
- }
+
 }
 function homeGroupHeader(g){
  const travel=groupMode(g)==='travel';

@@ -70,7 +70,7 @@ with sync_playwright() as p:
  c.route('**/rest/v1/rpc/divzplit_shopping_list',lambda r:r.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}'))
  shopping(page);expect(page.locator('.shopping-items [role="alert"]')).to_contain_text('no está activada')
  expect(page.locator('[data-shopping-action="add"]')).to_be_disabled()
- page.locator('.back-to-home').click();page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click();expect(page.locator('#expense-form')).to_be_visible();c.close()
+ page.locator('.back-to-home').click();page.locator('.mobile-quick-add .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click();expect(page.locator('#expense-form')).to_be_visible();c.close()
  assert not errors,errors
  co.close();cf.close();b.close()
 print('PASS: two-account shopping, quantities, safe titles, shared checks, cancellation, exact-cent atomic checkout, linked expense, clearing preserves ledger, ES/EN/RO and mobile/tablet')

@@ -14,10 +14,10 @@ No requiere SQL nuevo, cambios en Supabase ni Edge Functions. Se conservan las f
 
 Verificado con `npm run check`, `npm test`, `tests/workspace_browser.py`, `tests/personal_browser.py`, `tests/shopping_browser.py`, `tests/fx_browser.py`, `tests/notifications_browser.py` y `tests/onboarding_payer_browser.py`, usando `NEXO_URL` para apuntar al servidor local. Las pruebas incluyen estados positivos/negativos/cero, confirmación de pagos, navegación y foco, idiomas ES/EN/RO, pantallas de 320 a 1280 px, compras con PostgreSQL local, datos escapados, céntimos exactos y conservación de opciones avanzadas.
 
-## Navegación rápida Liquid Glass
+## Botón flotante Liquid Glass
 
-En móvil se recupera la cápsula inferior con Inicio, Grupos, «+», Actividad y Perfil. El «+» abre las acciones rápidas y sustituye al botón ancho del inicio; escritorio conserva el botón ancho y la barra lateral. El menú lateral contiene las demás secciones.
+La navegación queda en el menú lateral. La barra inferior se sustituye por un único botón «+» de 60 × 60 px, circular, en la esquina inferior derecha y separado del área segura del dispositivo. Se usa también en escritorio y abre las acciones rápidas existentes. No hay un botón ancho adicional en el inicio.
 
-Al abrir el menú lateral se oculta la barra inferior. Se recupera al cerrar con la cruz, Escape, el fondo, o al elegir una sección. También se restablece cuando el menú da paso al selector de grupo. El fondo permanece bloqueado mientras hay una ventana abierta. Se respetan movimiento reducido, transparencia reducida y el área segura del dispositivo. El botón de compra pasa al contenido de su pantalla en móvil para no superponerse a la navegación.
+El botón se oculta mientras está abierto el menú lateral y vuelve al cerrar con la cruz, Escape, el fondo o al elegir una sección. También se restablece cuando el menú da paso al selector de grupo. El fondo permanece bloqueado mientras hay una ventana abierta. Se respetan movimiento reducido y transparencia reducida, con un fondo opaco alternativo cuando hace falta. Los formularios siguen centrados y el pagador predeterminado es el usuario actual.
 
-Verificación adicional: `NEXO_URL=http://127.0.0.1:3011/ python3 tests/hybrid_navigation_browser.py`, con todas las formas de cerrar el menú, acciones rápidas, pestaña activa, tamaños de 320 a 760 px, escritorio y tres idiomas.
+Verificación adicional: usar NEXO_URL apuntando al servidor local y ejecutar tests/floating_quick_add_browser.py. Cubre tamaño y posición, ausencia de barra inferior, todas las formas de cerrar el menú, acciones rápidas, pantallas de 320 a 1280 px y tres idiomas. La prueba de gastos avanzada sigue en tests/personal_browser.py.

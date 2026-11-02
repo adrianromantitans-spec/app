@@ -34,14 +34,14 @@ with sync_playwright() as p:
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(lang,width,target)
     assert not page.locator('#app').evaluate('(e)=>e.inert')
    route(page,'home')
-   button=page.locator('.mobile-nav .nav-add');expect(button).to_be_visible();assert button.bounding_box()['height']>=44
+   button=page.locator('.mobile-quick-add .nav-add');expect(button).to_be_visible();assert button.bounding_box()['height']>=44
   page.set_viewport_size({'width':393,'height':852})
   if lang=='es-ES':
    page.screenshot(path='work/workspace-credit.png',full_page=False)
    page.locator('[data-action="workspace-menu"]').click();page.screenshot(path='work/workspace-drawer.png',full_page=False);page.keyboard.press('Escape')
   route(page,'shopping');expect(page.locator('.shopping-page')).to_be_visible();assert page.locator('.shopping-modal').count()==0
   page.locator('.back-to-home').click();expect(page.locator('.personal-home')).to_be_visible()
-  page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click();expect(page.locator('#expense-form [name="payer"]')).to_have_value('you');page.keyboard.press('Escape')
+  page.locator('.mobile-quick-add .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click();expect(page.locator('#expense-form [name="payer"]')).to_have_value('you');page.keyboard.press('Escape')
   page.locator('.home-group-picker').click();expect(page.locator('[data-group-mode="travel"]')).to_be_visible();page.keyboard.press('Escape')
   if lang=='es-ES':
    page.locator('.home-attention').click();page.locator('[data-payment-response="confirm"]').click();page.locator('[data-resolve-payment="confirm"]').click()

@@ -65,7 +65,7 @@ def context(browser,actor,locale='es-ES',enabled=True):
 
 from datetime import datetime,timedelta,timezone
 def new_expense(page):
- page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click()
+ page.locator('.mobile-quick-add .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click()
 def select_mode(page,mode):
  page.locator('.home-group-picker').click();page.locator('[data-group-mode="'+mode+'"]').click()
 from zoneinfo import ZoneInfo
