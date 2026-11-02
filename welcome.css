@@ -68,3 +68,5 @@
   .welcome-entry .social-note{font-size:9px;margin-top:8px}
   .welcome-phone{top:-50px}
 }
+
+.auth-legal{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:24px;color:#81758e;font-size:12px}.auth-legal a{color:inherit;text-underline-offset:3px}.auth-legal a:focus-visible{outline:2px solid #8550d3;outline-offset:4px}

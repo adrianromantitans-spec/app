@@ -1,5 +1,8 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  'Privacidad':{en:'Privacy',ro:'Confidențialitate'},
+  'Condiciones':{en:'Terms',ro:'Condiții'},
+  'Información legal':{en:'Legal information',ro:'Informații juridice'},
   "1 transferencia por realizar": {"en": "1 transfer left to make", "ro": "1 transfer de efectuat"},
   "{0} transferencias por realizar": {"en": "{0} transfers left to make", "ro": "{0} transferuri de efectuat"},
   "De {0} a {1} transferencias": {"en": "From {0} to {1} transfers", "ro": "De la {0} la {1} transferuri"},

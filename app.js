@@ -3,14 +3,14 @@ import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
 import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=simplify-42';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=legal-44';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
 import {Cloud} from './cloud.js?v=email-43';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
 import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
+import {welcomePage,socialButtons} from './auth-ui.js?v=legal-44';
 
 initializeLanguage();
 
