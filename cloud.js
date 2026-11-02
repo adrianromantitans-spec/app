@@ -1,5 +1,5 @@
-import {currencyOf} from './model.js?v=workspace-36';
-import {tr} from './i18n.js?v=workspace-36';
+import {currencyOf} from './model.js?v=shopping-notify-40';
+import {tr} from './i18n.js?v=shopping-notify-40';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -24,6 +24,8 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status) {
   const code = error?.error_code || error?.code;
+  if(code==='NEXO_SHOPPING_REMINDER_WAIT')return tr('Espera 15 minutos entre recordatorios de compra del grupo.');
+  if(code==='NEXO_SHOPPING_EMPTY')return tr('No quedan productos pendientes por comprar.');
   if(code==='NEXO_SHOPPING_CHANGED')return tr('La compra ha cambiado. Actualiza la lista y revisa tu selección.');
   if(code==='NEXO_SHOPPING_FIELDS')return tr('Revisa el producto y su cantidad.');
   if(code==='NEXO_SHOPPING_LINKED')return tr('Este producto ya tiene un gasto registrado.');
@@ -321,7 +323,16 @@ export class Cloud {
     return result;
   }
   async saveNotificationSettings(settings,muted) {
-    return this.rpc('divzplit_set_notification_settings',{p_expenses:settings.expenses,p_polls:settings.polls,p_tasks:settings.tasks,p_payments:settings.payments,p_muted:muted});
+    const args={p_expenses:settings.expenses,p_polls:settings.polls,p_tasks:settings.tasks,p_payments:settings.payments,p_muted:muted};
+    return this.rpc(Object.hasOwn(settings,'shopping')?'divzplit_set_notification_settings_v2':'divzplit_set_notification_settings',Object.hasOwn(settings,'shopping')?{...args,p_shopping:settings.shopping}:args);
+  }
+  async remindShopping(groupId,requestId) {
+    const viewer=this.user?.id;
+    try{
+      const result=await this.rpc('divzplit_remind_shopping',{p_id:groupId,p_request_id:requestId});
+      if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+      return result;
+    }catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('Los recordatorios de compras todavía no están activados.'));throw error;}
   }
   async markNotificationsRead(ids=null) {return this.rpc('divzplit_read_notifications',{p_ids:ids});}
   async openNotification(id) {return this.rpc('divzplit_open_notification',{p_id:id});}

@@ -1,5 +1,5 @@
-import {currencyScale,currencyDigits} from './currencies.js?v=workspace-36';
-import {tr} from './i18n.js?v=workspace-36';
+import {currencyScale,currencyDigits} from './currencies.js?v=shopping-notify-40';
+import {tr} from './i18n.js?v=shopping-notify-40';
 
 // Zero means no budget; monetary amounts remain integer minor units.
 export function optionalBudget(value,currency='EUR') {

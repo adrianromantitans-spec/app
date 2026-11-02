@@ -29,3 +29,7 @@ Se puede retirar la tarjeta y el acceso del menú o revertir este cambio de inte
 `npm run check`, `npm test`, `npm run test:database`, `NEXO_URL=http://127.0.0.1:3007/ python3 tests/shopping_browser.py` y `tests/personal_browser.py`.
 
 Las pruebas de compras usan dos cuentas de prueba, PostgreSQL desechable local y transportes Auth/REST locales. Cubren permisos, aislamiento, versiones, límites, cancelación, conservación de saldos, checkout atómico, respuesta perdida, compras concurrentes, limpieza, títulos escapados y móvil/tablet en español, inglés y rumano.
+
+## Avisos opcionales
+
+Los avisos de productos nuevos y el botón manual «Recordar al grupo» se describen en [SHOPPING-NOTIFICATIONS.md](SHOPPING-NOTIFICATIONS.md), junto con los dos pasos de activación en Supabase. Marcar productos no envía avisos.

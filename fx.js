@@ -1,5 +1,5 @@
-import {currencyScale,currencies} from './currencies.js?v=workspace-36';
-import {tr} from './i18n.js?v=workspace-36';
+import {currencyScale,currencies} from './currencies.js?v=shopping-notify-40';
+import {tr} from './i18n.js?v=shopping-notify-40';
 export function euroAmount(amount,currency,rate) {
  if(!Number.isSafeInteger(amount)||amount<1||!currencies.includes(currency)||currency==='EUR'||!/^\d+(?:\.\d{1,10})?$/.test(String(rate)))throw new Error(tr('No se ha podido calcular la conversión.'));
  const [whole,fraction='']=String(rate).split('.'),denominator=BigInt(whole+fraction),factor=10n**BigInt(fraction.length);

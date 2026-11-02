@@ -59,3 +59,14 @@ test('task and poll reminder pushes use reminder copy in all supported languages
   assert.equal(payload.notificationId,notificationId);assert.equal(payload.userId,userId);
  }
 });
+
+test('shopping push copy describes products and reminders without exposing product titles',()=>{
+ for(const language of ['es','en','ro']){
+  const added=JSON.parse(pushPayload({...job,kind:'shopping.added',language}));
+  const reminder=JSON.parse(pushPayload({...job,kind:'shopping.reminder',language}));
+  assert.notEqual(added.body,reminder.body);
+  assert.equal(added.notificationId,notificationId);
+  assert.match(added.body,/lista|list/);
+  assert.doesNotMatch(added.body,/pago|payment|plată/);
+ }
+});

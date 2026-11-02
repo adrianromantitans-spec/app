@@ -9,7 +9,7 @@ with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  for locale,ios in [('es-ES',True),('en-GB',False),('ro-RO',False)]:
   c=b.new_context(locale=locale,viewport={'width':393,'height':852},reduced_motion='reduce',user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' if ios else None)
-  settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;deleted=False;saved=[];registered=[];open_kind='expenses.added'
+  settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'shopping':True,'shopping_ready':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;deleted=False;saved=[];registered=[];open_kind='expenses.added'
   c.add_init_script('localStorage.setItem("nexo-session-v1:nexo-test.supabase.co",'+json.dumps(json.dumps({'access_token':'fixture','refresh_token':'fixture-refresh','expires_at':int(time.time())+3600}))+');')
   c.add_init_script('''
    window.__permissionCalls=0;window.__binding=null;window.__subscription=null;window.__permission='default';
@@ -32,7 +32,7 @@ with sync_playwright() as p:
    elif path.endswith('/divzplit_clear_notifications'):deleted=True;value=1
    elif path.endswith('/divzplit_read_notifications'):read=True
    elif path.endswith('/divzplit_open_notification'):read=True;value={'group_id':GID,'kind':open_kind}
-   elif path.endswith('/divzplit_set_notification_settings'):saved.append(data);settings.update({key:data['p_'+key] for key in ['expenses','polls','tasks','payments']});settings['muted_groups']=data['p_muted'];value=settings
+   elif path.endswith(('/divzplit_set_notification_settings','/divzplit_set_notification_settings_v2')):saved.append(data);settings.update({key:data['p_'+key] for key in ['expenses','polls','tasks','payments','shopping']});settings['muted_groups']=data['p_muted'];value=settings
    elif path.endswith('/divzplit_register_push'):registered.append(data)
    elif path.endswith('/divzplit_remove_push'):value=None
    else:route.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}');return
@@ -55,10 +55,11 @@ with sync_playwright() as p:
    assert registered[0]['p_language']==locale[:2]
    assert page.evaluate('window.__binding.userId')==OWNER
   page.locator('[data-notification-pref="expenses"]').uncheck()
+  page.locator('[data-notification-pref="shopping"]').uncheck()
   page.locator('[data-notification-mute]').check()
   page.locator('[data-notification-action="save"]').click()
   expect(page.locator('#toast')).to_be_visible()
-  assert saved[-1]['p_expenses']==False and saved[-1]['p_muted']==[GID]
+  assert saved[-1]['p_shopping']==False and saved[-1]['p_expenses']==False and saved[-1]['p_muted']==[GID]
   page.locator('.notification-settings [data-notification-action="inbox"]').click()
   page.locator('[data-notification-action="read-all"]').click()
   expect(page.locator('.notification-count')).to_be_hidden()
@@ -71,7 +72,7 @@ with sync_playwright() as p:
   assert page.locator('.notification-detail script').count()==0
   page.locator('[data-action="close-modal"]').first.click()
   assert page.locator('.notification-dialog').count()==0
-  for kind in ['tasks.added','tasks.updated','tasks.reminder','polls.added','polls.reminder','expenses.added','expenses.updated','expenses.deleted','payment.requested','payments.added','payment.rejected','payment.cancelled']:
+  for kind in ['tasks.added','tasks.updated','tasks.reminder','polls.added','polls.reminder','expenses.added','expenses.updated','expenses.deleted','payment.requested','payments.added','payment.rejected','payment.cancelled','shopping.added','shopping.reminder']:
    open_kind=kind
    page.locator('.notification-bell').click();page.locator('[data-notification-action="open"]').click()
    expect(page.locator('.notification-detail-subject')).to_contain_text('Cena <script>test</script>')

@@ -11,7 +11,9 @@ prefix=prefix.replace("  elif path.endswith('/nexo_save_group'):",'''  elif path
    if 'document' in result:group.update(result)
    fulfill(route,result)
   elif path.endswith('/nexo_save_group'):''')
+prefix=prefix.replace("  elif path.endswith('/nexo_save_group'):", "  elif path.endswith('/divzplit_remind_shopping'):\n   reminder_calls.append(data);fulfill(route,dbcall('divzplit_remind_shopping',[q(data['p_id']),q(data['p_request_id'])],actor))\n  elif path.endswith('/nexo_save_group'):")
 exec(prefix)
+reminder_calls=[]
 def q(v):return "'"+str(v).replace("'","''")+"'"
 def dbcall(name,args,actor):
  r=subprocess.run(['docker','--host=unix:///var/run/docker.sock','exec','-i','nexo-postgres-tests','psql','-U','postgres','-v','ON_ERROR_STOP=1','-tAq'],input='set role authenticated;set request.jwt.claim.sub='+q(actor)+';select public.'+name+'('+','.join(args)+');',capture_output=True,text=True)
@@ -43,6 +45,14 @@ with sync_playwright() as p:
  assert friend.locator('[data-shopping-action="edit"]').count()==0
  friend.locator('[data-shopping-check]').first.check();expect(friend.locator('.shopping-bought .shopping-row')).to_have_count(1)
  assert group['document']==before
+ # Reminders are optional: adding/checking/cancelling sends no reminder RPC.
+ assert reminder_calls==[]
+ owner.locator('[data-shopping-action="refresh"]').click()
+ owner.locator('[data-shopping-action="remind"]').click();owner.locator('[data-action="close-modal"]').first.click()
+ assert reminder_calls==[]
+ owner.locator('[data-shopping-action="remind"]').click();owner.locator('[data-shopping-action="send-reminder"]').click()
+ expect(owner.locator('#toast')).to_contain_text('Recordatorio enviado')
+ assert len(reminder_calls)==1 and group['document']==before
  # Another device sees the check, and cancelling checkout creates no expense.
  owner.locator('[data-shopping-action="refresh"]').click();expect(owner.locator('.shopping-bought .shopping-row')).to_have_count(1)
  owner.locator('[data-shopping-action="checkout"]').click();expect(owner.locator('#expense-form [name="amount"]')).to_have_value('')

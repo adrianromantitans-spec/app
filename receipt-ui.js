@@ -1,7 +1,7 @@
-import {currencyDigits,currencyStep} from './currencies.js?v=workspace-36';
+import {currencyDigits,currencyStep} from './currencies.js?v=shopping-notify-40';
 import {openReceiptCrop,closeReceiptCrop,applyReceiptCrop} from './receipt-crop.js?v=ocr-18';
-import {tr,ui,locale} from './i18n.js?v=workspace-36';
-import {readReceipt,parseReceipt} from './receipt-ocr.js?v=workspace-36';
+import {tr,ui,locale} from './i18n.js?v=shopping-notify-40';
+import {readReceipt,parseReceipt} from './receipt-ocr.js?v=shopping-notify-40';
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function setAutomaticValue(form,name,value) {
   form.receiptApplyingAuto=true;

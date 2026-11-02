@@ -1,13 +1,13 @@
-import {groupMode,homeSummary,groupForMode} from './home.js?v=workspace-36';
-import {euroAmount,validQuote} from './fx.js?v=workspace-36';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=workspace-36';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=workspace-36';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=workspace-36';
+import {groupMode,homeSummary,groupForMode} from './home.js?v=shopping-notify-40';
+import {euroAmount,validQuote} from './fx.js?v=shopping-notify-40';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=shopping-notify-40';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=shopping-notify-40';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=shopping-notify-40';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=workspace-36';
-import {Cloud} from './cloud.js?v=workspace-36';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=workspace-36';
-import {NotificationCentre} from './notifications.js?v=notice-39';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=shopping-notify-40';
+import {Cloud} from './cloud.js?v=shopping-notify-40';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=shopping-notify-40';
+import {NotificationCentre} from './notifications.js?v=shopping-notify-40';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -20,6 +20,7 @@ const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>sta
   if(!state.groups.some(g=>g.id===id))await loadSharedGroups();
   if(!state.groups.some(g=>g.id===id))throw new Error(tr('No tienes acceso a este grupo.'));
   closeModal();state.activeGroup=id;rememberActiveGroup();
+  if(kind.startsWith('shopping.')){await showShopping();return;}
   page=kind.startsWith('payment')?'activity':'home';tab=kind.startsWith('polls.')?'plans':kind.startsWith('tasks.')?'tasks':'expenses';
   if(page==='activity')await loadActivity();render();window.scrollTo({top:0});
   if(kind.startsWith('tasks.'))await showPlanningList('tasks');else if(kind.startsWith('polls.'))await showPlanningList('polls');
@@ -244,7 +245,7 @@ function renderShoppingList(){
  const items=shoppingState.items,pending=items.filter(i=>!i.bought),bought=items.filter(i=>i.bought),unlinked=bought.filter(i=>!i.expense_id);
  const row=i=>{const manage=canManage()||i.created_by===shoppingViewer();return `<article class="shopping-row ${i.bought?'is-bought':''}"><label class="shopping-check"><input type="checkbox" data-shopping-check="${esc(i.id)}" ${i.bought?'checked':''} ${i.expense_id?'disabled':''} aria-label="${esc(i.title)}"><span>${icon('check')}</span></label><div class="shopping-product"><strong>${esc(i.title)}</strong>${i.quantity?`<small>${esc(i.quantity)}</small>`:''}${i.expense_id?`<button class="text-button" data-shopping-action="expense" data-shopping-id="${esc(i.id)}">${tr('Gasto registrado')}${icon('chevron')}</button>`:''}</div>${manage?`<div class="shopping-row-actions">${!i.expense_id?`<button class="icon-button" data-shopping-action="edit" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Editar ${i.title}`)}">${icon('edit')}</button>`:''}<button class="icon-button" data-shopping-action="delete" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Borrar ${i.title}`)}">${icon('close')}</button></div>`:''}</article>`;};
  root.querySelector('.shopping-items').innerHTML=shoppingState.loading?`<p role="status">${tr('Cargando lista…')}</p>`:shoppingState.error?`<p role="alert" class="form-error">${esc(shoppingState.error)}</p>`:`<section><h3>${tr('Por comprar')}<span>${pending.length}</span></h3>${pending.length?pending.map(row).join(''):`<div class="shopping-empty">${icon('check')}<p>${tr(items.length?'Todo comprado.':'Añade lo que hace falta para la próxima compra.')}</p></div>`}</section>${bought.length?`<section class="shopping-bought"><h3>${tr('Comprados')}<span>${bought.length}</span></h3>${bought.map(row).join('')}</section>`:''}`;
- root.querySelector('.shopping-footer').innerHTML=!shoppingState.error&&!shoppingState.loading?`<button class="button primary full-width" data-shopping-action="checkout" ${unlinked.length?'':'disabled'}>${icon('receipt')}${tr('Crear gasto de la compra')}${unlinked.length?`<span>${unlinked.length}</span>`:''}</button><p class="shopping-note">${tr('Revisa el importe, el pagador y el reparto antes de guardar.')}</p>${canManage()&&bought.length?`<button class="text-button danger-text full-width" data-shopping-action="clear">${tr('Limpiar comprados')}</button>`:''}`:'';
+ root.querySelector('.shopping-footer').innerHTML=!shoppingState.error&&!shoppingState.loading?`<button class="button primary full-width" data-shopping-action="checkout" ${unlinked.length?'':'disabled'}>${icon('receipt')}${tr('Crear gasto de la compra')}${unlinked.length?`<span>${unlinked.length}</span>`:''}</button><p class="shopping-note">${tr('Revisa el importe, el pagador y el reparto antes de guardar.')}</p>${pending.length&&accountUser?`<button class="button secondary full-width shopping-remind" data-shopping-action="remind">${icon('bell')}${tr('Recordar al grupo')}</button>`:''}${canManage()&&bought.length?`<button class="text-button danger-text full-width" data-shopping-action="clear">${tr('Limpiar comprados')}</button>`:''}`:'';
  root.querySelector('[data-shopping-action="add"]').disabled=shoppingState.loading||!!shoppingState.error;
  if(focusedProduct)root.querySelector('[data-shopping-check="'+CSS.escape(focusedProduct)+'"]')?.focus({preventScroll:true});
 }
@@ -275,6 +276,19 @@ async function shoppingAction(el){
  if(action==='refresh'){await loadShopping();return;}
  if(!shoppingCurrent())return;
  const item=shoppingState.items.find(i=>i.id===el.dataset.shoppingId);
+ if(action==='remind'){
+  if(!accountUser||!shoppingState.items.some(i=>!i.bought))return;
+  const message=tr('Se enviará un aviso a las demás personas del grupo que tengan estos avisos activados. Solo se envía al confirmar. Podrás enviar otro dentro de 15 minutos.');
+  openModal(tr('¿Recordar la compra al grupo?'),'<p class="dialog-copy">'+message+'</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">'+tr('Cancelar')+'</button><button class="button primary" data-shopping-action="send-reminder" data-shopping-group="'+esc(group().id)+'" data-request-id="'+uid()+'">'+tr('Enviar recordatorio')+'</button></div>');
+  return;
+ }
+ if(action==='send-reminder'){
+  if(el.dataset.shoppingGroup!==group()?.id)return;
+  remoteBusy=true;el.disabled=true;
+  try{const sent=await cloud.remindShopping(group().id,el.dataset.requestId);closeModal();toast(tr(Number(sent)>0?'Recordatorio enviado a las personas con estos avisos activados.':'No hay otras personas con estos avisos activados.'),Number(sent)>0?'success':'neutral');}
+  finally{remoteBusy=false;el.disabled=false;}
+  return;
+ }
  if(action==='add'){shoppingItemForm();return;}
  if(action==='edit'&&item){shoppingItemForm(item);return;}
  if(action==='expense'&&item){if(group().expenses.some(e=>e.id===item.expense_id))expenseDetails(item.expense_id);else toast(tr('El gasto ya no está en este grupo.'));return;}

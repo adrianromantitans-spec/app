@@ -1,5 +1,16 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "No hay otras personas con estos avisos activados.": {"en":"No other members have these alerts enabled.","ro":"Niciun alt membru nu are aceste alerte activate."},
+  "Productos nuevos en la lista": {"en": "New products on the list", "ro": "Produse noi în listă"},
+  "Recordatorio de compra": {"en": "Shopping reminder", "ro": "Memento pentru cumpărături"},
+  "Ver lista de la compra": {"en": "View shopping list", "ro": "Vezi lista de cumpărături"},
+  "Recordar al grupo": {"en": "Remind the group", "ro": "Amintește grupului"},
+  "¿Recordar la compra al grupo?": {"en": "Remind the group about shopping?", "ro": "Amintești grupului de cumpărături?"},
+  "Se enviará un aviso a las demás personas del grupo que tengan estos avisos activados. Solo se envía al confirmar. Podrás enviar otro dentro de 15 minutos.": {"en": "An alert will be sent to the other group members who have these alerts enabled. It is only sent when you confirm. You can send another in 15 minutes.", "ro": "Se va trimite un anunț celorlalți membri ai grupului care au aceste alerte activate. Se trimite doar după confirmare. Poți trimite altul peste 15 minute."},
+  "Los recordatorios de compras todavía no están activados.": {"en": "Shopping reminders are not enabled yet.", "ro": "Mementourile pentru cumpărături nu sunt încă activate."},
+  "No quedan productos pendientes por comprar.": {"en": "There are no products left to buy.", "ro": "Nu mai sunt produse de cumpărat."},
+  "Espera 15 minutos entre recordatorios de compra del grupo.": {"en": "Wait 15 minutes between shopping reminders for the group.", "ro": "Așteaptă 15 minute între mementourile de cumpărături ale grupului."},
+
   "Debes": {"en": "You owe", "ro": "Ai de plătit"},
   "Todo saldado": {"en": "All settled", "ro": "Totul este achitat"},
   "Abrir menú": {"en": "Open menu", "ro": "Deschide meniul"},
