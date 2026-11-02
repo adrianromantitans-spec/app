@@ -4,6 +4,7 @@ exec(Path('tests/auth_browser.py').read_text().split('with sync_playwright() as 
 with sync_playwright() as p:
  browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  c,seen=context(browser,enabled=True);page=c.new_page();page.goto(BASE+'#registro')
+ expect(page.locator('#account-form a[href*=privacidad]')).to_have_count(1);expect(page.locator('#account-form a[href*=condiciones]')).to_have_count(1)
  page.get_by_label('¿Cómo te llamas?').fill('Ana');page.get_by_label('Correo electrónico',exact=True).fill('ana@example.test');page.get_by_label('Contraseña',exact=True).fill('fixture-password')
  page.get_by_role('button',name='Crear cuenta',exact=True).click();assert len(seen['signup'])==0
  page.locator('select[name=ageBand]').select_option('under_16')
@@ -15,6 +16,7 @@ with sync_playwright() as p:
  c.close()
  for provider in ['google','apple']:
   c,seen=context(browser,enabled=True);page=c.new_page();page.goto(BASE)
+  expect(page.locator('.welcome-entry .auth-legal')).to_have_count(0)
   page.get_by_role('button',name='Continuar con '+provider.title(),exact=True).click();assert seen['oauth']==[]
   expect(page.locator('#oauth-consent-form')).to_be_visible();page.locator('select[name=ageBand]').select_option('under_16');expect(page.get_by_role('heading',name='Registro a partir de 16 años',exact=True)).to_be_visible();assert seen['oauth']==[]
   page.get_by_role('button',name='Entendido',exact=True).click();page.get_by_role('button',name='Continuar con '+provider.title(),exact=True).click();page.locator('select[name=ageBand]').select_option('16_or_over');page.locator('input[name=acceptTerms]').check();page.locator('#oauth-consent-form').get_by_role('button',name='Continuar',exact=True).click()
@@ -25,12 +27,15 @@ with sync_playwright() as p:
    c.route('**/__auth_fixture/rest/v1/rpc/divzplit_privacy_export',lambda r:r.fulfill(content_type='application/json',body=json.dumps({'account':{'id':USER['id']},'groups':[],'scope':{'fixture':True}})))
    with page.expect_download() as info:page.get_by_role('button',name='Descargar datos de mi cuenta',exact=True).click()
    assert json.loads(Path(info.value.path()).read_text())['account']['id']==USER['id']
-  page.get_by_role('button',name='Cerrar mi cuenta y solicitar borrado',exact=True).click();page.locator('textarea[name=details]').fill('Please close my account');page.get_by_role('button',name='Preparar correo',exact=True).click()
-  draft=page.get_by_role('link',name='Abrir mi correo').get_attribute('href');body=parse_qs(urlsplit(draft).query)['body'][0];assert 'Request: deletion' in body and USER['id'] in body
+  dialog=page.get_by_role('dialog');expect(dialog.locator('.privacy-actions > *')).to_have_count(2)
+  expect(dialog.get_by_role('link',name='Contacto',exact=True)).to_have_attribute('href','mailto:support@divzplit.com')
+  assert dialog.get_by_role('button',name='Copiar solicitud',exact=True).count()==0
+  assert dialog.get_by_role('button',name='Exportar mis grupos (JSON)',exact=True).count()==0
+
   assert c.cookies()==[]
   for width in [320,393,768,1440]:page.set_viewport_size({'width':width,'height':852});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   c.close()
- print('PASS: both social providers require a separate explicit step, PKCE survives, account privacy requests remain drafts and fit mobile widths')
+ print('PASS: both social providers require a separate explicit step, PKCE survives, account privacy section contains only Contact and account download and fits mobile widths')
  for lang,label in [('en-US','I am 16 or older'),('ro-RO','Am cel puțin 16 ani')]:
   c,seen=context(browser);c.add_init_script("Object.defineProperty(navigator,'languages',{get:()=>["+json.dumps(lang)+"]})");page=c.new_page();page.goto(BASE+'#registro');expect(page.get_by_role('option',name=label,exact=True)).to_have_count(1);assert 'Acepto las' not in page.locator('#account-form').inner_text();c.close()
  print('PASS: legal registration UI is localized to English and Romanian')

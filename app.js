@@ -1,17 +1,17 @@
-import {legalFields,legalLinks,legalMetadata,privacyRequest,requestTypes} from './legal.js?v=age-47';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=account-48';
 import {settlementPlan} from './settlement-plan.js?v=simplify-42';
 import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
 import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=age-47';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=account-48';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
-import {Cloud} from './cloud.js?v=age-47';
+import {Cloud} from './cloud.js?v=account-48';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
 import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=age-47';
+import {welcomePage,socialButtons} from './auth-ui.js?v=account-48';
 
 initializeLanguage();
 
@@ -608,9 +608,8 @@ function expenseDetails(id) {
 }
 function profileContent() {
   const profile=currentProfile();
-  return ui`<div class="profile-detail">${avatar(profile)}<div><h3>${esc(profile.name)}${accountUser?'':tr(' · Tu perfil de demo')}</h3><p>${accountUser?esc(accountUser.email):tr('Moneda:')+' '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(currencyOf(group())))+' · '+tr('Idioma:')+' '+languageName}</p></div></div><div class="privacy-note"><h3>${accountUser?tr('Vuestros planes, en el mismo sitio'):tr('Explora DivZplit a tu ritmo')}</h3><p>${accountUser?tr('Tus grupos se guardan en tu cuenta. Los cambios se comprueban cada ocho segundos mientras usas DivZplit. Solo sus miembros pueden acceder. Los grupos de ejemplo de la demo no se suben a tu cuenta.'):tr('Esta demo guarda los cambios en este navegador. Entra o crea una cuenta para organizar grupos compartidos con otras personas.')}</p></div>${accountUser?ui`<button class="button secondary full-width" data-action="signout">Cerrar sesión</button>`:ui`<button class="button primary full-width" data-action="account">Entrar o crear una cuenta</button>`}<button class="button secondary full-width" data-action="privacy">Privacidad y mis datos</button><button class="button secondary full-width export-account" data-action="export">${icon('logout')} Exportar mis grupos (JSON)</button>${!accountUser?ui`<button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`:''}`;
+  return ui`<div class="profile-detail">${avatar(profile)}<div><h3>${esc(profile.name)}${accountUser?'':tr(' · Tu perfil de demo')}</h3><p>${accountUser?esc(accountUser.email):tr('Moneda:')+' '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(currencyOf(group())))+' · '+tr('Idioma:')+' '+languageName}</p></div></div><div class="privacy-note"><h3>${accountUser?tr('Vuestros planes, en el mismo sitio'):tr('Explora DivZplit a tu ritmo')}</h3><p>${accountUser?tr('Tus grupos se guardan en tu cuenta. Los cambios se comprueban cada ocho segundos mientras usas DivZplit. Solo sus miembros pueden acceder. Los grupos de ejemplo de la demo no se suben a tu cuenta.'):tr('Esta demo guarda los cambios en este navegador. Entra o crea una cuenta para organizar grupos compartidos con otras personas.')}</p></div>${accountUser?ui`<button class="button secondary full-width" data-action="signout">Cerrar sesión</button>`:ui`<button class="button primary full-width" data-action="account">Entrar o crear una cuenta</button>`}<button class="button secondary full-width" data-action="privacy">Privacidad y mis datos</button>${!accountUser?ui`<button class="button secondary full-width export-account" data-action="export">${icon('logout')} Exportar mis grupos (JSON)</button>`:''}${!accountUser?ui`<button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`:''}`;
 }
-let privacyDraft=null;
 function oauthConsentModal(provider){
  if(!['google','apple'].includes(provider))return;
  openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`);
@@ -630,12 +629,7 @@ async function exportAccountData(){
  }finally{remoteBusy=false;}
 }
 function privacyModal(){
- openModal(tr('Privacidad y mis datos'),ui`<p>Consulta tus documentos, descarga tus grupos o prepara una solicitud para soporte.</p>${legalLinks()}<div class="privacy-actions">${accountUser?ui`<button class="button primary full-width" data-action="privacy-export-full">Descargar datos de mi cuenta</button>`:''}<button class="button secondary full-width" data-action="export">Exportar mis grupos (JSON)</button>${Object.entries(requestTypes).map(([kind,label])=>'<button class="button secondary full-width" data-action="privacy-request" data-kind="'+kind+'">'+esc(tr(label))+'</button>').join('')}</div><p class="form-note">La descarga contiene los grupos disponibles en este dispositivo. Para una copia completa de tus datos, utiliza la solicitud de acceso. Una solicitud de borrado no elimina datos hasta que soporte la revise y la tramite.</p><p class="form-note">Puedes gestionar las notificaciones desde la campanita y revocar el permiso en tu navegador.</p>`);
-}
-function privacyRequestModal(kind='access'){
- if(!Object.hasOwn(requestTypes,kind))return;
- const title=tr(requestTypes[kind]);
- openModal(title,ui`<form id="privacy-request-form" data-kind="${kind}"><p>El envío se realiza desde tu aplicación de correo. Utiliza la dirección de tu cuenta o indica cómo podemos localizarla.</p><label class="field">Información adicional (opcional)<textarea name="details" maxlength="2000" rows="4"></textarea></label><p class="form-note">No incluyas contraseñas, números de tarjeta ni documentos de identidad.</p>${kind==='deletion'?tr('<p class="form-note">El cierre y el borrado se revisan con los datos compartidos y las obligaciones aplicables. No se eliminan las deudas de otros miembros por enviar esta solicitud.</p>'):''}${actions(tr('Preparar correo'))}</form>`);
+ openModal(tr('Privacidad y mis datos'),ui`<div class="privacy-actions"><a class="button secondary full-width" href="mailto:support@divzplit.com">Contacto</a>${accountUser?ui`<button class="button primary full-width" data-action="privacy-export-full">Descargar datos de mi cuenta</button>`:''}</div>`);
 }
 async function handlePrivacyForm(form,data){
  if(form.id==='oauth-consent-form'){
@@ -644,11 +638,7 @@ async function handlePrivacyForm(form,data){
   catch(error){form.querySelector('.form-error').textContent=error.message;}
   return true;
  }
- if(form.id!=='privacy-request-form')return false;
- const kind=form.dataset.kind;
- privacyDraft=privacyRequest(kind,accountUser,String(data.get('details')||''));
- openModal(tr('Enviar solicitud'),ui`<p>Tu solicitud todavía no se ha enviado. Abre tu correo, revisa el mensaje y pulsa Enviar.</p><a class="button primary full-width" href="${esc(privacyDraft.url)}">Abrir mi correo</a><button class="button secondary full-width" data-action="privacy-copy">Copiar solicitud</button><p class="form-note">Si no se abre tu aplicación, copia la solicitud y envíala a support@divzplit.com. Conserva el mensaje enviado. El plazo empieza cuando soporte recibe la solicitud; normalmente responderemos en un mes, con las excepciones legales aplicables.</p>`);
- return true;
+ return false;
 }
 
 function settingsModal() {openModal(tr('Tu espacio, a tu manera'),profileContent());}
@@ -778,8 +768,6 @@ async function onAppClick(event) {
     case 'settings':settingsModal();break;
     case 'privacy':privacyModal();break;
     case 'privacy-export-full':await exportAccountData();break;
-    case 'privacy-request':privacyRequestModal(el.dataset.kind||'access');break;
-    case 'privacy-copy':await navigator.clipboard.writeText(privacyDraft.text);toast(tr('Solicitud copiada. Envíala a soporte desde tu correo.'));break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
     case 'welcome':demoMode=false;authStage='welcome';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
@@ -1204,7 +1192,7 @@ async function signOutAccount() {
   try {await cloud.signOut();}
   catch {toast(tr('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.'));}
   finally {
-    activityCache.clear();paymentArchives.clear();privacyDraft=null;accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }

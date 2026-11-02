@@ -25,9 +25,10 @@ postal address has been supplied. These facts do not establish complete complian
 
 ## Requests: check the support inbox every working day
 
-The app prepares an email; it does not submit a request until the person sends
-it from their mail app. The reference in the draft is a convenience, not proof
-of identity or receipt. Gmail is the current mailbox, via Cloudflare forwarding.
+The account privacy section contains Contact and Download my account data only.
+Contact opens the person's mail app addressed to support; they write and send
+the request themselves. Assign a case reference on receipt; it is not proof of
+identity. Gmail is the current mailbox, via Cloudflare forwarding.
 Keep case records in a restricted location outside this public GitHub repository.
 
 For each received request, record the received date, reference, account ID if

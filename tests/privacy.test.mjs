@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
-import {legalMetadata,privacyRequest,TERMS_VERSION,PRIVACY_VERSION} from '../legal.js';
+import {legalMetadata,TERMS_VERSION,PRIVACY_VERSION} from '../legal.js';
 import {Cloud} from '../cloud.js';
 const config={url:'https://fixture.supabase.co',publishableKey:'sb_publishable_fixture'};
 const user={id:'11111111-1111-4111-8111-111111111111',email:'owner@example.test',user_metadata:{display_name:'Ana'}};
@@ -36,10 +36,4 @@ test('privacy export rejects cross-account responses and fails clearly when migr
  let c=authed(async()=>response({account:{id:'other'}}));await assert.rejects(()=>c.personalExport(),e=>e.code==='session');
  c=authed(async()=>new Response(JSON.stringify({code:'PGRST202'}),{status:404}));await assert.rejects(()=>c.personalExport(),/soporte/);
  c=authed(async()=>response({account:{id:user.id},groups:[]}));assert.equal((await c.personalExport()).account.id,user.id);
-});
-test('privacy requests are user-sent drafts with encoded fields and no passwords or group contents',()=>{
- const req=privacyRequest('deletion',user,'Please remove my account & confirm\nThanks');
- const u=new URL(req.url);assert.equal(u.protocol,'mailto:');assert.equal(u.pathname,'support@divzplit.com');assert.equal(u.searchParams.get('body'),req.body);assert.match(req.body,/Request: deletion/);assert.match(req.body,/owner@example.test/);assert.ok(!req.body.includes('refresh_token'));
- assert.throws(()=>privacyRequest('arbitrary',user));assert.throws(()=>privacyRequest('access',user,'x'.repeat(2001)));
- assert.throws(()=>privacyRequest('guardian',null));
 });

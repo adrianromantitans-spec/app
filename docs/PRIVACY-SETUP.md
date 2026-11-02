@@ -26,8 +26,9 @@ por correo. Los archivos de tickets y datos externos requieren revisión aparte.
 
 ## Funcionamiento de las solicitudes
 
-Perfil → **Privacidad y mis datos** prepara un correo; el usuario debe enviarlo.
-El mensaje indica claramente que no se ha enviado automáticamente. Revisar a
+Perfil → **Privacidad y mis datos** contiene únicamente **Contacto** y
+**Descargar datos de mi cuenta**. Contacto abre el correo dirigido a soporte; el
+usuario escribe su solicitud y debe enviarla. No se envía automáticamente. Revisar a
 diario `support@divzplit.com` y seguir el [procedimiento operativo](privacy/OPERATIONS.md).
 Un borrado requiere verificación y revisión de los datos compartidos; no se borran
 las deudas de otros miembros por pulsar un botón.
