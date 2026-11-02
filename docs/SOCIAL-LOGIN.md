@@ -1,9 +1,7 @@
-# Bienvenida e inicio de sesión con Google y Apple
+# Inicio de sesión con Google y Apple
 
-Sin una sesión válida, Nexo abre **Bienvenido a Nexo**, con registro e inicio de
-sesión por correo. La demo requiere pulsar **Explorar una demo**; refrescarla vuelve
-a la bienvenida y conserva sus datos locales. Una sesión válida abre directamente
-los grupos del usuario, también al recargar. Cerrar sesión vuelve a la bienvenida.
+La web de producción es `https://divzplit.com/`. Los botones y el flujo OAuth
+con PKCE ya están implementados; falta configurar los proveedores externos.
 
 ## Estado de Google y Apple
 
@@ -18,10 +16,12 @@ en Supabase y en sus respectivas consolas antes de probar un acceso real.
 
 ## Activar Google
 
-1. Abre tu proyecto en Google Cloud Console. Configura la pantalla de consentimiento
-   de OAuth y crea un **OAuth client ID** de tipo **Web application**.
+1. Abre tu proyecto en Google Cloud Console. En Google Auth Platform, configura **Branding**, **Audience** (External si
+   habrá usuarios ajenos a tu organización) y **Data Access** con los permisos
+   básicos de identidad (openid, email y profile). Crea en **Clients** un
+   **OAuth client ID** de tipo **Web application**.
 2. En **Authorized JavaScript origins**, añade:
-   `https://adrianromantitans-spec.github.io`
+   `https://divzplit.com`
 3. En **Authorized redirect URIs**, añade exactamente:
    `https://xvtqmmpufvmyuokpmjvf.supabase.co/auth/v1/callback`
 4. En Supabase → Authentication → Sign In / Providers → Google, habilita el
@@ -37,7 +37,7 @@ para los nombres de paneles y requisitos actuales.
 
 ## Activar Apple
 
-Necesitas acceso a una cuenta de **Apple Developer** con Sign in with Apple
+Necesitas una membresía de pago de **Apple Developer Program** con Sign in with Apple
 configurado para web. Sigue la
 [guía oficial de Apple en Supabase](https://supabase.com/docs/guides/auth/social-login/auth-apple)
 para crear el App ID / Services ID asociado y su credencial.
@@ -52,21 +52,21 @@ seguros. Los secretos de cliente para el flujo web de Apple requieren renovació
 periódica; consulta su fecha de caducidad y las instrucciones del proveedor.
 Esta implementación usa el flujo web de Apple, no el SDK nativo de iOS.
 
-## URL de vuelta a Nexo
+## URL de vuelta a DivZplit
 
 En Supabase → Authentication → URL Configuration, conserva:
 
-- **Site URL:** `https://adrianromantitans-spec.github.io/app/`
+- **Site URL:** `https://divzplit.com/`
 - **Redirect URLs:** esa misma URL exacta.
 
 Para desarrollo, añade también la URL local que estés usando, por ejemplo
 `http://localhost:3000/`. No confundas el callback de Supabase registrado en Google
-o Apple con el regreso final a la web de Nexo: son dos pasos diferentes.
+o Apple con el regreso final a la web de DivZplit: son dos pasos diferentes.
 
 ## Prueba real tras activar un proveedor
 
-1. Abre Nexo sin sesión y pulsa **Continuar con Google** o **Continuar con Apple**.
-2. Confirma el consentimiento en la página del proveedor. Nexo vuelve a abrirse
+1. Abre DivZplit sin sesión y pulsa **Continuar con Google** o **Continuar con Apple**.
+2. Confirma el consentimiento en la página del proveedor. DivZplit vuelve a abrirse
    en la misma pestaña, verifica la sesión y muestra los grupos de esa cuenta.
 3. Recarga: debe mantenerse la sesión. Cierra sesión: debe volver la bienvenida.
 4. Repite desde una invitación y comprueba que, tras entrar, sigue disponible
