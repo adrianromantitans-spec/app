@@ -1,4 +1,4 @@
-import {currencies} from './currencies.js?v=shopping-34';
+import {currencies} from './currencies.js?v=workspace-36';
 import {prepareOCRImage,receiptTextRows} from './receipt-image.js?v=ocr-18';
 // The pinned Tesseract 6 worker and language models are hosted with the app.
 // Only image bytes are sent to this local worker; OCR text is never persisted.

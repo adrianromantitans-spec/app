@@ -1,4 +1,4 @@
-import {balances,expenseShares} from './model.js?v=shopping-34';
+import {balances,expenseShares} from './model.js?v=workspace-36';
 export const groupMode=g=>g?.type==='Viaje'?'travel':'home';
 export function dayOffset(iso,now=new Date()) {
  const date=new Date(iso);if(!Number.isFinite(date.getTime()))return null;

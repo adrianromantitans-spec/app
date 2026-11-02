@@ -1,3 +1,7 @@
+# Diseño actual
+
+La versión vigente usa el inicio despejado y el menú lateral descritos en [WORKSPACE-DESIGN.md](WORKSPACE-DESIGN.md). El resto de este documento conserva las decisiones de las propuestas anteriores.
+
 # Inicio personal y formulario compacto
 
 La propuesta de vídeo aprobada se aplica a las cuentas reales: fondo lavanda, tipografía Manrope local, tarjetas compactas, navegación móvil fija y ventanas emergentes centradas.

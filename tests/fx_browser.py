@@ -66,8 +66,12 @@ def context(browser,actor,locale='es-ES',enabled=True):
   else:fulfill(route,{'code':'PGRST202'},404)
  c.route('https://nexo-test.supabase.co/**',api)
  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
- page.goto('http://127.0.0.1:3003/');expect(page.locator('.balance-stat')).to_be_visible();return c,page
+ page.goto(__import__('os').environ.get('NEXO_URL','http://127.0.0.1:3003/'));expect(page.locator('.balance-stat')).to_be_visible();return c,page
 
+
+def go(page,route):
+ page.locator('[data-action="workspace-menu"]').click();page.locator('.navigation-drawer [data-route="'+('expenses' if route=='activity' else route)+'"]').click();page.wait_for_timeout(100)
+ if route=='activity':page.locator('.finance-sections [data-route="activity"]').click();page.wait_for_timeout(100)
 
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
@@ -91,7 +95,7 @@ with sync_playwright() as p:
  # A later rate never changes a pending payment or recipient confirmation.
  rate='6'
  co,owner=context(b,OWNER)
- owner.locator('[data-page="activity"]:visible').first.click()
+ go(owner,'activity')
  owner.locator('[data-action="show-pending-payments"]').click()
  expect(owner.locator('.payment-request')).to_contain_text('10,00')
  expect(owner.locator('.payment-request')).to_contain_text('50,00')
@@ -105,7 +109,7 @@ with sync_playwright() as p:
  expect(owner.locator('.payment-row')).to_contain_text('10,00')
  expect(owner.locator('.payment-row')).to_contain_text('50,00')
  owner.locator('[data-action="close-modal"]').first.click()
- owner.locator('[data-page="home"]:visible').first.click();expect(owner.locator('.balance-stat .stat-amount')).to_contain_text('0,00')
+ go(owner,'home');expect(owner.locator('.balance-stat .stat-amount')).to_contain_text('0,00')
  co.close();c.close()
  # Provider failure cannot masquerade as a valid euro amount; original payment remains available.
  group['document']['payments']=[];requests.clear();fx_failure=True
@@ -123,10 +127,10 @@ with sync_playwright() as p:
  # New currency selection and integral ISK expense input.
  group['document']['currency']='ISK';group['document']['expenses']=[];fx_failure=False
  c,page=context(b,OWNER)
- page.locator('[data-page="groups"]:visible').first.click();page.locator('[data-action="new-group"]:visible').first.click()
+ go(page,'groups');page.locator('[data-action="new-group"]:visible').first.click()
  assert page.locator('[name="currency"] option').count()==25
  page.locator('[name="currency"]').select_option('ISK');expect(page.locator('[name="budget"]')).to_have_attribute('step','1')
- page.locator('[data-action="close-modal"]').first.click();page.locator('[data-page="home"]:visible').first.click()
+ page.locator('[data-action="close-modal"]').first.click();go(page,'home')
  page.locator('[data-action="new-expense"]:visible').first.click()
  expect(page.locator('[name="amount"]')).to_have_attribute('step','1')
  page.locator('[name="title"]').fill('Cena islandesa');page.locator('[name="amount"]').fill('101')

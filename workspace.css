@@ -1,0 +1,111 @@
+/* Spacious workspace and mobile drawer, matching the approved sidebar proposal. */
+.personal-shell{--bg:#faf8fd;background:var(--bg)}
+.personal-shell .mobile-nav,.personal-shell .page-footer,.personal-shell .top-avatar{display:none}
+.personal-shell .main-shell{padding-bottom:120px}
+.personal-shell .mobile-menu-trigger{display:none}
+.workspace-sidebar{display:flex;flex-direction:column;overflow-y:auto;padding:25px 18px;gap:0}
+.workspace-sidebar .brand{margin:0 8px 25px}
+.drawer-group{display:flex;gap:10px;align-items:center;text-align:left;width:100%;border:1px solid #e8dcf5;border-radius:16px;background:#f0e7fb;padding:12px;margin-bottom:23px;min-height:64px}
+.drawer-group>span:nth-child(2){display:grid;gap:5px;flex:1;min-width:0;overflow-wrap:anywhere}
+.drawer-group strong{font-size:13px;color:#2d203e}
+.drawer-group small{font-size:10px;color:#81718f}
+.drawer-group>.icon{width:14px;color:var(--purple)}
+.drawer-section-label{text-transform:uppercase;letter-spacing:1.3px;font-size:9px;color:#9b88aa;padding:0 13px;margin-bottom:10px;font-weight:750}
+.workspace-links{display:grid;gap:3px}
+.workspace-link{display:flex;align-items:center;gap:12px;min-height:46px;padding:9px 13px;width:100%;border-radius:13px;text-align:left;color:#726180;font-size:12px;font-weight:650}
+.workspace-link span{min-width:0;flex:1}
+.workspace-link small{margin-left:auto;font-size:10px}
+.workspace-link .icon{height:20px;width:20px}
+.workspace-link.active{background:#eae0f8;color:#7842c7;font-weight:800}
+.workspace-link:hover{background:#f0e8fa}
+.drawer-divider{height:1px;background:#eee6f5;margin:17px 10px}
+.workspace-menu-footer{margin-top:auto;padding-top:20px}
+.drawer-profile{display:flex;align-items:center;gap:11px;padding:17px 5px 0;border-top:1px solid #eee5f5;text-align:left;width:100%;min-height:65px}
+.drawer-profile>span:nth-child(2){flex:1;display:grid;gap:4px;min-width:0}
+.drawer-profile strong{font-size:12px;overflow-wrap:anywhere}
+.drawer-profile small{font-size:10px;color:#81718f;line-height:1.6}
+.drawer-profile>.icon{width:15px;color:#81718f}
+.personal-home{display:block;max-width:680px;margin:0 auto}
+.home-group-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:27px}
+.home-group-context{color:#81718f;font-size:11px;text-align:right}
+.home-greeting{margin-bottom:21px}
+.personal-shell .home-balance{position:relative;overflow:hidden;border-radius:25px;padding:24px 23px;background:linear-gradient(135deg,#55318b,#8a59cf);border:0;box-shadow:0 10px 30px #6d3fa421;color:white}
+.home-balance:before,.home-balance:after{content:'';position:absolute;right:-65px;top:-65px;border:1px solid #ffffff17;border-radius:50%;width:180px;height:180px;pointer-events:none}
+.home-balance:after{width:140px;height:140px;right:-45px;top:-45px}
+.personal-shell .home-balance .stat-copy{position:relative;z-index:1;display:grid;justify-items:start}
+.personal-shell .home-balance .balance-status{display:inline-flex;align-items:center;gap:8px;max-width:100%;border-radius:10px;padding:7px 10px;background:#c9f2df;color:#145b43;font-size:12px;line-height:1.4;font-weight:800;text-transform:none;letter-spacing:0}
+.balance-status-sign{font-size:17px;line-height:1;font-weight:850}
+.personal-shell .home-balance.is-owed .balance-status{background:#ffdfac;color:#744212}
+.personal-shell .home-balance.is-settled .balance-status{background:#eee3ff;color:#513278}
+.personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{color:#fff;font-size:43px;font-weight:850;letter-spacing:-1.4px;line-height:1.4}
+.personal-shell .home-balance .stat-copy .stat-amount{margin:7px 0 18px;flex-wrap:wrap}
+.personal-shell .home-balance .stat-copy .stat-amount .stat-currency{color:#e8d7fa;font-size:22px;font-weight:650;letter-spacing:-.5px}
+.home-balance-bottom{position:relative;z-index:1;gap:10px}
+.home-balance-bottom small{color:#e8dcf7!important;font-size:11px}
+.home-balance-bottom .text-button{color:white!important;border:1px solid #ffffff30;background:#ffffff20;border-radius:10px;padding:8px 11px;font-size:12px;min-height:36px}
+.home-recent{margin-top:27px}
+.home-recent .expense-row{border-bottom:1px solid #eee8f5;padding:17px 0;min-height:73px;gap:12px;background:none}
+.home-recent .expense-description strong{font-size:13px}
+.home-recent .expense-description small{font-size:11px;margin-top:5px}
+.home-recent .expense-value strong{font-size:13px}
+.home-recent .expense-value small{display:none}
+.home-recent .expense-icon{width:37px;height:37px;border-radius:13px}
+.home-recent .expense-detail-button{min-width:30px;width:30px;min-height:44px}
+.home-attention{margin-top:15px}
+.floating-expense-action{position:fixed;left:calc(224px + 24px);right:24px;bottom:24px;z-index:50;display:flex;justify-content:center;pointer-events:none}
+.personal-shell .floating-expense-action .home-add{pointer-events:auto;width:min(100%,680px);margin:0;border-radius:18px;min-height:50px!important;background:linear-gradient(140deg,#9463e0,#7c49cc);border:1px solid #b491e8;box-shadow:inset 0 1px 0 #d3b2ff66,0 8px 24px #7141b92a;font-size:14px}
+.finance-sections{display:flex;gap:6px;margin:12px 0 22px;border-bottom:1px solid #e9def4}
+.finance-sections button{font-size:12px;padding:13px;min-height:44px;color:#81718f}
+.finance-sections .active{font-weight:800;color:var(--purple);border-bottom:2px solid var(--purple)}
+.shopping-page{max-width:680px;margin:0 auto}
+.shopping-page h1{font-size:30px;letter-spacing:-1px;margin:9px 0}
+.shopping-intro{font-size:12px;color:#81718f;line-height:1.8;margin-bottom:24px}
+.shopping-page .shopping-items{margin-top:22px}
+.shopping-page .shopping-items>section{border-radius:20px;background:white;border:1px solid #eee7f5;padding:15px}
+.shopping-page .shopping-bought{margin-top:22px}
+.shopping-page .shopping-footer>.button{position:fixed;left:calc(224px + 24px);right:24px;bottom:24px;width:auto;margin:0 auto;max-width:680px;z-index:50;border-radius:18px;min-height:50px;background:#fffc;color:var(--purple);border:1px solid #e3d3f6;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 5px 24px #5a358211}
+.shopping-footer>.button:disabled{opacity:1;background:#f4effa;color:#9787aa;box-shadow:none;backdrop-filter:none}
+.shopping-page .shopping-footer>.text-button{margin-bottom:10px}
+.personal-app .navigation-overlay{padding:0;align-items:stretch;justify-content:flex-start;top:var(--modal-viewport-top,0px);bottom:auto;height:var(--modal-viewport-height,100dvh);overflow:hidden}
+.personal-app .navigation-drawer{display:flex;flex-direction:column;margin:0;width:min(310px,calc(100% - 46px));max-width:310px;max-height:100%;height:100%;border-radius:0 27px 27px 0;padding:max(25px,env(safe-area-inset-top)) 20px max(23px,env(safe-area-inset-bottom));background:linear-gradient(145deg,#fff,#faf6ff);overflow-y:auto;overscroll-behavior:contain;animation:drawer-enter .25s cubic-bezier(.22,1,.36,1)}
+.navigation-drawer .modal-heading{margin-bottom:26px}
+.navigation-drawer .modal-heading h2{font-size:24px}
+.navigation-drawer .workspace-menu-footer{padding-top:22px}
+.navigation-drawer .workspace-link{min-height:44px}
+@keyframes drawer-enter{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@media(max-width:760px){
+ .personal-shell .workspace-sidebar{display:none}
+ .personal-shell .main-shell{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+ .personal-shell .topbar{padding:10px 22px;height:67px;min-height:67px}
+ .personal-shell .breadcrumb{gap:13px;min-width:0}
+ .personal-shell .mobile-menu-trigger{display:grid;place-items:center;width:32px;min-width:32px;min-height:44px;padding:0;color:var(--purple)}
+ .mobile-menu-trigger .icon{width:23px;height:23px}
+ .personal-shell .mobile-logo{font-size:25px;letter-spacing:-1px}
+ .personal-shell main{padding:14px 22px 25px}
+ .home-group-header{margin-bottom:25px}
+ .home-group-picker{gap:9px}
+ .home-group-copy strong{font-size:13px}
+ .home-group-symbol{width:32px;height:33px;border-radius:10px}
+ .home-group-context{font-size:10px;line-height:1.6}
+ .home-greeting{margin-bottom:20px}
+ .home-greeting p{font-size:10px;margin-bottom:5px}
+ .home-greeting h1{font-size:27px;letter-spacing:-1px}
+ .personal-shell .home-balance{padding:21px;border-radius:25px}
+ .personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:38px}
+ .personal-shell .home-balance .stat-copy .stat-amount .stat-currency{font-size:19px}
+ .personal-shell .home-balance .balance-status{font-size:11px;padding:6px 9px}
+ .home-balance-bottom small{font-size:10px;min-width:0}
+ .home-balance-bottom .text-button{font-size:11px}
+ .home-section-heading h2{font-size:13px}
+ .home-recent .expense-description strong,.home-recent .expense-value strong{font-size:12px}
+ .home-recent .expense-description small{font-size:10px}
+ .floating-expense-action{left:max(22px,env(safe-area-inset-left));right:max(22px,env(safe-area-inset-right));bottom:max(22px,calc(env(safe-area-inset-bottom) + 8px))}
+ .personal-shell .floating-expense-action .home-add{font-size:13px}
+ .shopping-page h1{font-size:27px}
+ .shopping-page .shopping-footer>.button{left:22px;right:22px;bottom:max(22px,calc(env(safe-area-inset-bottom) + 8px));font-size:12px}
+ .personal-app .navigation-drawer{padding-top:max(25px,env(safe-area-inset-top));padding-bottom:max(23px,env(safe-area-inset-bottom));border-radius:0 27px 27px 0}
+ .personal-app #toast{bottom:calc(92px + env(safe-area-inset-bottom))}
+}
+@media(max-width:360px){.personal-shell main{padding-left:18px;padding-right:18px}.personal-shell .home-balance{padding:18px}.personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:34px}.home-recent .expense-row{gap:8px}.home-recent .expense-value strong{font-size:11px}.home-recent .expense-detail-button{width:20px;min-width:20px}.home-group-context{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.personal-app .navigation-drawer{animation:none}}
+@media(prefers-reduced-transparency:reduce){.shopping-page .shopping-footer>.button{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}}

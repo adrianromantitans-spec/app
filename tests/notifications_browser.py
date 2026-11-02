@@ -65,7 +65,7 @@ with sync_playwright() as p:
   for width in [320,393,430,768]:
    page.set_viewport_size({'width':width,'height':852});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   page.set_viewport_size({'width':393,'height':852});page.screenshot(path='work/notifications-'+locale[:2]+'.png',full_page=True)
-  page.locator('[data-notification-action="open"]').click();expect(page.locator('[data-tab="expenses"]').first).to_have_class('active')
+  page.locator('[data-notification-action="open"]').click();expect(page.locator('.finance-sections [data-route="expenses"]').first).to_have_class('active')
   assert page.locator('.notification-dialog').count()==0
   for kind in ['tasks.reminder','polls.reminder']:
    open_kind=kind
@@ -81,7 +81,7 @@ with sync_playwright() as p:
   expect(page.locator('.notification-count')).to_be_hidden()
   assert deleted and settings['expenses']==False and settings['muted_groups']==[GID]
   page.locator('[data-action="close-modal"]').first.click()
-  page.locator('[data-action="settings"]:visible').first.click()
+  page.locator('[data-action="workspace-menu"]').click();page.locator('.navigation-drawer [data-route="profile"]').click()
   page.get_by_role('button',name={'es-ES':'Cerrar sesión','en-GB':'Sign out','ro-RO':'Deconectare'}[locale],exact=True).click()
   expect(page.locator('.welcome-entry')).to_be_visible()
   assert page.evaluate('window.__binding') is None

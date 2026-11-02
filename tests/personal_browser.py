@@ -64,6 +64,8 @@ def context(browser,actor,locale='es-ES',enabled=True):
 
 
 from datetime import datetime,timedelta,timezone
+def select_mode(page,mode):
+ page.locator('.home-group-picker').click();page.locator('[data-group-mode="'+mode+'"]').click()
 from zoneinfo import ZoneInfo
 now=datetime.now(timezone.utc)
 local=now.astimezone(ZoneInfo('Europe/Bucharest'))
@@ -81,7 +83,6 @@ with sync_playwright() as p:
  expect(page.locator('.personal-home')).to_have_attribute('data-home-mode','home')
  expect(page.locator('.balance-stat .stat-number')).to_contain_text('42,50')
  expect(page.locator('.home-attention')).to_contain_text('2 pagos esperan tu confirmación')
- expect(page.locator('.home-highlight')).to_contain_text('Pagar internet')
  assert page.locator('.home-recent .expense-row').count()==1
  for width in [320,393,430,768,1280]:
   page.set_viewport_size({'width':width,'height':900 if width>760 else 852})
@@ -99,21 +100,19 @@ with sync_playwright() as p:
  expect(page.locator('.home-attention')).to_contain_text('Un pago espera tu confirmación')
  # Mode switches select existing groups and preserve all financial/group documents.
  original=copy.deepcopy(group_rows);save_count=len(saves)
- page.locator('[data-group-mode="travel"]').click();expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
+ select_mode(page,'travel');expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
  expect(page.locator('.personal-home')).to_have_attribute('data-home-mode','travel')
- expect(page.locator('.home-budget-line')).to_contain_text('Opcional')
- expect(page.locator('.home-highlight')).to_contain_text('Elegir restaurante')
  expect(page.locator('.home-attention')).to_have_count(0)
  for width in [320,393,430,768,1280]:
   page.set_viewport_size({'width':width,'height':900 if width>760 else 852});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),('trip',width)
  page.set_viewport_size({'width':393,'height':852});page.screenshot(path='work/personal-travel.png',full_page=True)
- page.locator('[data-group-mode="home"]').click();expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
- page.locator('[data-action="choose-group"]').click();page.locator('#modal-root [data-group="'+SECOND+'"]').click()
+ select_mode(page,'home');expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
+ page.locator('.home-group-picker').click();page.locator('#modal-root [data-group="'+SECOND+'"]').click()
  expect(page.locator('.home-group-copy strong')).to_contain_text('Casa de verano')
- page.locator('[data-group-mode="travel"]').click();expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
- page.locator('[data-group-mode="home"]').click();expect(page.locator('.home-group-copy strong')).to_contain_text('Casa de verano')
+ select_mode(page,'travel');expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
+ select_mode(page,'home');expect(page.locator('.home-group-copy strong')).to_contain_text('Casa de verano')
  assert group_rows==original and len(saves)==save_count
- page.locator('[data-action="choose-group"]').click();page.locator('#modal-root [data-group="'+GID+'"]').click()
+ page.locator('.home-group-picker').click();page.locator('#modal-root [data-group="'+GID+'"]').click()
  expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
  # Main expense fields match the proposal, while advanced options and exact cents remain functional.
  page.locator('.home-add').click();form=page.locator('#expense-form')
@@ -130,7 +129,7 @@ with sync_playwright() as p:
  form.locator('[type="submit"]').click();expect(page.locator('#expense-form')).to_have_count(0)
  assert saves[-1]['p_document']['expenses'][0]['amount']==1001 and saves[-1]['p_document']['expenses'][0]['payer']==OWNER and saves[-1]['p_document']['expenses'][0]['category']=='Actividades'
  expect(page.locator('.balance-stat .stat-number')).to_contain_text('29,00')
- page.locator('.home-recent [data-expense]').click();page.locator('[data-edit-expense]').click()
+ page.locator('.home-recent [data-expense]').first.click();page.locator('[data-edit-expense]').click()
  expect(page.locator('#expense-form [name="amount"]')).to_have_value('10.01')
  expect(page.locator('#expense-form [name="category"]')).to_have_value('Actividades')
  page.keyboard.press('Escape')
@@ -145,7 +144,7 @@ with sync_playwright() as p:
  saved=saves[-1]['p_document']['expenses'][0]
  assert saved['split']['values']=={OWNER:2500,FRIEND:7500} and saved['amount']==1001
  assert saved['recurrence']['frequency']=='monthly' and saved['recurrence']['active']
- page.locator('.home-recent [data-expense]').click();page.locator('[data-edit-expense]').click()
+ page.locator('.home-recent [data-expense]').first.click();page.locator('[data-edit-expense]').click()
  expect(page.locator('#expense-form [name="frequency"]')).to_have_value('monthly')
  expect(page.locator('#expense-form [name="date"]')).to_have_value(local.strftime('%Y-%m-%d'))
  assert page.locator('.expense-more-options').evaluate('(e)=>e.open')
@@ -153,7 +152,7 @@ with sync_playwright() as p:
  # Missing mode opens creation without making up a group or changing the current group type.
  group_rows[:]=[group]
  c,page=context(b,OWNER);original=copy.deepcopy(group_rows)
- page.locator('[data-group-mode="travel"]').click();expect(page.locator('.dialog-copy')).to_contain_text('Aún no tienes grupos de viaje')
+ select_mode(page,'travel');expect(page.locator('.dialog-copy')).to_contain_text('Aún no tienes grupos de viaje')
  page.locator('[data-group-type="Viaje"]').click();expect(page.locator('#group-form [name="type"]')).to_have_value('Viaje')
  assert group_rows==original;page.keyboard.press('Escape');c.close()
  group_rows[:]=[group,trip,second]

@@ -1,5 +1,5 @@
-import {currencyOf} from './model.js?v=shopping-34';
-import {tr} from './i18n.js?v=shopping-34';
+import {currencyOf} from './model.js?v=workspace-36';
+import {tr} from './i18n.js?v=workspace-36';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {

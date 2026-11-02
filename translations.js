@@ -1,5 +1,18 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Debes": {"en": "You owe", "ro": "Ai de plătit"},
+  "Todo saldado": {"en": "All settled", "ro": "Totul este achitat"},
+  "Abrir menú": {"en": "Open menu", "ro": "Deschide meniul"},
+  "Tu grupo": {"en": "Your group", "ro": "Grupul tău"},
+  "Gastos y pagos": {"en": "Expenses and payments", "ro": "Cheltuieli și plăți"},
+  "Pagos y actividad": {"en": "Payments and activity", "ro": "Plăți și activitate"},
+  "Tu perfil y preferencias": {"en": "Your profile and preferences", "ro": "Profilul și preferințele tale"},
+  "Tu casa, sin líos.": {"en": "Your home, without the hassle.", "ro": "Casa ta, fără bătăi de cap."},
+  "Tu saldo personal": {"en": "Your personal balance", "ro": "Soldul tău personal"},
+  "Ver saldos": {"en": "View balances", "ro": "Vezi soldurile"},
+  "Organización": {"en": "Organization", "ro": "Organizare"},
+  "Todo lo que falta, sin mensajes perdidos.": {"en": "Everything you need, without lost messages.", "ro": "Tot ce lipsește, fără mesaje pierdute."},
+
   "Lista de la compra": {"en": "Shopping list", "ro": "Lista de cumpărături"},
   "Lo que falta, en un mismo lugar.": {"en": "Everything you need, in one place.", "ro": "Tot ce lipsește, într-un singur loc."},
   "Actualizar lista": {"en": "Refresh list", "ro": "Actualizează lista"},

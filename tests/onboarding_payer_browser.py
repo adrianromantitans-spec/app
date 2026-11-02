@@ -58,7 +58,7 @@ with sync_playwright() as p:
   expect(page.locator('#expense-form')).to_have_count(0)
   assert saved[-1]['p_document']['expenses'][0]['payer']==VIEWER
   assert [m['id'] for m in saved[-1]['p_document']['members']]==[OWNER,VIEWER]
-  page.locator('[data-tab="expenses"]').first.click()
+  page.locator('[data-action="workspace-menu"]').click();page.locator('.navigation-drawer [data-route="expenses"]').click()
   page.locator('[data-expense="old"]:visible').first.click();page.locator('[data-edit-expense="old"]').click()
   expect(page.locator('#expense-form [name="payer"]')).to_have_value(OWNER)
   page.locator('[data-action="close-modal"]').first.click();page.reload();expect(page.locator('.topbar')).to_be_visible();page.wait_for_timeout(1200)

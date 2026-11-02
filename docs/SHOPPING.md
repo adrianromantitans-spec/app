@@ -1,6 +1,6 @@
 # Lista de la compra compartida
 
-La lista se abre desde una tarjeta compacta del inicio de Casa, sin mostrar todos los productos en el inicio. También está en el menú «+» de cualquier grupo. Usa el diseño morado, ventanas centradas y navegación Liquid Glass existentes.
+La lista se abre desde el menú lateral de cualquier grupo y tiene su propia pantalla. Usa el diseño morado, ventanas centradas y navegación Liquid Glass existentes.
 
 Permite añadir productos y cantidades opcionales, marcar o desmarcar comprados y crear un gasto a partir de los productos comprados que aún no tienen gasto. El formulario exige revisar importe, pagador y reparto; cancelarlo no crea gastos. Los productos se vinculan al gasto únicamente cuando se guarda. La lista se actualiza al abrir, al pulsar actualizar y cada diez segundos mientras está abierta.
 
@@ -10,7 +10,7 @@ Todos los miembros pueden añadir productos y marcarlos. Su autor y el administr
 
 1. Publicar los archivos estáticos de esta versión.
 2. Copiar `supabase/shopping.sql` completo en el SQL Editor del proyecto Supabase y ejecutarlo. Requiere las actualizaciones anteriores de DivZplit; no lleva claves ni secretos. Se puede ejecutar otra vez sin borrar datos.
-3. Reabrir la aplicación y entrar en Casa → Lista de la compra.
+3. Reabrir la aplicación y entrar en Menú lateral → Lista de la compra.
 
 Mientras no se ejecute el SQL, esta sección muestra que aún no está activada. Los gastos, pagos y demás funciones siguen disponibles. No requiere ninguna Edge Function nueva ni tocar Verify JWT.
 

@@ -19,10 +19,19 @@ def dbcall(name,args,actor):
  return json.loads(r.stdout)
 group=dbcall('nexo_create_group',[q(json.dumps({'name':'Nuestro piso','type':'Convivencia','emoji':'🏠','place':'','date':'','endDate':'','currency':'EUR','budget':0,'requestId':str(uuid.uuid4())}))+'::jsonb'],OWNER);GID=group['id']
 invite=dbcall('nexo_create_invite',[q(GID)],OWNER);group=dbcall('nexo_join_group',[q(invite['token'])],FRIEND);group_rows[:]=[group]
+def shopping(page):
+ if page.locator('.shopping-page').count():return
+ page.locator('[data-action="workspace-menu"]').click();page.locator('.navigation-drawer [data-route="shopping"]').click()
+def home(page):
+ if page.locator('.back-to-home:visible').count():
+  page.locator('.back-to-home').click();page.wait_for_timeout(100);return
+ if page.locator('.workspace-sidebar:visible').count():
+  page.locator('.workspace-sidebar [data-route="home"]').click();page.wait_for_timeout(100);return
+ page.locator('[data-action="workspace-menu"]').click();page.locator('.navigation-drawer [data-route="home"]').click();page.wait_for_timeout(100)
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  co,owner=context(b,OWNER);cf,friend=context(b,FRIEND)
- owner.locator('.home-shopping-entry').click();expect(owner.locator('.shopping-empty')).to_be_visible()
+ shopping(owner);expect(owner.locator('.shopping-empty')).to_be_visible()
  expect(owner.locator('[data-shopping-action="checkout"]')).to_be_disabled()
  for title,quantity in [('Leche <b>entera</b>','2 litros'),('Pan','1 barra')]:
   owner.locator('[data-shopping-action="add"]').click();f=owner.locator('#shopping-item-form');f.locator('[name="title"]').fill(title);f.locator('[name="quantity"]').fill(quantity);f.locator('[type="submit"]').click()
@@ -30,7 +39,7 @@ with sync_playwright() as p:
  assert owner.locator('.shopping-product b').count()==0
  owner.locator('[data-shopping-action="edit"]').first.click();owner.locator('#shopping-item-form [name="title"]').fill('Leche entera');owner.locator('#shopping-item-form [type="submit"]').click();expect(owner.locator('.shopping-product').first).to_contain_text('Leche entera')
  before=json.loads(json.dumps(group['document']))
- friend.locator('.home-shopping-entry').click();expect(friend.locator('.shopping-row')).to_have_count(2)
+ shopping(friend);expect(friend.locator('.shopping-row')).to_have_count(2)
  assert friend.locator('[data-shopping-action="edit"]').count()==0
  friend.locator('[data-shopping-check]').first.check();expect(friend.locator('.shopping-bought .shopping-row')).to_have_count(1)
  assert group['document']==before
@@ -38,29 +47,30 @@ with sync_playwright() as p:
  owner.locator('[data-shopping-action="refresh"]').click();expect(owner.locator('.shopping-bought .shopping-row')).to_have_count(1)
  owner.locator('[data-shopping-action="checkout"]').click();expect(owner.locator('#expense-form [name="amount"]')).to_have_value('')
  owner.keyboard.press('Escape');assert group['document']==before
- owner.locator('.home-shopping-entry').click();owner.locator('[data-shopping-action="checkout"]').click()
+ shopping(owner);owner.locator('[data-shopping-action="checkout"]').click()
  expect(owner.locator('#expense-form [name="payer"]')).to_have_value('you')
  owner.locator('#expense-form [name="amount"]').fill('10.01');owner.locator('#expense-form [type="submit"]').click();expect(owner.locator('#expense-form')).to_have_count(0)
  assert len(group['document']['expenses'])==1 and group['document']['expenses'][0]['amount']==1001
+ home(owner)
  expect(owner.locator('.balance-stat .stat-number')).to_contain_text('5,00')
- owner.locator('.home-shopping-entry').click();expect(owner.locator('.shopping-product [data-shopping-action="expense"]')).to_have_count(1)
+ shopping(owner);expect(owner.locator('.shopping-product [data-shopping-action="expense"]')).to_have_count(1)
  expect(owner.locator('[data-shopping-action="checkout"]')).to_be_disabled()
  owner.locator('[data-shopping-action="expense"]').click();expect(owner.locator('#modal-title')).to_contain_text('Leche')
- owner.keyboard.press('Escape');owner.locator('.home-shopping-entry').click()
+ owner.keyboard.press('Escape');shopping(owner)
  for width in [320,393,430,768]:
   owner.set_viewport_size({'width':width,'height':852});assert owner.evaluate('document.documentElement.scrollWidth<=innerWidth')
  owner.set_viewport_size({'width':393,'height':852});owner.wait_for_timeout(4600);owner.evaluate('document.activeElement.blur()');owner.screenshot(path='work/shopping-list.png',full_page=True)
  owner.locator('[data-shopping-action="clear"]').click();owner.locator('[data-shopping-action="confirm"]').click();expect(owner.locator('.shopping-row')).to_have_count(1)
  assert len(group['document']['expenses'])==1
- owner.keyboard.press('Escape');owner.wait_for_timeout(4600);owner.evaluate('document.activeElement.blur()');owner.screenshot(path='work/shopping-home.png',full_page=True)
+ home(owner);owner.wait_for_timeout(4600);owner.evaluate('document.activeElement.blur()');owner.screenshot(path='work/shopping-home.png',full_page=True)
  for lang,expected in [('en-GB','Shopping list'),('ro-RO','Lista de cumpărături')]:
-  c,page=context(b,OWNER,lang);page.locator('.home-shopping-entry').click();expect(page.locator('#modal-title')).to_have_text(expected);assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');c.close()
+  c,page=context(b,OWNER,lang);shopping(page);expect(page.locator('.shopping-page h1')).to_have_text(expected);assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');c.close()
  # Before the SQL update, only this optional section is gated.
  c,page=context(b,OWNER)
  c.route('**/rest/v1/rpc/divzplit_shopping_list',lambda r:r.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}'))
- page.locator('.home-shopping-entry').click();expect(page.locator('.shopping-items [role="alert"]')).to_contain_text('no está activada')
+ shopping(page);expect(page.locator('.shopping-items [role="alert"]')).to_contain_text('no está activada')
  expect(page.locator('[data-shopping-action="add"]')).to_be_disabled()
- page.keyboard.press('Escape');page.locator('.home-add').click();expect(page.locator('#expense-form')).to_be_visible();c.close()
+ page.locator('.back-to-home').click();page.locator('.home-add').click();expect(page.locator('#expense-form')).to_be_visible();c.close()
  assert not errors,errors
  co.close();cf.close();b.close()
 print('PASS: two-account shopping, quantities, safe titles, shared checks, cancellation, exact-cent atomic checkout, linked expense, clearing preserves ledger, ES/EN/RO and mobile/tablet')
