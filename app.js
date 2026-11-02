@@ -10,7 +10,7 @@ import {Cloud} from './cloud.js?v=email-43';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
 import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=legal-44';
+import {welcomePage,socialButtons} from './auth-ui.js?v=legal-45';
 
 initializeLanguage();
 
