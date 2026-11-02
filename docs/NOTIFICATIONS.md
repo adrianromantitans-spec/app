@@ -107,3 +107,11 @@ Conserva preferencias, grupos silenciados, suscripciones y avisos de otras cuent
 Las entregas aún en cola se eliminan junto con sus avisos; un aviso ya enviado al
 sistema del móvil puede permanecer allí. Para activar esta operación en proyectos
 existentes, ejecutar `supabase/clear-lists.sql`. No contiene claves privadas.
+
+## Abrir un aviso sin cambiar de pantalla
+
+Pulsar un aviso muestra únicamente su detalle: tipo, asunto, grupo, autor y fecha cuando están disponibles. No cambia automáticamente a Gastos, Tareas, Votaciones o Pagos, ni abre un formulario de creación o una lista completa sobre esa sección. El usuario puede cerrar el aviso o entrar explícitamente en la sección mediante el botón de su categoría.
+
+Se aplica también a recordatorios y enlaces del sistema del móvil. Si el aviso está en una página anterior del buzón se busca su información sin abrir el grupo. Las respuestas tardías se descartan cuando se cierra la ventana, se abre otro aviso o cambia la cuenta. Los textos se escapan y se mantiene el marcado como leído existente.
+
+No requiere SQL ni funciones nuevas. Verificación: tests de apertura y sus carreras en tests/notification_open.test.mjs, y tests/notifications_browser.py con doce tipos de aviso, enlaces push, preferencias y cierre de sesión en ES/EN/RO.

@@ -7,7 +7,7 @@ export function pushEnvironment(nav=globalThis.navigator,standalone=globalThis.m
 function keyBytes(value){return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(value.length/4)*4,'=')),c=>c.charCodeAt(0));}
 export class NotificationCentre {
  constructor({cloud,openModal,toast,openGroup,groups,closeModal,canOfferOnboarding=()=>true}){Object.assign(this,{cloud,openModal,toast,openGroup,groups,closeModal,canOfferOnboarding});this.introMemory=new Set();this.reset();}
- reset(){this.inboxGeneration=(this.inboxGeneration||0)+1;clearTimeout(this.introTimer);this.introTimer=null;this.wantsOnboarding=false;this.deviceSynced=false;clearInterval(this.timer);this.timer=null;this.account=null;this.settings=null;this.items=[];this.unread=0;this.next=null;this.error='';this.available=null;this.lastPoll=0;this.enabled=false;this.requestEpoch=(this.requestEpoch||0)+1;}
+ reset(){this.detail=null;this.openSerial=(this.openSerial||0)+1;this.inboxGeneration=(this.inboxGeneration||0)+1;clearTimeout(this.introTimer);this.introTimer=null;this.wantsOnboarding=false;this.deviceSynced=false;clearInterval(this.timer);this.timer=null;this.account=null;this.settings=null;this.items=[];this.unread=0;this.next=null;this.error='';this.available=null;this.lastPoll=0;this.enabled=false;this.requestEpoch=(this.requestEpoch||0)+1;}
  bell(){return `<button class="notification-bell" data-notification-action="inbox" aria-label="${esc(tr('Notificaciones'))}"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-count" ${this.unread?'':'hidden'}>${Math.min(this.unread,99)}</span></button>`;}
  updateBadge(){document.querySelectorAll('.notification-count').forEach(el=>{el.hidden=!this.unread;el.textContent=String(Math.min(this.unread,99));});}
  async registration(){if(!pushEnvironment().supported)return null;return navigator.serviceWorker.register(new URL('./sw.js?v=notifications-26',location.href),{scope:new URL('./',location.href).pathname,updateViaCache:'none'}).then(()=>navigator.serviceWorker.ready);}
@@ -66,7 +66,34 @@ export class NotificationCentre {
   url.searchParams.delete('notification');history.replaceState(null,'',url.pathname+url.search+url.hash);
   if(idPattern.test(id))try{await this.open(id);}catch(error){this.toast(error.message);}
  }
- async open(id){const account=this.account,result=await this.cloud.openNotification(id);if(this.account!==account)return;await this.poll(true);await this.openGroup(result.group_id,result.kind);}
+ async open(id){
+  const account=this.account,serial=++this.openSerial;
+  let notice=this.items.find(item=>item.id===id);
+  this.openModal(tr('Notificaciones'),'<div class="notification-detail"><p role="status">'+tr('Cargando avisos…')+'</p></div>');
+  const slot=document.querySelector('.notification-detail');
+  const current=()=>this.account===account&&this.openSerial===serial&&slot?.isConnected;
+  try{
+   const result=await this.cloud.openNotification(id);if(!current())return;
+   await this.poll(true);if(!current())return;
+   notice=notice||this.items.find(item=>item.id===id);
+   // Push links can refer to an older page of the inbox. Read metadata only;
+   // opening an alert never opens a creation form or a whole planning list.
+   let cursor=this.next;const seen=new Set();
+   for(let page=0;!notice&&cursor&&page<20;page++){
+    const key=JSON.stringify(cursor);if(seen.has(key))break;seen.add(key);
+    const batch=await this.cloud.notificationInbox(cursor);if(!current())return;
+    notice=batch?.items?.find(item=>item.id===id);cursor=batch?.next;
+   }
+   if(notice?.group_id!==result.group_id||notice?.kind!==result.kind)notice=null;
+   const group=this.groups().find(g=>g.id===result.group_id);
+   const when=notice?.created_at&&Number.isFinite(Date.parse(notice.created_at))?new Intl.DateTimeFormat(locale,{dateStyle:'short',timeStyle:'short'}).format(new Date(notice.created_at)):'';
+   this.detail={account,group_id:result.group_id,kind:result.kind};
+   const target=result.kind.startsWith('polls.')?'Ver votaciones':result.kind.startsWith('tasks.')?'Ver tareas':result.kind.startsWith('payment')?'Pagos y actividad':'Gastos';
+   this.openModal(tr(titles[result.kind]||'Novedades del grupo'),'<div class="notification-detail"><p class="notification-detail-group">'+esc(notice?.group_name||group?.name||tr('Notificaciones'))+'</p>'+(notice?.subject?'<h3 class="notification-detail-subject">'+esc(notice.subject)+'</h3>':'')+(notice?.actor_name?'<p class="notification-detail-actor">'+esc(notice.actor_name)+'</p>':'')+(when?'<time class="notification-detail-time">'+esc(when)+'</time>':'')+'<div class="modal-actions"><button class="button secondary" data-action="close-modal">'+tr('Cerrar')+'</button><button class="button primary" data-notification-action="view-group">'+tr(target)+'</button></div></div>');
+  }catch(error){
+   if(current())this.openModal(tr('Notificaciones'),'<div class="notification-detail"><p class="form-error" role="alert">'+esc(error.message)+'</p><button class="button secondary" data-notification-action="inbox">'+tr('Volver a los avisos')+'</button></div>');
+  }
+ }
  async clearAll(){
   if(this.clearing)return;
   const account=this.account,confirmation=document.querySelector('.notification-clear-confirm');this.clearing=true;this.inboxGeneration++;confirmation?.setAttribute('aria-busy','true');confirmation?.querySelectorAll('button').forEach(button=>button.disabled=true);
@@ -78,6 +105,7 @@ export class NotificationCentre {
   }finally{this.clearing=false;confirmation?.removeAttribute('aria-busy');confirmation?.querySelectorAll('button').forEach(button=>button.disabled=false);}
  }
  async handle(button){const action=button.dataset.notificationAction;
+  if(action==='view-group'){const detail=this.detail;if(detail&&detail.account===this.account)await this.openGroup(detail.group_id,detail.kind);return;}
   if(action==='clear'){this.openModal(tr('¿Borrar todas tus notificaciones?'),ui`<div class="notification-clear-confirm"><p class="dialog-copy">Se borrarán todos tus avisos, leídos y pendientes. Las notificaciones de otras personas y tus preferencias se conservarán.</p><div class="modal-actions"><button class="button secondary" data-notification-action="inbox">Cancelar</button><button class="button danger" data-notification-action="confirm-clear">Borrar todo</button></div></div>`);return;}
   if(action==='confirm-clear'){await this.clearAll();return;}
   if(action==='later'){this.closeModal();return;}

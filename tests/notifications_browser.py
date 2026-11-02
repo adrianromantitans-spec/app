@@ -28,7 +28,7 @@ with sync_playwright() as p:
    elif path=='/rest/v1/nexo_groups':value=[group]
    elif path=='/rest/v1/nexo_deleted_groups':value=[]
    elif path.endswith('/divzplit_get_notification_settings'):value=settings
-   elif path.endswith('/divzplit_notification_inbox'):value={'items':[] if deleted else [{'id':NID,'group_id':GID,'kind':'expenses.added','category':'expenses','actor_name':'Luis','group_name':group['document']['name'],'subject':'Cena <script>test</script>','created_at':'2026-11-01T12:00:00Z','read_at':'2026-11-01T12:00:01Z' if read else None}],'unread':0 if read or deleted else 1,'next':None}
+   elif path.endswith('/divzplit_notification_inbox'):value={'items':[] if deleted else [{'id':NID,'group_id':GID,'kind':open_kind,'category':'expenses','actor_name':'Luis','group_name':group['document']['name'],'subject':'Cena <script>test</script>','created_at':'2026-11-01T12:00:00Z','read_at':'2026-11-01T12:00:01Z' if read else None}],'unread':0 if read or deleted else 1,'next':None}
    elif path.endswith('/divzplit_clear_notifications'):deleted=True;value=1
    elif path.endswith('/divzplit_read_notifications'):read=True
    elif path.endswith('/divzplit_open_notification'):read=True;value={'group_id':GID,'kind':open_kind}
@@ -65,13 +65,32 @@ with sync_playwright() as p:
   for width in [320,393,430,768]:
    page.set_viewport_size({'width':width,'height':852});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   page.set_viewport_size({'width':393,'height':852});page.screenshot(path='work/notifications-'+locale[:2]+'.png',full_page=True)
-  page.locator('[data-notification-action="open"]').click();expect(page.locator('.finance-sections [data-route="expenses"]').first).to_have_class('active')
+  main_before=page.locator('#main').inner_html()
+  page.locator('[data-notification-action="open"]').click();expect(page.locator('.notification-detail-subject')).to_contain_text('Cena <script>test</script>')
+  assert page.locator('#main').inner_html()==main_before
+  assert page.locator('.notification-detail script').count()==0
+  page.locator('[data-action="close-modal"]').first.click()
   assert page.locator('.notification-dialog').count()==0
-  for kind in ['tasks.reminder','polls.reminder']:
+  for kind in ['tasks.added','tasks.updated','tasks.reminder','polls.added','polls.reminder','expenses.added','expenses.updated','expenses.deleted','payment.requested','payments.added','payment.rejected','payment.cancelled']:
    open_kind=kind
    page.locator('.notification-bell').click();page.locator('[data-notification-action="open"]').click()
-   expect(page.locator('.planning-list-dialog')).to_have_attribute('data-kind',kind.split('.')[0])
+   expect(page.locator('.notification-detail-subject')).to_contain_text('Cena <script>test</script>')
+   assert page.locator('.notification-detail').count()==1
+   assert page.locator('#poll-form,#task-form,#expense-form,.planning-list-dialog,.payment-list-dialog').count()==0
+   assert page.locator('#main').inner_html()==main_before
    page.locator('[data-action="close-modal"]').first.click()
+  # Section navigation is explicit, never an automatic consequence of opening an alert.
+  open_kind='polls.reminder'
+  page.locator('.notification-bell').click();page.locator('[data-notification-action="open"]').click()
+  page.locator('[data-notification-action="view-group"]').click()
+  expect(page.locator('.planning-list-dialog')).to_have_attribute('data-kind','polls')
+  page.locator('[data-action="close-modal"]').first.click()
+  # An OS push link also opens only one alert, without navigating into creation.
+  page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3004/')+'?notification='+NID)
+  expect(page.locator('.notification-detail-subject')).to_be_visible()
+  assert page.locator('#poll-form,#task-form,#expense-form,.planning-list-dialog').count()==0
+  assert 'notification=' not in page.url
+  page.locator('[data-action="close-modal"]').first.click()
 
   page.locator('.notification-bell').click()
   page.locator('[data-notification-action="clear"]').click()

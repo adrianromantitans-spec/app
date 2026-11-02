@@ -7,7 +7,7 @@ import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=workspace-36';
 import {Cloud} from './cloud.js?v=workspace-36';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=workspace-36';
-import {NotificationCentre} from './notifications.js?v=workspace-36';
+import {NotificationCentre} from './notifications.js?v=notice-39';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
