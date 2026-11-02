@@ -1,13 +1,13 @@
-import {groupMode,homeSummary,groupForMode} from './home.js?v=shopping-notify-40';
-import {euroAmount,validQuote} from './fx.js?v=shopping-notify-40';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=shopping-notify-40';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=shopping-notify-40';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=shopping-notify-40';
+import {groupMode,homeSummary,groupForMode} from './home.js?v=settlement-41';
+import {convertedAmount,validConversion} from './fx.js?v=settlement-41';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=settlement-41';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=settlement-41';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=settlement-41';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=shopping-notify-40';
-import {Cloud} from './cloud.js?v=shopping-notify-40';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=shopping-notify-40';
-import {NotificationCentre} from './notifications.js?v=shopping-notify-40';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=settlement-41';
+import {Cloud} from './cloud.js?v=settlement-41';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=settlement-41';
+import {NotificationCentre} from './notifications.js?v=settlement-41';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -43,7 +43,7 @@ let inviteError='';
 const remoteBaseline=new Map();
 const activityCache=new Map();
 const activityRequests=new Map();
-let fxSession={groupId:null,mode:false,quote:null,error:'',loading:false,request:0};
+let fxSession={groupId:null,mode:false,target:'EUR',quote:null,targetQuote:null,error:'',loading:false,request:0};
 let homeClock=0;
 let shoppingState={groupId:null,viewer:null,items:[],error:'',loading:false};
 let shoppingRequest=0;
@@ -197,7 +197,7 @@ function homeView(){
  const info=homeSummary(g),amount=Math.abs(info.ownBalance),credit=info.ownBalance>0,debt=info.ownBalance<0,data=activityData(),incoming=data.requests.filter(r=>r.to_id===accountUser?.id),outgoing=data.requests.filter(r=>r.from_id===accountUser?.id),pending=incoming.length||outgoing.length;
  const label=credit?'Te deben':debt?'Debes':'Todo saldado',symbol=credit?'+':debt?'−':'✓';
  const attention=data.ready===true&&pending?`<button class="home-attention" data-action="show-pending-payments"><span class="home-attention-count">${pending}</span><strong>${incoming.length?incoming.length===1?tr('Un pago espera tu confirmación'):ui`${incoming.length} pagos esperan tu confirmación`:outgoing.length===1?tr('Un pago espera confirmación'):ui`${outgoing.length} pagos esperan confirmación`}</strong>${icon('chevron')}</button>`:'';
- return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<div class="home-greeting"><p>${ui`Hola, ${esc(currentProfile().name.split(/\s+/)[0])}`}</p><h1>${tr(info.travel?'Viajad. Lo demás, aquí.':['Pareja','Convivencia'].includes(g.type)?'Tu casa, sin líos.':'Tus cuentas, al día.')}</h1></div><article class="home-balance balance-stat ${credit?'is-credit':debt?'is-owed':'is-settled'}" data-balance-state="${credit?'credit':debt?'debt':'settled'}"><div class="stat-copy"><span class="balance-status stat-label"><span class="balance-status-sign" aria-hidden="true">${symbol}</span>${tr(label)}</span><strong class="stat-amount" aria-label="${esc(tr(label)+': '+money(amount))}">${statMoney(amount)}</strong></div><div class="home-balance-bottom"><small>${tr(info.travel&&currencyOf(g)!=='EUR'?'Consulta el cambio para pagar en euros':'Tu saldo personal')}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':amount?'Saldar':'Ver saldos')}${icon('arrow')}</button></div></article>${attention}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Últimos gastos')}</h2><button class="text-button" data-route="expenses">${tr('Ver todos')}${icon('arrow')}</button></div>${g.expenses.length?expenseList(g.expenses.slice(0,2)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</section></section>`;
+ return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<div class="home-greeting"><p>${ui`Hola, ${esc(currentProfile().name.split(/\s+/)[0])}`}</p><h1>${tr(info.travel?'Viajad. Lo demás, aquí.':['Pareja','Convivencia'].includes(g.type)?'Tu casa, sin líos.':'Tus cuentas, al día.')}</h1></div><article class="home-balance balance-stat ${credit?'is-credit':debt?'is-owed':'is-settled'}" data-balance-state="${credit?'credit':debt?'debt':'settled'}"><div class="stat-copy"><span class="balance-status stat-label"><span class="balance-status-sign" aria-hidden="true">${symbol}</span>${tr(label)}</span><strong class="stat-amount" aria-label="${esc(tr(label)+': '+money(amount))}">${statMoney(amount)}</strong></div><div class="home-balance-bottom"><small>${tr(info.travel&&currencyOf(g)!=='EUR'?'Consulta el cambio a otra moneda':'Tu saldo personal')}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':amount?'Saldar':'Ver saldos')}${icon('arrow')}</button></div></article>${attention}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Últimos gastos')}</h2><button class="text-button" data-route="expenses">${tr('Ver todos')}${icon('arrow')}</button></div>${g.expenses.length?expenseList(g.expenses.slice(0,2)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</section></section>`;
 }
 function rememberHomeMode(g) {
  try{const key='divzplit-home-groups:'+ (accountUser?.id||'demo'),saved=JSON.parse(sessionStorage.getItem(key)||'{}');sessionStorage.setItem(key,JSON.stringify({...saved,[groupMode(g)]:g.id}));}catch{/* Navigation also works without browser storage. */}
@@ -426,7 +426,7 @@ function renderPaymentList() {
   const items=pending?data.requests:visibleRepayments(g,showArchivedRepayments);
   const notice=pending?activityNotice(data):archive?.error?`<p class="activity-error" role="alert">${esc(archive.error)}</p><button class="button secondary" data-action="show-recorded-payments">${tr('Volver a intentar')}</button>`:'';
   const controls=`<div class="history-modal-controls payment-list-controls">${!notice&&canManage()&&items.length&&(!showArchivedRepayments||pending)?ui`<button class="button secondary danger-text" data-clear-payment-list="${pending?'pending':'recorded'}">Borrar todo</button>`:''}${!pending&&archive?.ids?.length?ui`<button class="text-button" data-action="toggle-recorded-archive">${tr(showArchivedRepayments?'Volver a recientes':'Ver anteriores')}</button>`:''}</div>`;
-  const recorded=items.length?items.slice(0,recordedPaymentLimit).map(p=>ui`<div class="payment-row"><span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${p.fx?money(p.fx.amount,'EUR'):money(p.amount)}</strong><small>${p.fx?money(p.amount)+' · ':''}${dateLabel(p.date)}</small>${p.fx?fxDetails(p.fx,currencyOf(g)):''}</div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>');
+  const recorded=items.length?items.slice(0,recordedPaymentLimit).map(p=>ui`<div class="payment-row"><span>${esc(member(p.from).name)} → ${esc(member(p.to).name)}</span><strong>${p.fx?money(p.fx.amount,p.fx.currency||'EUR'):money(p.amount)}</strong><small>${p.fx?money(p.amount)+' · ':''}${dateLabel(p.date)}</small>${p.fx?fxDetails(p.fx,currencyOf(g)):''}</div>`).join(''):tr('<p class="muted">Todavía no se han registrado devoluciones.</p>');
   container.innerHTML=`${controls}${!pending&&showArchivedRepayments?`<p class="history-policy">${tr('Devoluciones anteriores. Los pagos y los saldos se conservan.')}</p>`:''}<div class="payment-list-scroll">${notice||(pending?paymentRequestsView(items,accountUser?.id,activityMemberName,currencyOf(g)):recorded)}${!pending&&!notice&&items.length>recordedPaymentLimit?ui`<button class="button secondary" data-action="more-recorded-payments">Ver más devoluciones</button>`:''}</div>`;
 }
 
@@ -534,36 +534,42 @@ function paymentSuggestions() {
   const id=value=>value===accountUser?.id?'you':value;
   return settlements({...group(),payments:[...group().payments,...pending.map(r=>({from:id(r.from_id),to:id(r.to_id),amount:r.amount}))]});
 }
-function fxDetails(snapshot,baseCurrency) {
- if(!snapshot)return '';
- const source=snapshot.source==='ECB'?'BCE / ECB':'ExchangeRate-API';
- return ui`<p class="fx-detail">${tr('Cambio aplicado')}: 1 EUR = ${esc(new Intl.NumberFormat(locale,{maximumFractionDigits:10}).format(Number(snapshot.rate)))} ${esc(baseCurrency)} · ${esc(snapshot.date)} · ${esc(source)}</p>`;
+function conversionReady(){
+ return validConversion(fxSession.quote,fxSession.targetQuote,currencyOf(group()),fxSession.target);
 }
-function fxPanel() {
- if(currencyOf(group())==='EUR')return '';
- const fx=fxSession,quote=fx.quote;
- return ui`<section class="fx-panel"><div class="fx-controls"><button class="button ${fx.mode?'secondary':'primary'} small-button" data-action="fx-original">${esc(currencyOf(group()))}</button><button class="button ${fx.mode?'primary':'secondary'} small-button" data-action="fx-euros">Ver en euros</button></div>${fx.loading?ui`<p role="status">Consultando el cambio más reciente…</p>`:fx.error?`<p class="activity-error" role="alert">${esc(fx.error)}</p><button class="text-button" data-action="fx-refresh">${tr('Volver a intentar')}</button>`:quote?ui`<p class="fx-detail">${tr('Última cotización disponible')}: ${esc(quote.rate_date)}<br>1 EUR = ${esc(new Intl.NumberFormat(locale,{maximumFractionDigits:10}).format(Number(quote.rate)))} ${esc(quote.currency)} · ${quote.source==='ECB'?'<a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer">BCE / ECB</a>':'<a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates by ExchangeRate-API</a>'}</p><button class="text-button" data-action="fx-refresh">Actualizar cambio</button>`:''}<p class="form-note">Cambio de referencia: el banco puede aplicar otro cambio o comisiones. Los gastos y saldos se mantienen en la moneda original.</p></section>`;
+function conversionSnapshot(amount){
+ const fx=fxSession,br=fx.quote?.rate||'1',trg=fx.targetQuote?.rate||'1',baseDate=fx.quote?.rate_date||fx.targetQuote?.rate_date,targetDate=fx.targetQuote?.rate_date||baseDate;
+ return {currency:fx.target,amount:convertedAmount(amount,currencyOf(group()),fx.target,br,trg),rate:String(Number(br)/Number(trg)),date:[baseDate,targetDate].sort()[0],baseDate,targetDate,source:!fx.quote?fx.targetQuote?.source:!fx.targetQuote||fx.quote.source===fx.targetQuote.source?fx.quote.source:'ECB + ExchangeRate-API'};
+}
+function fxDetails(snapshot,baseCurrency){
+ if(!snapshot)return '';
+ const target=snapshot.currency||'EUR',dates=snapshot.baseDate&&snapshot.targetDate&&snapshot.baseDate!==snapshot.targetDate?baseCurrency+': '+snapshot.baseDate+' · '+target+': '+snapshot.targetDate:snapshot.date;
+ return ui`<p class="fx-detail">${tr('Cambio aplicado')}: 1 ${esc(target)} = ${esc(new Intl.NumberFormat(locale,{maximumFractionDigits:10}).format(Number(snapshot.rate)))} ${esc(baseCurrency)}<br>${esc(dates)} · ${esc(snapshot.source==='ECB'?'BCE / ECB':snapshot.source)}</p>`;
+}
+function fxPanel(){
+ const fx=fxSession,base=currencyOf(group()),ready=fx.mode&&conversionReady();
+ return ui`<section class="fx-panel"><div class="fx-controls"><button class="button ${fx.mode?'secondary':'primary'} small-button" data-action="fx-original">${esc(base)}</button><label class="fx-target-field"><span>${tr('Convertir a')}</span><select data-fx-target aria-label="${tr('Moneda de destino')}"><option value="" ${!fx.mode?'selected':''}>${tr('Elegir moneda')}</option>${currencies.filter(code=>code!==base).map(code=>'<option value="'+code+'" '+(fx.mode&&fx.target===code?'selected':'')+'>'+code+' · '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))+'</option>').join('')}</select></label></div>${fx.loading?ui`<p role="status">Consultando el cambio más reciente…</p>`:fx.error?'<p class="activity-error" role="alert">'+esc(fx.error)+'</p><button class="text-button" data-action="fx-refresh">'+tr('Volver a intentar')+'</button>':ready?fxDetails(conversionSnapshot(1),base)+'<button class="text-button" data-action="fx-refresh">'+tr('Actualizar cambio')+'</button>':''}<p class="form-note">Cambio de referencia: el banco puede aplicar otro cambio o comisiones. Los gastos y saldos se mantienen en la moneda original.</p></section>`;
 }
 function renderSettlements() {
  const box=modalRoot.querySelector('.settlements-dialog');if(!box||box.dataset.settlementGroup!==group()?.id)return;
- const g=group(),items=paymentSuggestions(),data=activityData(),converted=fxSession.mode&&validQuote(fxSession.quote,currencyOf(g));
- box.innerHTML=ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${fxPanel()}${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(g)):''}<div class="settlement-list">${items.length?items.map((p,i)=>{const eur=converted?euroAmount(p.amount,currencyOf(g),fxSession.quote.rate):null;return `<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div class="settlement-amount"><strong>${money(eur??p.amount,converted?'EUR':currencyOf(g))}</strong>${converted?`<small>${money(p.amount)}</small>`:''}${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}" ${fxSession.mode&&(!converted||!eur)?'disabled':''}>Marcar como pagado</button>`:''}${converted&&!eur?ui`<small>Importe inferior a un céntimo. Usa la moneda original.</small>`:''}</div></div>`;}).join(''):data.requests.length?ui`<p class="pending-summary">Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`;
+ const g=group(),items=paymentSuggestions(),data=activityData(),converted=fxSession.mode&&conversionReady();
+ box.innerHTML=ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${fxPanel()}${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(g)):''}<div class="settlement-list">${items.length?items.map((p,i)=>{const eur=converted?conversionSnapshot(p.amount).amount:null;return `<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div class="settlement-amount"><strong>${money(eur??p.amount,converted?fxSession.target:currencyOf(g))}</strong>${converted?`<small>${money(p.amount)}</small>`:''}${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}" ${fxSession.mode&&(!converted||!eur)?'disabled':''}>Marcar como pagado</button>`:''}${converted&&!eur?ui`<small>Importe inferior a la unidad mínima. Usa la moneda original.</small>`:''}</div></div>`;}).join(''):data.requests.length?ui`<p class="pending-summary">Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`;
 }
 async function loadFxQuote() {
- const g=group(),viewer=accountUser?.id;if(!g||currencyOf(g)==='EUR')return;
- const request=++fxSession.request;fxSession.loading=true;fxSession.error='';fxSession.quote=null;renderSettlements();
+ const g=group(),viewer=accountUser?.id;if(!g||fxSession.target===currencyOf(g))return;
+ const target=fxSession.target,base=currencyOf(g),request=++fxSession.request;fxSession.loading=true;fxSession.error='';fxSession.quote=null;fxSession.targetQuote=null;renderSettlements();
  try{
   if(!viewer)throw new Error(tr('Entra con tu cuenta para consultar el cambio actualizado.'));
-  const quote=await cloud.exchangeQuote(currencyOf(g));
-  if(fxSession.request!==request||group()?.id!==g.id||accountUser?.id!==viewer)return;
-  if(!validQuote(quote,currencyOf(g)))throw new Error(tr('No se ha podido obtener un cambio vigente.'));
-  fxSession.quote=quote;
+  const [quote,targetQuote]=await Promise.all([base==='EUR'?null:cloud.exchangeQuote(base),target==='EUR'?null:cloud.exchangeQuote(target)]);
+  if(fxSession.request!==request||group()?.id!==g.id||accountUser?.id!==viewer||fxSession.target!==target)return;
+  if(!validConversion(quote,targetQuote,base,target))throw new Error(tr('No se ha podido obtener un cambio vigente.'));
+  fxSession.quote=quote;fxSession.targetQuote=targetQuote;
  }catch(error){if(fxSession.request===request&&group()?.id===g.id&&accountUser?.id===viewer)fxSession.error=error.message;}
  finally{if(fxSession.request===request&&group()?.id===g.id&&accountUser?.id===viewer){fxSession.loading=false;renderSettlements();}}
 }
 async function settlementsModal() {
  const id=group()?.id;if(!id)return;
- fxSession={groupId:id,mode:false,quote:null,error:'',loading:false,request:fxSession.request+1};
+ fxSession={groupId:id,mode:false,target:currencyOf(group())==='EUR'?'USD':'EUR',quote:null,targetQuote:null,error:'',loading:false,request:fxSession.request+1};
  openModal(tr('Las cuentas claras'),`<div class="settlements-dialog" data-settlement-group="${esc(id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,tr('Menos transferencias para equilibrar los saldos.'));
  await loadActivity();renderSettlements();
 }
@@ -645,11 +651,11 @@ async function onAppClick(event) {
     let p=paymentSuggestions()[Number(el.dataset.settle)];if(!p||p.from!=='you')return;
     let fx=null;
     if(fxSession.mode){
-      if(!validQuote(fxSession.quote,currencyOf(group())))throw new Error(tr('El cambio ha caducado. Actualízalo antes de continuar.'));
-      const quote=fxSession.quote;const amount=euroAmount(p.amount,currencyOf(group()),quote.rate);if(amount<1)throw new Error(tr('Importe inferior a un céntimo. Usa la moneda original.'));
-      p={...p,fxQuoteId:quote.id,eurAmount:amount};fx={currency:'EUR',amount,rate:quote.rate,date:quote.rate_date,source:quote.source};
+      if(!conversionReady())throw new Error(tr('El cambio ha caducado. Actualízalo antes de continuar.'));
+      fx=conversionSnapshot(p.amount);if(fx.amount<1)throw new Error(tr('Importe inferior a la unidad mínima. Usa la moneda original.'));
+      p={...p,fxQuoteId:fxSession.quote?.id||null,fxCurrency:fxSession.target,targetQuoteId:fxSession.targetQuote?.id||null,targetAmount:fx.amount,eurAmount:fx.amount};
     }
-    openModal(tr('¿Has enviado el pago?'),ui`<p class="dialog-copy">Vas a marcar como enviado un pago de <strong>${fx?money(fx.amount,'EUR'):money(p.amount)}</strong> a <strong>${esc(member(p.to).name)}</strong>.</p>${fx?ui`<p class="form-note">Equivale a ${money(p.amount)} en las cuentas del grupo.</p>${fxDetails(fx,currencyOf(group()))}`:''}<p class="form-note">El saldo no cambiará hasta que la otra persona confirme la recepción.</p><div class="modal-actions"><button class="button secondary" data-action="settlements">Cancelar</button><button class="button primary" data-confirm-payment="${esc(JSON.stringify(p))}" data-payment-group="${esc(group().id)}" data-request-id="${uid()}">Ya lo he enviado</button></div>`);return;
+    openModal(tr('¿Has enviado el pago?'),ui`<p class="dialog-copy">Vas a marcar como enviado un pago de <strong>${fx?money(fx.amount,fx.currency||'EUR'):money(p.amount)}</strong> a <strong>${esc(member(p.to).name)}</strong>.</p>${fx?ui`<p class="form-note">Equivale a ${money(p.amount)} en las cuentas del grupo.</p>${fxDetails(fx,currencyOf(group()))}`:''}<p class="form-note">El saldo no cambiará hasta que la otra persona confirme la recepción.</p><div class="modal-actions"><button class="button secondary" data-action="settlements">Cancelar</button><button class="button primary" data-confirm-payment="${esc(JSON.stringify(p))}" data-payment-group="${esc(group().id)}" data-request-id="${uid()}">Ya lo he enviado</button></div>`);return;
   }
   if(el.dataset.confirmPayment){
     if(el.dataset.paymentGroup!==group()?.id)return;
@@ -660,8 +666,8 @@ async function onAppClick(event) {
   if(el.dataset.paymentResponse){
     const action=el.dataset.paymentResponse,id=el.dataset.requestId,returnToPending=!!modalRoot.querySelector('.payment-list-dialog[data-kind="pending"]');
     const request=activityData().requests.find(r=>r.id===id);
-    const fxSummary=request?.fx?ui`<p class="dialog-copy">${money(request.fx.amount,'EUR')} · ${money(request.amount,request.currency)}</p>${fxDetails(request.fx,request.currency)}`:'';
-    const label=action==='confirm'&&request?ui`¿Has recibido ${money(request.fx?.amount??request.amount,request.fx?'EUR':request.currency)}?`:action==='confirm'?tr('¿Confirmas que has recibido el dinero?'):action==='reject'?'¿Todavía no has recibido este pago?':'¿Cancelar esta solicitud de pago?';
+    const fxSummary=request?.fx?ui`<p class="dialog-copy">${money(request.fx.amount,request.fx.currency||'EUR')} · ${money(request.amount,request.currency)}</p>${fxDetails(request.fx,request.currency)}`:'';
+    const label=action==='confirm'&&request?ui`¿Has recibido ${money(request.fx?.amount??request.amount,request.fx?(request.fx.currency||'EUR'):request.currency)}?`:action==='confirm'?tr('¿Confirmas que has recibido el dinero?'):action==='reject'?'¿Todavía no has recibido este pago?':'¿Cancelar esta solicitud de pago?';
     openModal(tr(label),ui`${action==='confirm'?`<div class="payment-confirm-icon">${icon('wallet')}</div>`:''}${fxSummary}<p class="dialog-copy">${tr(action==='confirm'?'Confirma únicamente si el dinero ya ha llegado a su destino.':'Los saldos no cambiarán.')}</p><div class="modal-actions"><button class="button secondary" data-action="${returnToPending?'show-pending-payments':'close-modal'}">Volver</button><button class="button primary" data-resolve-payment="${esc(action)}" data-request-id="${esc(id)}" data-return-pending="${returnToPending}">${tr(action==='confirm'?'Sí, confirmar':'Confirmar')}</button></div>`);return;
   }
   if(el.dataset.resolvePayment){await respondToPayment(el.dataset.requestId,el.dataset.resolvePayment,el.dataset.returnPending==='true');return;}
@@ -695,11 +701,11 @@ async function onAppClick(event) {
     case 'new-expense':expenseModal();break;
     case 'new-group':groupModal(false,el.dataset.groupType||'Viaje');break;
     case 'edit-group':groupModal(true);break;
-    case 'fx-original':fxSession.mode=false;renderSettlements();break;
-    case 'fx-euros':fxSession.mode=true;if(validQuote(fxSession.quote,currencyOf(group())))renderSettlements();else await loadFxQuote();break;
+    case 'fx-original':fxSession.mode=false;++fxSession.request;fxSession.loading=false;fxSession.error='';fxSession.quote=null;fxSession.targetQuote=null;renderSettlements();break;
+    case 'fx-euros':fxSession.target='EUR';fxSession.mode=true;if(conversionReady())renderSettlements();else await loadFxQuote();break;
     case 'fx-refresh':await loadFxQuote();break;
     case 'choose-group':chooseGroup();break;
-    case 'settlements':await settlementsModal();if(el.dataset.preferEuros==='true'){fxSession.mode=true;await loadFxQuote();}break;
+    case 'settlements':await settlementsModal();if(el.dataset.preferEuros==='true'){fxSession.target='EUR';fxSession.mode=true;await loadFxQuote();}break;
     case 'reload-activity':await loadActivity();if(modalRoot.querySelector('.history-dialog'))renderHistoryModal();else if(modalRoot.querySelector('.payment-list-dialog'))renderPaymentList();else if(modalRoot.querySelector('.settlements-dialog'))renderSettlements();else if(modalRoot.firstElementChild)await settlementsModal();else render();break;
     case 'more-history':await loadActivity(true);renderHistoryModal();break;
     case 'show-pending-payments':await showPaymentList('pending');break;
@@ -738,6 +744,7 @@ document.addEventListener('change',event=>{onAppChange(event).catch(handleAction
 async function onAppChange(event) {
   const el=event.target;
   if(remoteBusy || authLoading){if(el.dataset.shoppingCheck){el.checked=!!shoppingState.items.find(i=>i.id===el.dataset.shoppingCheck)?.bought;return;}render();return;}
+  if(el.matches('[data-fx-target]')){if(!currencies.includes(el.value)||el.value===currencyOf(group()))return;fxSession.target=el.value;fxSession.mode=true;await loadFxQuote();return;}
   if(el.matches('[data-quick-group]')){state.activeGroup=el.value;await save();render();modalOpener=[...root.querySelectorAll('[data-action=quick-add]')].find(button=>button.getClientRects().length);quickAddModal();return;}
   if(el.form?.id==='expense-form'&&(el.name==='splitMode'||el.name==='participants')){renderSplitFields(el.form);return;}
   if(el.name==='removeReceipt'&&el.checked){const file=el.form.elements.receipt;file.value='';await receiptChanged(file);return;}

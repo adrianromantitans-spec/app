@@ -1,5 +1,5 @@
-import {currencyOf} from './model.js?v=shopping-notify-40';
-import {tr} from './i18n.js?v=shopping-notify-40';
+import {currencyOf} from './model.js?v=settlement-41';
+import {tr} from './i18n.js?v=settlement-41';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -365,9 +365,13 @@ export class Cloud {
   async requestPayment(group,payment,requestId) {
     const viewer=this.user?.id;await this.requireCollaboration();
     if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'));
-    if(payment.fxQuoteId){const viewer=this.user?.id;await this.requireFx();if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'));}
+    if(payment.fxQuoteId||payment.fxCurrency){const viewer=this.user?.id;await this.requireFx();if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'));}
     if(payment.from!=='you')throw new CloudError(tr('Solo puedes marcar tus propios pagos.'));
     const args={p_id:group.id,p_version:group.remote.version,p_request_id:requestId,p_to:payment.to,p_amount:payment.amount,p_currency:currencyOf(group)};
+    if(payment.fxCurrency&&payment.fxCurrency!=='EUR'){
+      try{return await this.rpc('divzplit_request_payment_fx',{...args,p_quote:payment.fxQuoteId||null,p_target_currency:payment.fxCurrency,p_target_quote:payment.targetQuoteId,p_target_amount:payment.targetAmount});}
+      catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('Para registrar pagos en otras monedas, activa la actualización de cambios en Supabase.'));throw error;}
+    }
     return this.rpc(payment.fxQuoteId?'divzplit_request_payment_eur':'divzplit_request_payment',payment.fxQuoteId?{...args,p_quote:payment.fxQuoteId,p_eur_amount:payment.eurAmount}:args);
   }
   async respondPayment(group,requestId,action) {

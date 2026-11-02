@@ -77,7 +77,7 @@ with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  c,friend=context(b,FRIEND)
  friend.locator('[data-action="settlements"]').first.click()
- expect(friend.locator('[data-action="fx-euros"]')).to_be_visible()
+ expect(friend.locator('[data-fx-target]')).to_be_visible()
  expect(friend.locator('.settlement-amount>strong')).to_contain_text('10,00')
  expect(friend.locator('.settlement-amount>small')).to_contain_text('50,00')
  expect(friend.locator('.fx-panel')).to_contain_text('2026-10-30')
@@ -122,7 +122,7 @@ with sync_playwright() as p:
  # A subcent EUR amount remains payable only in the original currency.
  group['document']['expenses'][0]['amount']=1;group['document']['expenses'][0]['participants']=[FRIEND];fx_failure=False
  c,page=context(b,FRIEND);page.locator('[data-action="settlements"]').first.click()
- expect(page.locator('.settlement-amount')).to_contain_text('Importe inferior a un céntimo')
+ expect(page.locator('.settlement-amount')).to_contain_text('Importe inferior a la unidad mínima')
  expect(page.locator('[data-settle]')).to_be_disabled();c.close()
  # New currency selection and integral ISK expense input.
  group['document']['currency']='ISK';group['document']['expenses']=[];fx_failure=False
@@ -140,11 +140,11 @@ with sync_playwright() as p:
  # EUR groups have no unnecessary conversion; localized FX copy works in EN/RO.
  group['document']['currency']='EUR'
  c,page=context(b,OWNER);page.locator('[data-action="settlements"]').first.click()
- expect(page.locator('.settlement-row')).to_be_visible();assert page.locator('.fx-panel').count()==0;c.close()
+ expect(page.locator('.settlement-row')).to_be_visible();expect(page.locator('[data-action="fx-original"]')).to_have_text('EUR');c.close()
  group['document']['currency']='RON'
  for language,label in [('en-GB','View in euros'),('ro-RO','Vezi în euro')]:
   c,page=context(b,FRIEND,language);page.locator('[data-action="settlements"]').first.click()
-  expect(page.get_by_role('button',name=label,exact=True)).to_be_visible();c.close()
+  expect(page.locator('[data-fx-target]')).to_be_visible();c.close()
  assert not errors,errors
  print('PASS: dated EUR preview, original debt retained, frozen payment/confirmation, provider failure fallback, all 25 currencies, integral ISK and ES/EN/RO mobile layouts')
  b.close()

@@ -44,3 +44,20 @@ test('expired or foreign-currency quotes cannot be used in a payment preview',()
  const q={id:'11111111-1111-4111-8111-111111111111',currency:'RON',source:'ECB',rate:'5',rate_date:today,expires_at:'2026-11-01T12:15:00Z'};
  assert.equal(validQuote(q,'RON',now),true);assert.equal(validQuote(q,'USD',now),false);assert.equal(validQuote(q,'RON',now+16*60000),false);
 });
+
+test('cross-currency amounts round once in the selected minor unit',async()=>{
+ const {convertedAmount,validConversion}=await import('../fx.js');
+ assert.equal(convertedAmount(10000,'RON','USD','5','1.2'),2400);
+ assert.equal(convertedAmount(10000,'EUR','USD','1','1.2'),12000);
+ assert.equal(convertedAmount(1000,'ISK','RON','160','5'),3125);
+ assert.equal(convertedAmount(100,'RON','ISK','5','160'),32);
+ assert.equal(convertedAmount(1,'RON','ISK','5','160'),0);
+ assert.equal(convertedAmount(1,'RON','USD','2','1'),1);
+ assert.throws(()=>convertedAmount(100,'RON','USD','0','1'));
+ assert.throws(()=>convertedAmount(100,'RON','RON','5','5'));
+ const quote={id:'11111111-1111-4111-8111-111111111111',currency:'RON',rate:'5',rate_date:'2026-11-02',source:'ECB',expires_at:new Date(Date.now()+60000).toISOString()};
+ assert.equal(validConversion(quote,null,'RON','EUR'),true);
+ assert.equal(validConversion(null,{...quote,currency:'USD'},'EUR','USD'),true);
+ assert.equal(validConversion(quote,{...quote,currency:'GBP'},'RON','USD'),false);
+ assert.equal(validConversion({...quote,expires_at:'2000-01-01'},null,'RON','EUR'),false);
+});

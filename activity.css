@@ -10,3 +10,9 @@
 
 .fx-panel{border:1px solid var(--border);background:#faf8fd;border-radius:16px;padding:16px;margin-bottom:20px;font-size:12px;line-height:1.7}.fx-controls{display:flex;gap:8px;flex-wrap:wrap}.fx-detail{font-size:11px;line-height:1.7;color:var(--muted);overflow-wrap:anywhere;margin:9px 0}.fx-detail a{color:var(--purple)}.settlement-row .settlement-amount{display:flex;flex-direction:column;gap:6px;align-items:flex-end}.settlement-amount>small{color:var(--muted);font-size:11px}.settlements-dialog .settlement-row>div:first-child{flex-wrap:wrap;min-width:0}.settlements-dialog .settlement-row strong{overflow-wrap:anywhere}.payment-request .fx-detail{grid-column:1/-1}.button:disabled{opacity:.5;cursor:default}
 .payment-row>.fx-detail{flex-basis:100%;margin:0}
+
+.fx-controls{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:12px}
+.fx-target-field{display:grid;gap:5px;min-width:0;font-size:11px;color:var(--muted)}
+.fx-target-field select{width:100%;min-width:0;min-height:44px;border:1px solid #e5dcf1;border-radius:12px;padding:9px 11px;background:#fff;color:var(--purple);font-size:16px}
+.fx-controls>[data-action="fx-original"]{min-height:44px;align-self:end}
+@media(max-width:360px){.fx-controls{gap:8px}.fx-target-field select{padding-left:8px;padding-right:8px}}

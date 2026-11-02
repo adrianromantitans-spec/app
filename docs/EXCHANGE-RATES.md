@@ -58,3 +58,7 @@ Esta versión no mezcla distintas monedas dentro de los gastos de un mismo grupo
   dos cuentas, móvil/tablet, ES/EN/RO, conversión, fallos y gastos enteros en ISK.
 
 La entrega de una transferencia bancaria no se ejecuta ni verifica desde DivZplit.
+
+## Selector de moneda de destino
+
+La ventana para saldar permite ahora elegir otra moneda, conservando la original a la izquierda. Ver [SETTLEMENT-CURRENCIES.md](SETTLEMENT-CURRENCIES.md) para la actualización SQL y la conservación de cotizaciones y pagos.

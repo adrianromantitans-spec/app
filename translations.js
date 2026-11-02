@@ -1,5 +1,14 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Últimos gastos": {"en": "Recent expenses", "ro": "Ultimele cheltuieli"},
+  "Convertir a": {"en": "Convert to", "ro": "Convertește în"},
+  "Moneda de destino": {"en": "Target currency", "ro": "Moneda de destinație"},
+  "Elegir moneda": {"en": "Choose currency", "ro": "Alege moneda"},
+  "Pago convertido": {"en": "Converted payment", "ro": "Plată convertită"},
+  "Importe inferior a la unidad mínima. Usa la moneda original.": {"en": "Amount below the smallest currency unit. Use the original currency.", "ro": "Suma este sub unitatea minimă a monedei. Folosește moneda inițială."},
+  "Consulta el cambio a otra moneda": {"en": "View the rate for another currency", "ro": "Vezi cursul pentru altă monedă"},
+  "Para registrar pagos en otras monedas, activa la actualización de cambios en Supabase.": {"en": "To record payments in other currencies, enable the exchange update in Supabase.", "ro": "Pentru a înregistra plăți în alte monede, activează actualizarea conversiilor în Supabase."},
+
   "No hay otras personas con estos avisos activados.": {"en":"No other members have these alerts enabled.","ro":"Niciun alt membru nu are aceste alerte activate."},
   "Productos nuevos en la lista": {"en": "New products on the list", "ro": "Produse noi în listă"},
   "Recordatorio de compra": {"en": "Shopping reminder", "ro": "Memento pentru cumpărături"},

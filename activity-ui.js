@@ -1,5 +1,5 @@
-import {tr,ui,locale} from './i18n.js?v=shopping-notify-40';
-import {money} from './model.js?v=shopping-notify-40';
+import {tr,ui,locale} from './i18n.js?v=settlement-41';
+import {money} from './model.js?v=settlement-41';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={
  'tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación',
@@ -10,16 +10,16 @@ const labels={
  'members.added':'Miembro incorporado','members.updated':'Miembro actualizado','members.deleted':'Miembro eliminado',
  'payment.requested':'Pago marcado como enviado','payment.rejected':'Pago no recibido','payment.cancelled':'Solicitud de pago cancelada'
 };
-const fields={fx:'Pago en euros',dueAt:'Fecha límite',remindAt:'Recordatorio',important:'Importante',title:'Concepto',amount:'Importe',payer:'Pagado por',participants:'Participantes',split:'Reparto',date:'Fecha',category:'Categoría',receipt:'Ticket',recurrence:'Repetición',done:'Completada',assignee:'Responsable',votes:'Votos',options:'Opciones',name:'Nombre',place:'Lugar',budget:'Presupuesto',currency:'Moneda',emoji:'Icono',type:'Tipo de grupo',endDate:'Fecha de vuelta',from:'De',to:'Para',from_id:'De',to_id:'Para',status:'Estado'};
+const fields={fx:'Pago convertido',dueAt:'Fecha límite',remindAt:'Recordatorio',important:'Importante',title:'Concepto',amount:'Importe',payer:'Pagado por',participants:'Participantes',split:'Reparto',date:'Fecha',category:'Categoría',receipt:'Ticket',recurrence:'Repetición',done:'Completada',assignee:'Responsable',votes:'Votos',options:'Opciones',name:'Nombre',place:'Lugar',budget:'Presupuesto',currency:'Moneda',emoji:'Icono',type:'Tipo de grupo',endDate:'Fecha de vuelta',from:'De',to:'Para',from_id:'De',to_id:'Para',status:'Estado'};
 export function paymentRequestsView(requests,viewerId,name,currency) {
  if(!requests.length)return `<p class="muted">${tr('No hay pagos pendientes de confirmar.')}</p>`;
- return `<div class="payment-requests">${requests.map(r=>`<article class="payment-request"><div><strong>${esc(name(r.from_id))} → ${esc(name(r.to_id))}</strong><span>${esc(r.fx?money(r.fx.amount,'EUR'):money(r.amount,r.currency||currency))}</span>${r.fx?`<small>${esc(money(r.amount,r.currency||currency))} · ${tr('Cambio aplicado')}: 1 EUR = ${esc(new Intl.NumberFormat(locale,{maximumFractionDigits:10}).format(Number(r.fx.rate)))} ${esc(r.currency||currency)} · ${esc(r.fx.date)} · ${esc(r.fx.source)}</small>`:''}<small>${tr('Pendiente de confirmar por quien recibe el dinero')}</small></div>${r.to_id===viewerId?ui`<div class="payment-actions"><button class="button primary small-button" data-payment-response="confirm" data-request-id="${esc(r.id)}">Confirmar recepción</button><button class="button secondary small-button" data-payment-response="reject" data-request-id="${esc(r.id)}">No lo he recibido</button></div>`:r.from_id===viewerId?ui`<button class="text-button" data-payment-response="cancel" data-request-id="${esc(r.id)}">Cancelar solicitud</button>`:''}</article>`).join('')}</div>`;
+ return `<div class="payment-requests">${requests.map(r=>`<article class="payment-request"><div><strong>${esc(name(r.from_id))} → ${esc(name(r.to_id))}</strong><span>${esc(r.fx?money(r.fx.amount,r.fx.currency||'EUR'):money(r.amount,r.currency||currency))}</span>${r.fx?`<small>${esc(money(r.amount,r.currency||currency))} · ${tr('Cambio aplicado')}: 1 ${esc(r.fx.currency||'EUR')} = ${esc(new Intl.NumberFormat(locale,{maximumFractionDigits:10}).format(Number(r.fx.rate)))} ${esc(r.currency||currency)} · ${esc(r.fx.baseDate&&r.fx.targetDate&&r.fx.baseDate!==r.fx.targetDate?(r.currency||currency)+': '+r.fx.baseDate+' · '+(r.fx.currency||'EUR')+': '+r.fx.targetDate:r.fx.date)} · ${esc(r.fx.source)}</small>`:''}<small>${tr('Pendiente de confirmar por quien recibe el dinero')}</small></div>${r.to_id===viewerId?ui`<div class="payment-actions"><button class="button primary small-button" data-payment-response="confirm" data-request-id="${esc(r.id)}">Confirmar recepción</button><button class="button secondary small-button" data-payment-response="reject" data-request-id="${esc(r.id)}">No lo he recibido</button></div>`:r.from_id===viewerId?ui`<button class="text-button" data-payment-response="cancel" data-request-id="${esc(r.id)}">Cancelar solicitud</button>`:''}</article>`).join('')}</div>`;
 }
 function valueText(key,value,event,name,snapshot) {
  if((value===null||value===undefined)&&snapshot&&key==='split')return tr('A partes iguales');
  if((value===null||value===undefined)&&snapshot&&key==='receipt')return tr('Sin ticket');
  if(value===null||value===undefined)return '—';
- if(key==='fx')return money(value.amount,'EUR')+' · 1 EUR = '+value.rate+' '+event.currency+' · '+value.date+' · '+value.source;
+ if(key==='fx')return money(value.amount,value.currency||'EUR')+' · 1 '+(value.currency||'EUR')+' = '+value.rate+' '+event.currency+' · '+(value.baseDate&&value.targetDate&&value.baseDate!==value.targetDate?event.currency+': '+value.baseDate+' · '+value.currency+': '+value.targetDate:value.date)+' · '+value.source;
  if(key==='budget'&&!value)return tr('Sin presupuesto establecido.');
  if(key==='amount'||key==='budget')return money(value,event.currency);
  if(['payer','assignee','from','to','from_id','to_id'].includes(key))return name(value);
