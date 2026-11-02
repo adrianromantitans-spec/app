@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=settlement-41';
+import {translations} from './translations.js?v=simplify-42';
 
 const supported=new Set(['es','en','ro']);
 export function detectLanguage(preferences=[]) {

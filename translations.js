@@ -1,5 +1,15 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "1 transferencia por realizar": {"en": "1 transfer left to make", "ro": "1 transfer de efectuat"},
+  "{0} transferencias por realizar": {"en": "{0} transfers left to make", "ro": "{0} transferuri de efectuat"},
+  "De {0} a {1} transferencias": {"en": "From {0} to {1} transfers", "ro": "De la {0} la {1} transferuri"},
+  "Plan simplificado": {"en": "Simplified plan", "ro": "Plan simplificat"},
+  "Plan habitual": {"en": "Standard plan", "ro": "Plan obișnuit"},
+  "Simplificar pagos": {"en": "Simplify payments", "ro": "Simplifică plățile"},
+  "Se conserva lo que cada persona paga o recibe. No se cambian los gastos.": {"en": "What each person pays or receives stays the same. Expenses are unchanged.", "ro": "Se păstrează suma plătită sau primită de fiecare persoană. Cheltuielile nu se modifică."},
+  "Hay 1 pago pendiente de confirmar, ya tenido en cuenta.": {"en": "There is 1 payment awaiting confirmation, already accounted for.", "ro": "Există 1 plată în așteptarea confirmării, deja luată în calcul."},
+  "Hay {0} pagos pendientes de confirmar, ya tenidos en cuenta.": {"en": "There are {0} payments awaiting confirmation, already accounted for.", "ro": "Există {0} plăți în așteptarea confirmării, deja luate în calcul."},
+
   "Últimos gastos": {"en": "Recent expenses", "ro": "Ultimele cheltuieli"},
   "Convertir a": {"en": "Convert to", "ro": "Convertește în"},
   "Moneda de destino": {"en": "Target currency", "ro": "Moneda de destinație"},

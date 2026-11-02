@@ -1,13 +1,14 @@
-import {groupMode,homeSummary,groupForMode} from './home.js?v=settlement-41';
-import {convertedAmount,validConversion} from './fx.js?v=settlement-41';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=settlement-41';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=settlement-41';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=settlement-41';
+import {settlementPlan} from './settlement-plan.js?v=simplify-42';
+import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
+import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=simplify-42';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=settlement-41';
-import {Cloud} from './cloud.js?v=settlement-41';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=settlement-41';
-import {NotificationCentre} from './notifications.js?v=settlement-41';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
+import {Cloud} from './cloud.js?v=simplify-42';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
+import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -45,6 +46,8 @@ const activityCache=new Map();
 const activityRequests=new Map();
 let fxSession={groupId:null,mode:false,target:'EUR',quote:null,targetQuote:null,error:'',loading:false,request:0};
 let homeClock=0;
+let simplifyPayments=true;
+let settlementCache={key:null,plan:null};
 let shoppingState={groupId:null,viewer:null,items:[],error:'',loading:false};
 let shoppingRequest=0;
 let planningLimit=30;
@@ -529,10 +532,21 @@ function groupModal(edit=false,defaultType='Viaje') {
   const selectedCurrency=currencyOf(edit?g:undefined);
   openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${(edit?g.type:defaultType)===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}"></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}"></label></div>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}>${currencies.map(code=>`<option value="${code}" ${selectedCurrency===code?'selected':''}>${esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))} (${code})</option>`).join('')}</select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='EUR'?'€':selectedCurrency})`}</span><input name="budget" type="number" min="1" max="10000000" step="${currencyStep(selectedCurrency)}" value="${edit&&g.budget?g.budget/currencyScale(selectedCurrency):''}" placeholder="1200"><span class="muted">${tr('Opcional. Déjalo vacío si no necesitas presupuesto.')}</span></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
 }
-function paymentSuggestions() {
-  const pending=activityData().ready===true?activityData().requests:[];
-  const id=value=>value===accountUser?.id?'you':value;
-  return settlements({...group(),payments:[...group().payments,...pending.map(r=>({from:id(r.from_id),to:id(r.to_id),amount:r.amount}))]});
+function currentSettlementPlan(){
+ const pending=activityData().ready===true?activityData().requests:[];
+ const id=value=>value===accountUser?.id?'you':value;
+ const g={...group(),payments:[...group().payments,...pending.map(r=>({from:id(r.from_id),to:id(r.to_id),amount:r.amount}))]};
+ const key=JSON.stringify([g.id,accountUser?.id,Object.entries(balances(g))]);
+ if(settlementCache.key!==key)settlementCache={key,plan:settlementPlan(g)};
+ return settlementCache.plan;
+}
+function paymentSuggestions(){const plan=currentSettlementPlan();return simplifyPayments?plan.transfers:plan.basicTransfers;}
+function settlementOptions(){
+ const plan=currentSettlementPlan(),n=paymentSuggestions().length,pending=activityData().ready===true?activityData().requests.length:0;
+ if(!plan.basicTransfers.length)return '';
+ const title=n===1?tr('1 transferencia por realizar'):ui`${n} transferencias por realizar`;
+ const reduction=simplifyPayments&&plan.basicTransfers.length>n?ui`De ${plan.basicTransfers.length} a ${n} transferencias`:tr(simplifyPayments?'Plan simplificado':'Plan habitual');
+ return '<section class="settlement-summary"><div class="settlement-summary-heading"><strong>'+title+'</strong><button class="button secondary small-button" data-action="toggle-simplify" aria-pressed="'+simplifyPayments+'">'+(simplifyPayments?icon('check'):icon('spark'))+tr('Simplificar pagos')+'</button></div><p>'+reduction+'</p><small>'+tr('Se conserva lo que cada persona paga o recibe. No se cambian los gastos.')+'</small>'+(pending?'<p class="settlement-pending-note">'+(pending===1?tr('Hay 1 pago pendiente de confirmar, ya tenido en cuenta.'):ui`Hay ${pending} pagos pendientes de confirmar, ya tenidos en cuenta.`)+'</p>':'')+'</section>';
 }
 function conversionReady(){
  return validConversion(fxSession.quote,fxSession.targetQuote,currencyOf(group()),fxSession.target);
@@ -553,7 +567,7 @@ function fxPanel(){
 function renderSettlements() {
  const box=modalRoot.querySelector('.settlements-dialog');if(!box||box.dataset.settlementGroup!==group()?.id)return;
  const g=group(),items=paymentSuggestions(),data=activityData(),converted=fxSession.mode&&conversionReady();
- box.innerHTML=ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${fxPanel()}${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(g)):''}<div class="settlement-list">${items.length?items.map((p,i)=>{const eur=converted?conversionSnapshot(p.amount).amount:null;return `<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div class="settlement-amount"><strong>${money(eur??p.amount,converted?fxSession.target:currencyOf(g))}</strong>${converted?`<small>${money(p.amount)}</small>`:''}${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}" ${fxSession.mode&&(!converted||!eur)?'disabled':''}>Marcar como pagado</button>`:''}${converted&&!eur?ui`<small>Importe inferior a la unidad mínima. Usa la moneda original.</small>`:''}</div></div>`;}).join(''):data.requests.length?ui`<p class="pending-summary">Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`;
+ box.innerHTML=ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${settlementOptions()}${fxPanel()}${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(g)):''}<div class="settlement-list">${items.length?items.map((p,i)=>{const eur=converted?conversionSnapshot(p.amount).amount:null;return `<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div class="settlement-amount"><strong>${money(eur??p.amount,converted?fxSession.target:currencyOf(g))}</strong>${converted?`<small>${money(p.amount)}</small>`:''}${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}" ${fxSession.mode&&(!converted||!eur)?'disabled':''}>Marcar como pagado</button>`:''}${converted&&!eur?ui`<small>Importe inferior a la unidad mínima. Usa la moneda original.</small>`:''}</div></div>`;}).join(''):data.requests.length?ui`<p class="pending-summary">Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`;
 }
 async function loadFxQuote() {
  const g=group(),viewer=accountUser?.id;if(!g||fxSession.target===currencyOf(g))return;
@@ -701,6 +715,7 @@ async function onAppClick(event) {
     case 'new-expense':expenseModal();break;
     case 'new-group':groupModal(false,el.dataset.groupType||'Viaje');break;
     case 'edit-group':groupModal(true);break;
+    case 'toggle-simplify':simplifyPayments=!simplifyPayments;renderSettlements();break;
     case 'fx-original':fxSession.mode=false;++fxSession.request;fxSession.loading=false;fxSession.error='';fxSession.quote=null;fxSession.targetQuote=null;renderSettlements();break;
     case 'fx-euros':fxSession.target='EUR';fxSession.mode=true;if(conversionReady())renderSettlements();else await loadFxQuote();break;
     case 'fx-refresh':await loadFxQuote();break;

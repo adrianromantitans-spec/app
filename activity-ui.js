@@ -1,5 +1,5 @@
-import {tr,ui,locale} from './i18n.js?v=settlement-41';
-import {money} from './model.js?v=settlement-41';
+import {tr,ui,locale} from './i18n.js?v=simplify-42';
+import {money} from './model.js?v=simplify-42';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={
  'tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación',
