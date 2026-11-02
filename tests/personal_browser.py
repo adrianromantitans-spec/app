@@ -1,5 +1,5 @@
 """Two browser accounts with local REST fixtures. No live accounts or emails."""
-import copy,json,time,uuid,re
+import copy,json,time,uuid,re,os
 from urllib.parse import urlsplit,parse_qs
 from playwright.sync_api import sync_playwright,expect
 OWNER='11111111-1111-4111-8111-111111111111';FRIEND='22222222-2222-4222-8222-222222222222';GID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -60,7 +60,7 @@ def context(browser,actor,locale='es-ES',enabled=True):
   else:fulfill(route,{'code':'PGRST202'},404)
  c.route('https://nexo-test.supabase.co/**',api)
  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
- page.goto('http://127.0.0.1:3003/');expect(page.locator('.balance-stat')).to_be_visible();return c,page
+ page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3003/'));expect(page.locator('.balance-stat')).to_be_visible();return c,page
 
 
 from datetime import datetime,timedelta,timezone

@@ -1,5 +1,5 @@
-import {currencyOf} from './model.js?v=personal-32';
-import {tr} from './i18n.js?v=personal-32';
+import {currencyOf} from './model.js?v=shopping-34';
+import {tr} from './i18n.js?v=shopping-34';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -24,6 +24,10 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status) {
   const code = error?.error_code || error?.code;
+  if(code==='NEXO_SHOPPING_CHANGED')return tr('La compra ha cambiado. Actualiza la lista y revisa tu selección.');
+  if(code==='NEXO_SHOPPING_FIELDS')return tr('Revisa el producto y su cantidad.');
+  if(code==='NEXO_SHOPPING_LINKED')return tr('Este producto ya tiene un gasto registrado.');
+  if(code==='NEXO_SHOPPING_LIMIT')return tr('La lista admite hasta 200 productos. Limpia los comprados para añadir más.');
   if(code==='NEXO_FX_EXPIRED')return tr('El cambio ha caducado. Actualízalo antes de continuar.');
   if(code==='NEXO_FX_AMOUNT'||code==='NEXO_FX_RATE')return tr('No se ha podido validar la conversión. Actualiza el cambio y vuelve a intentarlo.');
   if(code==='NEXO_POLL_CLOSED')return tr('Esta votación ya está cerrada.');
@@ -264,6 +268,20 @@ export class Cloud {
     if (this.user?.id!==viewerId) throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
     return rows.map(row=>this.rowToGroup(row,viewerId));
   }
+  async shoppingList(groupId) {
+    const viewer=this.user?.id;
+    try {
+      const items=await this.rpc('divzplit_shopping_list',{p_id:groupId});
+      if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+      return items;
+    }catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('La lista compartida todavía no está activada.'),'shopping_setup');throw error;}
+  }
+  async shoppingAction(groupId,action,item={}) {
+    const viewer=this.user?.id;
+    const items=await this.rpc('divzplit_shopping_action',{p_id:groupId,p_action:action,p_item:item});
+    if(this.user?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    return items;
+  }
   async requireCurrencies() {
     if(this.currenciesReady)return;
     let enabled=false;
@@ -277,13 +295,14 @@ export class Cloud {
     fields.requestId=group.id;
     return this.groupRpc('nexo_create_group',{p_fields:fields});
   }
-  async saveGroup(group) {
+  async saveGroup(group,checkout=null) {
     if(group.expenses.some(e=>e.split&&e.split.mode!=='equal'))await this.requireExpenseTools();
     if(!['EUR','RON'].includes(currencyOf(group)))await this.requireFx();else if(currencyOf(group)==='RON')await this.requireCurrencies();
     const document=mapGroup(group,this.user.id,true);
     // The server owns names, membership and identity. Restore the canonical name.
     const me=document.members.find(m=>m.id===this.user.id);
     if (me) {me.name=group.remote.memberName;}
+    if(checkout)return this.groupRpc('divzplit_shopping_checkout',{p_id:group.id,p_version:group.remote.version,p_document:document,p_expense_id:checkout.expenseId,p_items:checkout.items});
     return this.groupRpc('nexo_save_group',{p_id:group.id,p_version:group.remote.version,p_document:document});
   }
   async finishNotificationOnboarding() {

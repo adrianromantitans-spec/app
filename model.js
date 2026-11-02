@@ -1,5 +1,5 @@
-import {locale,tr} from './i18n.js?v=personal-32';
-import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=personal-32';
+import {locale,tr} from './i18n.js?v=shopping-34';
+import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=shopping-34';
 export {currencies,currencyDigits,currencyScale,currencyStep};
 export function currencyOf(group) {
   const currency=group?.currency??'EUR';

@@ -1,13 +1,13 @@
-import {groupMode,homeSummary,dayOffset,groupForMode} from './home.js?v=personal-32';
-import {euroAmount,validQuote} from './fx.js?v=personal-32';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=personal-32';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=personal-32';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=personal-32';
+import {groupMode,homeSummary,dayOffset,groupForMode} from './home.js?v=shopping-34';
+import {euroAmount,validQuote} from './fx.js?v=shopping-34';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=shopping-34';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=shopping-34';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=shopping-34';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=personal-32';
-import {Cloud} from './cloud.js?v=personal-32';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=personal-32';
-import {NotificationCentre} from './notifications.js?v=personal-32';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=shopping-34';
+import {Cloud} from './cloud.js?v=shopping-34';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=shopping-34';
+import {NotificationCentre} from './notifications.js?v=shopping-34';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=welcome-20';
 
@@ -44,6 +44,8 @@ const activityCache=new Map();
 const activityRequests=new Map();
 let fxSession={groupId:null,mode:false,quote:null,error:'',loading:false,request:0};
 let homeClock=0;
+let shoppingState={groupId:null,viewer:null,items:[],error:'',loading:false};
+let shoppingRequest=0;
 let planningLimit=30;
 let recordedPaymentLimit=50;
 let showArchivedRepayments=false;
@@ -51,6 +53,8 @@ const paymentArchives=new Map();
 const archiveRequests=new Map();
 
 const icons = {
+  edit:'<path d="m16 3 5 5-12 12-6 1 1-6L16 3Zm-2 2 5 5"/>',
+  refresh:'<path d="M20 7V3m0 4h-4M4 17v4m0-4h4M20 7a9 9 0 0 0-15-2M4 17a9 9 0 0 0 15 2"/>',
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
   person:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
@@ -116,7 +120,7 @@ const dateLabel = date => date ? new Intl.DateTimeFormat(locale,{day:'numeric',m
 const categoryIcon = category => ({Alojamiento:'bed',Transporte:'plane',Comida:'coffee',Actividades:'spark',Otros:'receipt'}[category] || 'receipt');
 let toastTimer;
 function toast(message,tone='neutral') { const el=document.querySelector('#toast'); el.textContent=message;el.classList.toggle('success',tone==='success'); el.classList.add('visible'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('visible'),4500); }
-async function save() {
+async function save(checkout=null) {
   if (!accountUser) {
     try {localStorage.setItem(storageKey,JSON.stringify(state));}
     catch {toast(tr('El navegador no permite guardar. Los cambios solo durarán durante esta sesión.'));}
@@ -128,7 +132,7 @@ async function save() {
     for (let i=0;i<state.groups.length;i++) {
       const g=state.groups[i];
       if (remoteBaseline.get(g.id)===JSON.stringify(g)) continue;
-      const saved=g.remote ? await cloud.saveGroup(g) : await cloud.createGroup(g);
+      const saved=g.remote ? await cloud.saveGroup(g,checkout?.groupId===g.id?checkout:null) : await cloud.createGroup(g);
       state.groups[i]=saved;
       remoteBaseline.delete(g.id);remoteBaseline.set(saved.id,JSON.stringify(saved));
       if (state.activeGroup===g.id) state.activeGroup=saved.id;
@@ -191,7 +195,7 @@ function homeView() {
   const balanceLabel=info.ownBalance>0?'Te deben en este grupo':info.ownBalance<0?'Tienes pendiente':'Todo en equilibrio';
   const detail=info.travel&&currencyOf(g)!=='EUR'?tr('Consulta el cambio para pagar en euros'):info.travel?ui`Tu parte del viaje: ${money(info.ownShare)}`:ui`Este mes · Tu parte: ${money(info.ownShare)}`;
   const attention=data.ready===true&&pending?`<button class="home-attention" data-action="show-pending-payments"><span class="home-attention-count">${pending}</span><strong>${toConfirm.length?toConfirm.length===1?tr('Un pago espera tu confirmación'):ui`${toConfirm.length} pagos esperan tu confirmación`:outgoing.length===1?tr('Un pago espera confirmación'):ui`${outgoing.length} pagos esperan confirmación`}</strong>${icon('chevron')}</button>`:'';
-  return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<div class="home-greeting"><p>${info.travel?tr('Todo listo para el próximo plan'):ui`Hola, ${esc(currentProfile().name.split(/\s+/)[0])}`}</p><h1>${tr(info.travel?'Viajad. Lo demás, aquí.':'Tus cuentas, al día.')}</h1></div><div class="home-overview"><article class="home-balance balance-stat ${info.ownBalance<0?'is-owed':info.ownBalance>0?'is-credit':'is-settled'}"><div class="home-balance-top"><div class="stat-copy"><span class="stat-label">${tr(balanceLabel)}</span><strong class="stat-amount" aria-label="${esc(money(Math.abs(info.ownBalance)))}">${statMoney(Math.abs(info.ownBalance))}</strong></div><span class="home-wallet">${icon('wallet')}</span></div><div class="home-balance-bottom"><small>${detail}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':'Saldar')}${icon('arrow')}</button></div></article>${attention}${info.travel?homeBudgetLine(g):''}<button class="button primary home-add" data-action="new-expense">${icon('plus')}${tr('Añadir gasto')}</button></div><div class="home-summary-grid">${summaryView(info)}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Último gasto')}</h2><button class="text-button" data-tab="expenses">${tr('Ver todos')}${icon('arrow')}</button></div><div class="home-compact-card">${g.expenses.length?expenseList(g.expenses.slice(0,1)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</div></section></div><div class="home-shortcuts" aria-label="${tr('Secciones del grupo')}"><button data-tab="expenses">${icon('receipt')}${tr('Gastos')}</button><button data-tab="tasks">${icon('task')}${tr('Tareas')}</button><button data-tab="plans">${icon('vote')}${tr('Votaciones')}</button></div><div class="home-context"><span>${tr('Total compartido')}: <strong>${money(totalSpent(g))}</strong></span><button class="text-button" data-page="budget">${tr('Presupuestos')}${icon('arrow')}</button></div></section>`;
+  return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<div class="home-greeting"><p>${info.travel?tr('Todo listo para el próximo plan'):ui`Hola, ${esc(currentProfile().name.split(/\s+/)[0])}`}</p><h1>${tr(info.travel?'Viajad. Lo demás, aquí.':'Tus cuentas, al día.')}</h1></div><div class="home-overview"><article class="home-balance balance-stat ${info.ownBalance<0?'is-owed':info.ownBalance>0?'is-credit':'is-settled'}"><div class="home-balance-top"><div class="stat-copy"><span class="stat-label">${tr(balanceLabel)}</span><strong class="stat-amount" aria-label="${esc(money(Math.abs(info.ownBalance)))}">${statMoney(Math.abs(info.ownBalance))}</strong></div><span class="home-wallet">${icon('wallet')}</span></div><div class="home-balance-bottom"><small>${detail}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':'Saldar')}${icon('arrow')}</button></div></article>${attention}${info.travel?homeBudgetLine(g):''}<button class="button primary home-add" data-action="new-expense">${icon('plus')}${tr('Añadir gasto')}</button></div><div class="home-summary-grid">${summaryView(info)}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Último gasto')}</h2><button class="text-button" data-tab="expenses">${tr('Ver todos')}${icon('arrow')}</button></div><div class="home-compact-card">${g.expenses.length?expenseList(g.expenses.slice(0,1)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</div></section></div><div class="home-shortcuts" aria-label="${tr('Secciones del grupo')}"><button data-tab="expenses">${icon('receipt')}${tr('Gastos')}</button><button data-tab="tasks">${icon('task')}${tr('Tareas')}</button><button data-tab="plans">${icon('vote')}${tr('Votaciones')}</button></div>${!info.travel?`<button class="home-shopping-entry" data-shopping-action="open"><span class="home-shopping-icon">${icon('receipt')}</span><span><strong>${tr('Lista de la compra')}</strong><small>${tr('Lo que falta, en un mismo lugar.')}</small></span>${icon('chevron')}</button>`:''}<div class="home-context"><span>${tr('Total compartido')}: <strong>${money(totalSpent(g))}</strong></span><button class="text-button" data-page="budget">${tr('Presupuestos')}${icon('arrow')}</button></div></section>`;
 }
 function homeBudgetLine(g) {
  return `<div class="home-budget-line"><span>${g.budget?ui`Presupuesto: ${money(totalSpent(g))} de ${money(g.budget)}`:tr('Presupuesto de viaje · Opcional')}</span><button class="text-button" ${canManage()?'data-action="edit-budget"':'data-page="budget"'}>${tr(g.budget?canManage()?'Ajustar':'Ver':canManage()?'Añadir':'Ver')}${icon(g.budget?'arrow':'plus')}</button></div>`;
@@ -224,6 +228,77 @@ async function selectHomeMode(mode) {
  let remembered;try{remembered=JSON.parse(sessionStorage.getItem('divzplit-home-groups:'+(accountUser?.id||'demo'))||'{}')[mode];}catch{}
  const selected=groupForMode(state.groups,mode,remembered);if(selected)await activateHomeGroup(selected.id);else chooseGroup(mode);
 }
+function shoppingViewer(){return accountUser?.id||'demo';}
+function shoppingCurrent(){return shoppingState.groupId===group()?.id&&shoppingState.viewer===shoppingViewer();}
+function demoShoppingKey(){return 'divzplit-demo-shopping:'+group().id;}
+async function loadShopping(){
+ const g=group(),viewer=shoppingViewer(),request=++shoppingRequest;if(!g)return;
+ try {
+  let items=[];
+  if(accountUser)items=await cloud.shoppingList(g.id);
+  else {try{items=JSON.parse(localStorage.getItem(demoShoppingKey())||'[]');}catch{}if(!Array.isArray(items))items=[];}
+  if(request!==shoppingRequest||g.id!==group()?.id||viewer!==shoppingViewer())return;
+  shoppingState={groupId:g.id,viewer,items,error:'',loading:false};renderShoppingList();
+ }catch(error){if(request===shoppingRequest&&g.id===group()?.id&&viewer===shoppingViewer()){shoppingState={groupId:g.id,viewer,items:[],error:error.message,loading:false};renderShoppingList();}}
+}
+async function showShopping(){
+ const g=group();if(!g)return;
+ shoppingState={groupId:g.id,viewer:shoppingViewer(),items:[],error:'',loading:true};
+ openModal(tr('Lista de la compra'),`<div class="shopping-list" data-shopping-group="${esc(g.id)}"><div class="shopping-toolbar"><button class="button primary" data-shopping-action="add">${icon('plus')}${tr('Añadir producto')}</button><button class="text-button" data-shopping-action="refresh" aria-label="${tr('Actualizar lista')}">${icon('refresh')}</button></div><p class="shopping-note">${tr('Marcar productos no cambia los saldos.')}</p><div class="shopping-items" aria-live="polite"></div><div class="shopping-footer"></div><p class="form-error" role="alert"></p></div>`,esc(g.name),'shopping-modal');
+ renderShoppingList();await loadShopping();
+}
+function renderShoppingList(){
+ const root=modalRoot.querySelector('.shopping-list');if(!root||!shoppingCurrent()||root.dataset.shoppingGroup!==group()?.id)return;
+ const focusedProduct=document.activeElement?.dataset.shoppingCheck;
+ const items=shoppingState.items,pending=items.filter(i=>!i.bought),bought=items.filter(i=>i.bought),unlinked=bought.filter(i=>!i.expense_id);
+ const row=i=>{const manage=canManage()||i.created_by===shoppingViewer();return `<article class="shopping-row ${i.bought?'is-bought':''}"><label class="shopping-check"><input type="checkbox" data-shopping-check="${esc(i.id)}" ${i.bought?'checked':''} ${i.expense_id?'disabled':''} aria-label="${esc(i.title)}"><span>${icon('check')}</span></label><div class="shopping-product"><strong>${esc(i.title)}</strong>${i.quantity?`<small>${esc(i.quantity)}</small>`:''}${i.expense_id?`<button class="text-button" data-shopping-action="expense" data-shopping-id="${esc(i.id)}">${tr('Gasto registrado')}${icon('chevron')}</button>`:''}</div>${manage?`<div class="shopping-row-actions">${!i.expense_id?`<button class="icon-button" data-shopping-action="edit" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Editar ${i.title}`)}">${icon('edit')}</button>`:''}<button class="icon-button" data-shopping-action="delete" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Borrar ${i.title}`)}">${icon('close')}</button></div>`:''}</article>`;};
+ root.querySelector('.shopping-items').innerHTML=shoppingState.loading?`<p role="status">${tr('Cargando lista…')}</p>`:shoppingState.error?`<p role="alert" class="form-error">${esc(shoppingState.error)}</p>`:`<section><h3>${tr('Por comprar')}<span>${pending.length}</span></h3>${pending.length?pending.map(row).join(''):`<div class="shopping-empty">${icon('check')}<p>${tr(items.length?'Todo comprado.':'Añade lo que hace falta para la próxima compra.')}</p></div>`}</section>${bought.length?`<section class="shopping-bought"><h3>${tr('Comprados')}<span>${bought.length}</span></h3>${bought.map(row).join('')}</section>`:''}`;
+ root.querySelector('.shopping-footer').innerHTML=!shoppingState.error&&!shoppingState.loading?`<button class="button primary full-width" data-shopping-action="checkout" ${unlinked.length?'':'disabled'}>${icon('receipt')}${tr('Crear gasto de la compra')}${unlinked.length?`<span>${unlinked.length}</span>`:''}</button><p class="shopping-note">${tr('Revisa el importe, el pagador y el reparto antes de guardar.')}</p>${canManage()&&bought.length?`<button class="text-button danger-text full-width" data-shopping-action="clear">${tr('Limpiar comprados')}</button>`:''}`:'';
+ root.querySelector('[data-shopping-action="add"]').disabled=shoppingState.loading||!!shoppingState.error;
+ if(focusedProduct)root.querySelector('[data-shopping-check="'+CSS.escape(focusedProduct)+'"]')?.focus({preventScroll:true});
+}
+function shoppingItemForm(item=null){
+ if(!shoppingCurrent()||shoppingState.error)return;
+ openModal(tr(item?'Editar producto':'Añadir producto'),ui`<form id="shopping-item-form" data-shopping-group="${esc(group().id)}" data-entity-id="${esc(item?.id||uid())}" data-version="${item?.version||0}" data-edit="${!!item}"><label class="field">Producto<input name="title" required maxlength="120" placeholder="Ej. Leche" value="${esc(item?.title||'')}"></label><label class="field">Cantidad (opcional)<input name="quantity" maxlength="40" placeholder="Ej. 2 litros" value="${esc(item?.quantity||'')}"></label><p class="form-note">Se comparte con las personas de este grupo.</p><p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-shopping-action="open">Volver a la lista</button><button type="submit" class="button primary">${tr(item?'Guardar cambios':'Añadir producto')}</button></div></form>`,esc(group().name));
+}
+async function shoppingMutation(action,item={}){
+ if(!shoppingCurrent())throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
+ const gid=group().id,viewer=shoppingViewer();++shoppingRequest;remoteBusy=true;
+ try {
+  let items;
+  if(accountUser)items=await cloud.shoppingAction(gid,action,item);
+  else {
+   items=structuredClone(shoppingState.items);const previous=items.find(i=>i.id===item.id);
+   if(action==='add'){if(!previous){if(items.length>=200)throw new Error(tr('La lista admite hasta 200 productos. Limpia los comprados para añadir más.'));items.push({...item,title:item.title.trim(),quantity:item.quantity.trim(),created_by:'demo',bought:false,version:1});}}
+   else if(action==='clear')items=items.filter(i=>!i.bought);
+   else if(action==='delete')items=items.filter(i=>i.id!==item.id);
+   else {if(!previous||previous.version!==item.version||previous.expense_id)throw new Error(tr('La compra ha cambiado. Actualiza la lista y revisa tu selección.'));Object.assign(previous,item,{version:previous.version+1});}
+   localStorage.setItem(demoShoppingKey(),JSON.stringify(items));
+  }
+  if(gid===group()?.id&&viewer===shoppingViewer()){shoppingState.items=items;renderShoppingList();}
+ }finally{remoteBusy=false;}
+}
+async function shoppingAction(el){
+ const action=el.dataset.shoppingAction;
+ if(action==='open'){await showShopping();return;}
+ if(action==='refresh'){await loadShopping();return;}
+ if(!shoppingCurrent())return;
+ const item=shoppingState.items.find(i=>i.id===el.dataset.shoppingId);
+ if(action==='add'){shoppingItemForm();return;}
+ if(action==='edit'&&item){shoppingItemForm(item);return;}
+ if(action==='expense'&&item){if(group().expenses.some(e=>e.id===item.expense_id))expenseDetails(item.expense_id);else toast(tr('El gasto ya no está en este grupo.'));return;}
+ if(action==='checkout'){
+  const items=shoppingState.items.filter(i=>i.bought&&!i.expense_id);if(!items.length)return;
+  expenseModal();const form=modalRoot.querySelector('#expense-form');form.shoppingCheckout={groupId:group().id,items:items.map(i=>i.id),expenseId:form.dataset.entityId};
+  form.elements.title.value=(items.length===1?items[0].title:tr('Compra de casa')+': '+items.map(i=>i.title).join(', ')).slice(0,100);
+  const note=document.createElement('p');note.className='form-note shopping-checkout-note';note.textContent=ui`${items.length} productos comprados se vincularán a este gasto al guardarlo.`;form.prepend(note);return;
+ }
+ if(action==='delete'&&item||action==='clear'){
+  openModal(tr(action==='clear'?'¿Limpiar los productos comprados?':'¿Borrar este producto?'),ui`<p class="dialog-copy">${tr('Los gastos y los saldos se conservarán.')}</p><div class="modal-actions"><button class="button secondary" data-shopping-action="open">Cancelar</button><button class="button danger" data-shopping-action="confirm" data-shopping-operation="${action}" data-shopping-id="${esc(item?.id||'')}">${tr(action==='clear'?'Limpiar comprados':'Borrar')}</button></div>`);return;
+ }
+ if(action==='confirm'){await shoppingMutation(el.dataset.shoppingOperation,item||{});await showShopping();toast(tr('Lista de la compra actualizada.'),'success');}
+}
+
 function expenseList(items) {
   if (!items.length) return empty(tr('Las cuentas empiezan aquí'),tr('Añade el primer gasto y DivZplit calculará el reparto.'),'new-expense',tr('Añadir gasto'));
   return `<div class="expense-list">${items.map(e=>ui`<div class="expense-row"><span class="expense-icon ${e.category==='Alojamiento'?'lavender':e.category==='Transporte'?'blue-bg':'peach'}">${icon(categoryIcon(e.category))}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?tr(' · Ticket'):''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><button class="icon-button expense-detail-button" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}">${icon('chevron')}</button></div>`).join('')}</div>`;
@@ -503,7 +578,7 @@ function profileView() {
 }
 function quickAddModal() {
   const g=group();
-  openModal(tr('¿Qué quieres añadir?'),ui`<div class="quick-add-content">${g?ui`<p class="quick-add-context">En el grupo: <strong>${esc(g.name)}</strong></p>${state.groups.length>1?ui`<label class="field">Seleccionar grupo<select data-quick-group>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label>`:''}<div class="quick-actions">${[['new-expense','receipt',tr('Añadir gasto'),tr('Reparte una cuenta con tu grupo.')],['new-task','task',tr('Añadir tarea'),tr('Que no se os quede nada pendiente.')],['new-poll','vote',tr('Crear votación'),tr('Decidid juntos el próximo plan.')]].map(([action,ic,title,description])=>`<button class="quick-action" data-action="${action}"><span class="quick-action-icon">${icon(ic)}</span><span><strong>${title}</strong><small>${description}</small></span>${icon('chevron')}</button>`).join('')}</div>`:ui`<p class="form-note">Crea un grupo para empezar a compartir gastos y planes.</p>`}<button class="quick-action quick-new-group" data-action="new-group"><span class="quick-action-icon">${icon('users')}</span><span><strong>${tr('Crear grupo')}</strong><small>${tr('Todo empieza con tu gente.')}</small></span>${icon('plus')}</button></div>`,'','quick-add-modal');
+  openModal(tr('¿Qué quieres añadir?'),ui`<div class="quick-add-content">${g?ui`<p class="quick-add-context">En el grupo: <strong>${esc(g.name)}</strong></p>${state.groups.length>1?ui`<label class="field">Seleccionar grupo<select data-quick-group>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></label>`:''}<div class="quick-actions">${[['new-expense','receipt',tr('Añadir gasto'),tr('Reparte una cuenta con tu grupo.')],['new-task','task',tr('Añadir tarea'),tr('Que no se os quede nada pendiente.')],['new-poll','vote',tr('Crear votación'),tr('Decidid juntos el próximo plan.')]].map(([action,ic,title,description])=>`<button class="quick-action" data-action="${action}"><span class="quick-action-icon">${icon(ic)}</span><span><strong>${title}</strong><small>${description}</small></span>${icon('chevron')}</button>`).join('')}</div>`:ui`<p class="form-note">Crea un grupo para empezar a compartir gastos y planes.</p>`}${g?`<button class="quick-action quick-shopping" data-shopping-action="open"><span class="quick-action-icon">${icon('receipt')}</span><span><strong>${tr('Lista de la compra')}</strong><small>${tr('Lo que falta, en un mismo lugar.')}</small></span>${icon('chevron')}</button>`:''}<button class="quick-action quick-new-group" data-action="new-group"><span class="quick-action-icon">${icon('users')}</span><span><strong>${tr('Crear grupo')}</strong><small>${tr('Todo empieza con tu gente.')}</small></span>${icon('plus')}</button></div>`,'','quick-add-modal');
   root.querySelector('.nav-add')?.setAttribute('aria-expanded','true');
 }
 
@@ -514,6 +589,7 @@ async function onAppClick(event) {
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
   if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
+  if(el.dataset.shoppingAction){await shoppingAction(el);return;}
   if(el.dataset.notificationAction){await notifications.handle(el);return;}
   if(el.dataset.receiptAction){await handleReceiptAction(el,currencyOf(group()),updateSplitTotal);return;}
   if(el.dataset.page){page=el.dataset.page; render();if(page==='activity'||page==='home'){await loadActivity();render();}document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
@@ -642,13 +718,14 @@ async function onAppClick(event) {
 document.addEventListener('change',event=>{onAppChange(event).catch(handleActionError);});
 async function onAppChange(event) {
   const el=event.target;
-  if(remoteBusy || authLoading){render();return;}
+  if(remoteBusy || authLoading){if(el.dataset.shoppingCheck){el.checked=!!shoppingState.items.find(i=>i.id===el.dataset.shoppingCheck)?.bought;return;}render();return;}
   if(el.matches('[data-quick-group]')){state.activeGroup=el.value;await save();render();modalOpener=[...root.querySelectorAll('[data-action=quick-add]')].find(button=>button.getClientRects().length);quickAddModal();return;}
   if(el.form?.id==='expense-form'&&(el.name==='splitMode'||el.name==='participants')){renderSplitFields(el.form);return;}
   if(el.name==='removeReceipt'&&el.checked){const file=el.form.elements.receipt;file.value='';await receiptChanged(file);return;}
   if(el.matches('select[name=currency]')){const label=el.form.querySelector('.budget-currency-label');if(label)label.textContent=ui`Presupuesto total del grupo (${el.value==='EUR'?'€':el.value})`;if(el.form.elements.budget)el.form.elements.budget.step=currencyStep(el.value);return;}
   if(el.matches('input[name=receipt]')){const details=el.form?.querySelector('.expense-more-options');if(details)details.open=true;await receiptChanged(el);return;}
   if(el.form?.id==='expense-form'&&el.name==='payer'){const target=el.form.querySelector('.expense-payer-avatar');if(target)target.innerHTML=avatar(member(el.value),true);return;}
+  if(el.dataset.shoppingCheck){const item=shoppingState.items.find(i=>i.id===el.dataset.shoppingCheck);if(item){try{await shoppingMutation('check',{id:item.id,version:item.version,bought:el.checked});}catch(error){await loadShopping();throw error;}}return;}
   if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();renderPlanningList();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'||page==='home'){await loadActivity();render();}}
 }
@@ -658,6 +735,13 @@ document.addEventListener('submit',async event=>{
   if(await handleRecoveryForm(form,data))return;
   if(await handleAccountForm(form,data))return;
   try {
+    if(form.id==='shopping-item-form'){
+      if(form.dataset.shoppingGroup!==group()?.id)throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
+      const title=String(data.get('title')||'').trim(),quantity=String(data.get('quantity')||'').trim();
+      if(!title||title.length>120||quantity.length>40)throw new Error(tr('Revisa el producto y su cantidad.'));
+      await shoppingMutation(form.dataset.edit==='true'?'edit':'add',{id:form.dataset.entityId,version:Number(form.dataset.version),title,quantity});
+      await showShopping();toast(tr('Lista de la compra actualizada.'),'success');return;
+    }
     if(form.id==='expense-form'){
       if(form.dataset.expenseGroup!==group()?.id)throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
       if(form.receiptPending)throw new Error(tr('Espera a que termine de prepararse la foto.'));
@@ -717,7 +801,7 @@ document.addEventListener('submit',async event=>{
         const colors=['pink','blue','orange','purple'];const g={...fields,id:accountUser?form.dataset.entityId:uid(),members:[{id:'you',name:'Tú',initials:'AL',color:'purple'},...names.map((name,i)=>({id:uid(),name,initials:name.split(/\s+/).map(n=>n[0]).join('').slice(0,2).toUpperCase(),color:colors[i%4]}))],expenses:[],payments:[],tasks:[],polls:[]};state.groups.push(g);state.activeGroup=g.id;page='home';tab='summary';
       }
     }
-    await save();if(form.oldReceipt&&accountUser)cloud.deleteReceipt(form.oldReceipt.groupId,form.oldReceipt.path).catch(()=>{});closeModal();render();toast(form.id==='group-form'?tr('El plan ya tiene su espacio.'):tr('Listo. Todo está actualizado.'),'success');
+    await save(form.shoppingCheckout);if(form.shoppingCheckout&&!accountUser){const key=demoShoppingKey();const items=JSON.parse(localStorage.getItem(key)||'[]');for(const i of items)if(form.shoppingCheckout.items.includes(i.id)){i.expense_id=form.shoppingCheckout.expenseId;i.version++;}localStorage.setItem(key,JSON.stringify(items));}if(form.oldReceipt&&accountUser)cloud.deleteReceipt(form.oldReceipt.groupId,form.oldReceipt.path).catch(()=>{});closeModal();render();toast(form.id==='group-form'?tr('El plan ya tiene su espacio.'):tr('Listo. Todo está actualizado.'),'success');
   }catch(error){
     // A response can be lost after the server commits. Stable form IDs let a
     // reload confirm the saved record instead of creating another one on retry.
@@ -1128,3 +1212,5 @@ window.addEventListener('storage',event=>{
     cleanup.finally(()=>startAccount());
   }
 });
+
+setInterval(()=>{if(modalRoot.querySelector('.shopping-list')&&shoppingCurrent()&&!remoteBusy&&!document.hidden)loadShopping();},10000);
