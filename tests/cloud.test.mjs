@@ -41,7 +41,7 @@ test('sign-in verifies the current user, persists a session and restores it',asy
 test('signup waiting for email confirmation does not invent a session',async()=>{
   let args;const c=new Cloud(config,{storage:storage(),fetcher:async(url,options)=>{args={url,body:JSON.parse(options.body)};return response({user});}});
   assert.equal(await c.signUp('ana@example.test','long-password','Ana','https://example.test/app/'),false);
-  assert.equal(c.session,null);assert.equal(c.user,null);assert.equal(args.body.data.display_name,'Ana');assert.equal(args.body.data.notification_intro_pending,true);
+  assert.equal(c.session,null);assert.equal(c.user,null);assert.equal(args.body.data.display_name,'Ana');assert.equal(args.body.data.notification_intro_pending,true);assert.equal(args.body.data.language,'es');
   assert.ok(args.url.includes('redirect_to='));
 });
 test('an email callback cannot log someone into an account supplied in a URL',async()=>{

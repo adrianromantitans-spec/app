@@ -1,5 +1,5 @@
 import {currencyOf} from './model.js?v=simplify-42';
-import {tr} from './i18n.js?v=simplify-42';
+import {tr,language} from './i18n.js?v=simplify-42';
 import {receiptPath} from './extras.js?v=ocr-18';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
@@ -243,7 +243,7 @@ export class Cloud {
     this.persistSession(session);await this.loadUser();return this.user;
   }
   async signUp(email,password,name,redirect) {
-    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name,notification_intro_pending:true}},authenticated:false,timeoutMs:45000});
+    const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name,notification_intro_pending:true,language}},authenticated:false,timeoutMs:45000});
     const session=this.sessionFrom(result);
     if (session) {this.persistSession(session);await this.loadUser();}
     return !!session;
