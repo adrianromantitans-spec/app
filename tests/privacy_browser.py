@@ -7,18 +7,17 @@ with sync_playwright() as p:
  page.get_by_label('¿Cómo te llamas?').fill('Ana');page.get_by_label('Correo electrónico',exact=True).fill('ana@example.test');page.get_by_label('Contraseña',exact=True).fill('fixture-password')
  page.get_by_role('button',name='Crear cuenta',exact=True).click();assert len(seen['signup'])==0
  page.locator('select[name=ageBand]').select_option('under_16')
- expect(page.get_by_role('heading',name='Registro con un tutor',exact=True)).to_be_visible();assert len(seen['signup'])==0
- page.get_by_role('button',name='Contactar con soporte',exact=True).click();page.get_by_role('button',name='Preparar correo',exact=True).click()
- expect(page.get_by_text('Tu solicitud todavía no se ha enviado.',exact=False)).to_be_visible()
- href=page.get_by_role('link',name='Abrir mi correo').get_attribute('href');assert href.startswith('mailto:support@divzplit.com?');assert 'guardian' in parse_qs(urlsplit(href).query)['body'][0]
+ expect(page.get_by_role('heading',name='Registro a partir de 16 años',exact=True)).to_be_visible();assert len(seen['signup'])==0
+ assert page.locator('[data-kind=guardian]').count()==0
  page.goto(BASE+'#registro');page.get_by_label('¿Cómo te llamas?').fill('Ana');page.get_by_label('Correo electrónico',exact=True).fill('ana@example.test');page.get_by_label('Contraseña',exact=True).fill('fixture-password');page.locator('select[name=ageBand]').select_option('16_or_over');page.locator('input[name=acceptTerms]').check();page.get_by_role('button',name='Crear cuenta',exact=True).click()
- expect(page.get_by_role('heading',name='Revisa tu correo',exact=True)).to_be_visible();assert len(seen['signup'])==1;assert seen['signup'][0]['data']['terms_version']=='2026-11-02';assert seen['signup'][0]['data']['declared_age_band']=='16_or_over'
- print('PASS: email signup requires explicit terms and age band; minor routes to guardian review without signup; drafts are explicitly unsent')
+ expect(page.get_by_role('heading',name='Revisa tu correo',exact=True)).to_be_visible();assert len(seen['signup'])==1;assert seen['signup'][0]['data']['terms_version']=='2026-11-02.2';assert seen['signup'][0]['data']['declared_age_band']=='16_or_over'
+ print('PASS: email signup requires explicit terms and age band; under-16 registration is stopped without a guardian registration route')
  c.close()
  for provider in ['google','apple']:
   c,seen=context(browser,enabled=True);page=c.new_page();page.goto(BASE)
   page.get_by_role('button',name='Continuar con '+provider.title(),exact=True).click();assert seen['oauth']==[]
-  expect(page.locator('#oauth-consent-form')).to_be_visible();page.locator('select[name=ageBand]').select_option('16_or_over');page.locator('input[name=acceptTerms]').check();page.locator('#oauth-consent-form').get_by_role('button',name='Continuar',exact=True).click()
+  expect(page.locator('#oauth-consent-form')).to_be_visible();page.locator('select[name=ageBand]').select_option('under_16');expect(page.get_by_role('heading',name='Registro a partir de 16 años',exact=True)).to_be_visible();assert seen['oauth']==[]
+  page.get_by_role('button',name='Entendido',exact=True).click();page.get_by_role('button',name='Continuar con '+provider.title(),exact=True).click();page.locator('select[name=ageBand]').select_option('16_or_over');page.locator('input[name=acceptTerms]').check();page.locator('#oauth-consent-form').get_by_role('button',name='Continuar',exact=True).click()
   expect(page.locator('.workspace-sidebar')).to_be_visible();assert len(seen['oauth'])==1 and len(seen['exchange'])==1
   page.locator('.drawer-profile').click();page.get_by_role('button',name='Privacidad y mis datos',exact=True).click()
   if provider=='google':

@@ -3,7 +3,7 @@
 This is an operating procedure, not a legal certification. Controller: Adrian
 Roman, Romania; support@divzplit.com. Primary database region confirmed by the
 owner's Supabase screenshot: eu-west-1, Ireland. Free service, advertising planned
-but not installed. The owner wants to admit children under 16. No professional
+but not installed. The owner has chosen to restrict registration to people aged 16 or older. No professional
 postal address has been supplied. These facts do not establish complete compliance.
 
 ## Deploy the technical update
@@ -128,24 +128,15 @@ shared passwords, restrict recovery methods and regularly verify access rules.
 RLS tests cannot prove the live project has all current migrations or secure
 provider account configuration. Review actual production settings separately.
 
-## Children: not ready for unattended registration under 16
+## Minimum registration age: 16
 
-The UI asks for an age band, not date of birth. Under-16 users are routed to a
-support review without an ordinary email signup/OAuth request. This is a client
-flow, not verified age assurance and not an anti-bypass Auth server hook.
-Do not describe it as verified parental consent or admit children automatically.
-The ordinary self-service path records only a self-declaration of being 16+.
-
-Before approving a child, establish the applicable legal bases and contractual
-capacity rules for the child's country; the GDPR parental-consent threshold is
-relevant where consent is the basis and is not the sole rule for children.
-Define and assess proportionate guardian authority verification, notice in a
-language understood by child and guardian, withdrawal and erasure handling,
-proof retention and protection from advertising profiling. Avoid asking for raw
-ID documents by email. Commission a complete server-enforced guardian approval
-workflow and any required impact/age-assurance assessment before opening
-unattended under-16 registration. Manual cases must not be approved merely
-because someone ticks a box or knows the child's email.
+Registration is offered only to users who declare they are 16 or older. Under-16
+selection stops the email/social registration flow; there is no guardian approval
+route. The client records an age band, not date of birth. This is self-declaration,
+not verified age assurance or a server-side anti-bypass control. Review reports
+of underage accounts and assess proportionate age-assurance measures where needed.
+Users aged 16-17 may still be minors and need the applicable protections, including
+advertising restrictions. Other contractual-capacity rules may also apply.
 
 ## Advertising: planned, not activated
 

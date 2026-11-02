@@ -9,10 +9,10 @@ const storage=()=>{const data=new Map();return {getItem:k=>data.get(k)||null,set
 const response=value=>new Response(JSON.stringify(value),{status:200});
 function client(fetcher){return new Cloud(config,{fetcher,storage:storage(),temporaryStorage:storage()});}
 function authed(fetcher){const c=client(fetcher);c.user=user;c.persistSession({access_token:'fixture',refresh_token:'refresh',expires_at:Date.now()/1000+3600});return c;}
-test('acceptance is explicit and minors are routed to review, never treated as approved by a checkbox',()=>{
+test('acceptance is explicit and under-16 registration is rejected',()=>{
  assert.throws(()=>legalMetadata(false,'16_or_over','email'));
  assert.throws(()=>legalMetadata(true,'','google'));
- assert.throws(()=>legalMetadata(true,'under_16','email'),/tutor/);
+ assert.throws(()=>legalMetadata(true,'under_16','email'),/16/);
  const m=legalMetadata(true,'16_or_over','google');assert.equal(m.terms_version,TERMS_VERSION);assert.equal(m.privacy_notice_version,PRIVACY_VERSION);assert.equal(m.legal_source,'google');assert.ok(Number.isFinite(Date.parse(m.terms_accepted_at)));
  assert.ok(!Object.keys(m).some(k=>/birth|marketing|consent/i.test(k)));
 });
@@ -41,5 +41,5 @@ test('privacy requests are user-sent drafts with encoded fields and no passwords
  const req=privacyRequest('deletion',user,'Please remove my account & confirm\nThanks');
  const u=new URL(req.url);assert.equal(u.protocol,'mailto:');assert.equal(u.pathname,'support@divzplit.com');assert.equal(u.searchParams.get('body'),req.body);assert.match(req.body,/Request: deletion/);assert.match(req.body,/owner@example.test/);assert.ok(!req.body.includes('refresh_token'));
  assert.throws(()=>privacyRequest('arbitrary',user));assert.throws(()=>privacyRequest('access',user,'x'.repeat(2001)));
- assert.match(privacyRequest('guardian',null).body,/Request: guardian/);
+ assert.throws(()=>privacyRequest('guardian',null));
 });

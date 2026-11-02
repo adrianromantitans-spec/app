@@ -40,10 +40,10 @@ las deudas de otros miembros por pulsar un botón.
 - **Proveedores:** revisar y formalizar los acuerdos aplicables y las condiciones
   reales de conservación y transferencias; no se han aceptado contratos por ti.
   La base principal está en Irlanda, pero eso no cubre todos los servicios.
-- **Menores:** el formulario remite a revisión con tutor y no ofrece registro
-  directo para menores de 16. Esto no verifica edad ni autoridad parental y no
-  sustituye un proceso completo con control del servidor. Definirlo y validarlo
-  antes de abrir el registro de menores sin revisión manual.
+- **Edad mínima:** registro solo para personas de 16 años o más, sin vía de
+  autorización de tutores para menores de 16. La declaración de edad no es una
+  verificación de identidad ni un control contra eludir el formulario. Las
+  personas de 16-17 pueden seguir siendo menores y tener protecciones específicas.
 - **Publicidad:** todavía no hay anuncios ni rastreadores. Elegir proveedor y
   revisar consentimiento y protección de menores antes de activarlos. Nunca usar
   aceptación de condiciones como consentimiento publicitario general.

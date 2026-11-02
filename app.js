@@ -1,17 +1,17 @@
-import {legalFields,legalLinks,legalMetadata,privacyRequest,requestTypes} from './legal.js?v=privacy-46';
+import {legalFields,legalLinks,legalMetadata,privacyRequest,requestTypes} from './legal.js?v=age-47';
 import {settlementPlan} from './settlement-plan.js?v=simplify-42';
 import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
 import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=privacy-46';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=age-47';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
-import {Cloud} from './cloud.js?v=privacy-46';
+import {Cloud} from './cloud.js?v=age-47';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
 import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=privacy-46';
+import {welcomePage,socialButtons} from './auth-ui.js?v=age-47';
 
 initializeLanguage();
 
@@ -615,9 +615,10 @@ function oauthConsentModal(provider){
  if(!['google','apple'].includes(provider))return;
  openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`);
 }
-function guardianRequestModal(){
- openModal(tr('Registro con un tutor'),ui`<p>Antes de crear una cuenta para una persona menor de 16 años, soporte debe revisar la autorización de su tutor. No basta con marcar una casilla.</p><p>No envíes documentos de identidad ni fotos por este formulario. Soporte explicará qué verificación es necesaria.</p><button class="button primary full-width" data-action="privacy-request" data-kind="guardian">Contactar con soporte</button>${legalLinks()}`);
+function minimumAgeModal(){
+ openModal(tr('Registro a partir de 16 años'),ui`<p>Debes tener al menos 16 años para registrarte.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>${legalLinks()}`);
 }
+
 async function exportAccountData(){
  if(!accountUser)return;
  remoteBusy=true;
@@ -629,16 +630,16 @@ async function exportAccountData(){
  }finally{remoteBusy=false;}
 }
 function privacyModal(){
- openModal(tr('Privacidad y mis datos'),ui`<p>Consulta tus documentos, descarga tus grupos o prepara una solicitud para soporte.</p>${legalLinks()}<div class="privacy-actions">${accountUser?ui`<button class="button primary full-width" data-action="privacy-export-full">Descargar datos de mi cuenta</button>`:''}<button class="button secondary full-width" data-action="export">Exportar mis grupos (JSON)</button>${Object.entries(requestTypes).filter(([kind])=>kind!=='guardian').map(([kind,label])=>'<button class="button secondary full-width" data-action="privacy-request" data-kind="'+kind+'">'+esc(tr(label))+'</button>').join('')}</div><p class="form-note">La descarga contiene los grupos disponibles en este dispositivo. Para una copia completa de tus datos, utiliza la solicitud de acceso. Una solicitud de borrado no elimina datos hasta que soporte la revise y la tramite.</p><p class="form-note">Puedes gestionar las notificaciones desde la campanita y revocar el permiso en tu navegador.</p>`);
+ openModal(tr('Privacidad y mis datos'),ui`<p>Consulta tus documentos, descarga tus grupos o prepara una solicitud para soporte.</p>${legalLinks()}<div class="privacy-actions">${accountUser?ui`<button class="button primary full-width" data-action="privacy-export-full">Descargar datos de mi cuenta</button>`:''}<button class="button secondary full-width" data-action="export">Exportar mis grupos (JSON)</button>${Object.entries(requestTypes).map(([kind,label])=>'<button class="button secondary full-width" data-action="privacy-request" data-kind="'+kind+'">'+esc(tr(label))+'</button>').join('')}</div><p class="form-note">La descarga contiene los grupos disponibles en este dispositivo. Para una copia completa de tus datos, utiliza la solicitud de acceso. Una solicitud de borrado no elimina datos hasta que soporte la revise y la tramite.</p><p class="form-note">Puedes gestionar las notificaciones desde la campanita y revocar el permiso en tu navegador.</p>`);
 }
 function privacyRequestModal(kind='access'){
- if(kind!=='guardian'&&!Object.hasOwn(requestTypes,kind))return;
- const title=kind==='guardian'?tr('Registro con un tutor'):tr(requestTypes[kind]);
+ if(!Object.hasOwn(requestTypes,kind))return;
+ const title=tr(requestTypes[kind]);
  openModal(title,ui`<form id="privacy-request-form" data-kind="${kind}"><p>El envío se realiza desde tu aplicación de correo. Utiliza la dirección de tu cuenta o indica cómo podemos localizarla.</p><label class="field">Información adicional (opcional)<textarea name="details" maxlength="2000" rows="4"></textarea></label><p class="form-note">No incluyas contraseñas, números de tarjeta ni documentos de identidad.</p>${kind==='deletion'?tr('<p class="form-note">El cierre y el borrado se revisan con los datos compartidos y las obligaciones aplicables. No se eliminan las deudas de otros miembros por enviar esta solicitud.</p>'):''}${actions(tr('Preparar correo'))}</form>`);
 }
 async function handlePrivacyForm(form,data){
  if(form.id==='oauth-consent-form'){
-  if(data.get('ageBand')==='under_16'){guardianRequestModal();return true;}
+  if(data.get('ageBand')==='under_16'){minimumAgeModal();return true;}
   try{const acknowledgement={accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')};legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,form.dataset.provider);await beginOAuth(form.dataset.provider,acknowledgement);}
   catch(error){form.querySelector('.form-error').textContent=error.message;}
   return true;
@@ -803,7 +804,7 @@ async function onAppClick(event) {
 document.addEventListener('change',event=>{onAppChange(event).catch(handleActionError);});
 async function onAppChange(event) {
   const el=event.target;
-  if(el.name==='ageBand'&&el.value==='under_16'){guardianRequestModal();return;}
+  if(el.name==='ageBand'&&el.value==='under_16'){minimumAgeModal();return;}
   if(remoteBusy || authLoading){if(el.dataset.shoppingCheck){el.checked=!!shoppingState.items.find(i=>i.id===el.dataset.shoppingCheck)?.bought;return;}render();return;}
   if(el.matches('[data-fx-target]')){if(!currencies.includes(el.value)||el.value===currencyOf(group()))return;fxSession.target=el.value;fxSession.mode=true;await loadFxQuote();return;}
   if(el.matches('[data-quick-group]')){state.activeGroup=el.value;await save();render();modalOpener=[...root.querySelectorAll('[data-action=quick-add]')].find(button=>button.getClientRects().length);quickAddModal();return;}
@@ -1151,7 +1152,7 @@ async function handleAccountForm(form,data) {
     const email=data.get('email').trim();
     const password=data.get('password');
     if (form.dataset.mode==='signup') {
-      if(data.get('ageBand')==='under_16'){guardianRequestModal();return true;}
+      if(data.get('ageBand')==='under_16'){minimumAgeModal();return true;}
       const name=data.get('name').trim();if (!name) throw new Error(tr('Escribe tu nombre.'));
       const signedIn=await cloud.signUp(email,password,name,new URL('./',location.href).href,{accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')});
       if (!signedIn) {
