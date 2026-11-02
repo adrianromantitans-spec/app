@@ -109,3 +109,13 @@
 @media(max-width:360px){.personal-shell main{padding-left:18px;padding-right:18px}.personal-shell .home-balance{padding:18px}.personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:34px}.home-recent .expense-row{gap:8px}.home-recent .expense-value strong{font-size:11px}.home-recent .expense-detail-button{width:20px;min-width:20px}.home-group-context{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.personal-app .navigation-drawer{animation:none}}
 @media(prefers-reduced-transparency:reduce){.shopping-page .shopping-footer>.button{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}}
+/* Quick destinations in glass; the side menu keeps the group sections. */
+@media(max-width:760px){
+ .personal-shell .mobile-nav{display:grid;transition:opacity .16s,translate .16s}
+ .personal-shell .floating-expense-action{display:none}
+ .personal-shell .mobile-nav[data-active="-1"] .mobile-nav-indicator{opacity:0}
+ .personal-app.workspace-menu-open .mobile-nav{opacity:0;visibility:hidden;pointer-events:none;translate:0 16px}
+ .shopping-page .shopping-footer>.button{position:static;width:100%;margin-top:0;min-height:46px}
+ .personal-app #toast{bottom:calc(110px + env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){.personal-shell .mobile-nav{transition:none}}

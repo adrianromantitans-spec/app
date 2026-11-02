@@ -45,14 +45,14 @@ with sync_playwright() as p:
    expect(page.locator('.notification-onboarding')).to_have_count(0)
    assert page.evaluate('window.__permissionCalls')==1 and len(registered)==1
   else:page.locator('[data-notification-action="later"]').click()
-  page.locator('[data-action="new-expense"]:visible').first.click()
+  page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click()
   form=page.locator('#expense-form');expect(form.locator('[name="payer"]')).to_have_value('you')
   expect(form.locator('[name="payer"] option').first).to_have_attribute('value','you')
   expect(form.locator('[name="payer"] option').first).to_contain_text('Lucía')
   assert [m['id'] for m in g['document']['members']]==[OWNER,VIEWER]
   form.locator('[name="payer"]').select_option(OWNER)
   page.locator('[data-action="close-modal"]').first.click()
-  page.locator('[data-action="new-expense"]:visible').first.click();form=page.locator('#expense-form')
+  page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click();form=page.locator('#expense-form')
   expect(form.locator('[name="payer"]')).to_have_value('you')
   form.locator('[name="title"]').fill('Compra nueva');form.locator('[name="amount"]').fill('12.34');form.locator('[type="submit"]').click()
   expect(page.locator('#expense-form')).to_have_count(0)

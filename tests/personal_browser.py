@@ -64,6 +64,8 @@ def context(browser,actor,locale='es-ES',enabled=True):
 
 
 from datetime import datetime,timedelta,timezone
+def new_expense(page):
+ page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click()
 def select_mode(page,mode):
  page.locator('.home-group-picker').click();page.locator('[data-group-mode="'+mode+'"]').click()
 from zoneinfo import ZoneInfo
@@ -115,7 +117,7 @@ with sync_playwright() as p:
  page.locator('.home-group-picker').click();page.locator('#modal-root [data-group="'+GID+'"]').click()
  expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
  # Main expense fields match the proposal, while advanced options and exact cents remain functional.
- page.locator('.home-add').click();form=page.locator('#expense-form')
+ new_expense(page);form=page.locator('#expense-form')
  expect(form.locator('[name="payer"]')).to_have_value('you')
  expect(form.locator('[name="payer"] option').first).to_have_attribute('value','you')
  assert 'Ana' in form.locator('[name="payer"] option').first.inner_text()
@@ -134,7 +136,7 @@ with sync_playwright() as p:
  expect(page.locator('#expense-form [name="category"]')).to_have_value('Actividades')
  page.keyboard.press('Escape')
  # Advanced options retain a dated recurring expense and a custom cent-exact split.
- page.locator('.home-add').click();form=page.locator('#expense-form')
+ new_expense(page);form=page.locator('#expense-form')
  form.locator('[name="amount"]').fill('10.01');form.locator('[name="title"]').fill('Reparto mensual')
  form.locator('[name="splitMode"]').select_option('percent')
  for field,value in zip(form.locator('[data-split-member]').all(),['25','75']):field.fill(value)
@@ -162,7 +164,7 @@ with sync_playwright() as p:
   c,page=context(b,OWNER,language);page.set_viewport_size({'width':320,'height':740})
   assert page.locator('.home-group-copy script').count()==0
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-  page.locator('.home-add').click();expect(page.locator('.expense-more-options summary')).to_contain_text(label)
+  new_expense(page);expect(page.locator('.expense-more-options summary')).to_contain_text(label)
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   c.close()
  group['document']['name']=original_name

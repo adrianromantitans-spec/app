@@ -16,7 +16,7 @@ with sync_playwright() as p:
   expect(page.locator('.balance-stat')).to_have_attribute('data-balance-state','credit')
   expect(page.locator('.balance-status-sign')).to_have_text('+')
   assert page.locator('.home-recent .expense-row').count()==2
-  assert page.locator('.home-shortcuts,.home-shopping-entry,.home-upcoming,.mobile-nav').count()==0
+  assert page.locator('.home-shortcuts,.home-shopping-entry,.home-upcoming').count()==0
   assert page.locator('.stat-amount').evaluate('(e)=>getComputedStyle(e).color')=='rgb(255, 255, 255)'
   credit_color=page.locator('.balance-status').evaluate('(e)=>getComputedStyle(e).backgroundColor')
   gradient=page.locator('.balance-stat').evaluate('(e)=>getComputedStyle(e).backgroundImage')
@@ -34,14 +34,14 @@ with sync_playwright() as p:
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(lang,width,target)
     assert not page.locator('#app').evaluate('(e)=>e.inert')
    route(page,'home')
-   button=page.locator('.floating-expense-action button');expect(button).to_be_visible();assert button.bounding_box()['height']>=44
+   button=page.locator('.mobile-nav .nav-add');expect(button).to_be_visible();assert button.bounding_box()['height']>=44
   page.set_viewport_size({'width':393,'height':852})
   if lang=='es-ES':
    page.screenshot(path='work/workspace-credit.png',full_page=False)
    page.locator('[data-action="workspace-menu"]').click();page.screenshot(path='work/workspace-drawer.png',full_page=False);page.keyboard.press('Escape')
   route(page,'shopping');expect(page.locator('.shopping-page')).to_be_visible();assert page.locator('.shopping-modal').count()==0
   page.locator('.back-to-home').click();expect(page.locator('.personal-home')).to_be_visible()
-  page.locator('.home-add').click();expect(page.locator('#expense-form [name="payer"]')).to_have_value('you');page.keyboard.press('Escape')
+  page.locator('.mobile-nav .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click();expect(page.locator('#expense-form [name="payer"]')).to_have_value('you');page.keyboard.press('Escape')
   page.locator('.home-group-picker').click();expect(page.locator('[data-group-mode="travel"]')).to_be_visible();page.keyboard.press('Escape')
   if lang=='es-ES':
    page.locator('.home-attention').click();page.locator('[data-payment-response="confirm"]').click();page.locator('[data-resolve-payment="confirm"]').click()
