@@ -1,17 +1,18 @@
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=account-list-49';
+import {helpCentreView,filterHelp} from './help.js?v=help-50';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=help-50';
 import {settlementPlan} from './settlement-plan.js?v=simplify-42';
 import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
 import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=account-list-49';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=help-50';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
-import {Cloud} from './cloud.js?v=account-list-49';
+import {Cloud} from './cloud.js?v=help-50';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
 import {NotificationCentre} from './notifications.js?v=simplify-42';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=account-list-49';
+import {welcomePage,socialButtons} from './auth-ui.js?v=help-50';
 
 initializeLanguage();
 
@@ -40,6 +41,7 @@ let finishBrandIntro=()=>{};
 let demoMode=false;
 let providers=null;
 let providerError=false;
+let helpQuery='';
 let pendingInvite='';
 let inviteError='';
 const remoteBaseline=new Map();
@@ -75,6 +77,7 @@ const icons = {
   task:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m7 12 3 3 7-7"/>',
   spark:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="m9 3-1 3-3 1-2 3 2 2-1 3 2 3 3-1 3 2 3-2 3 1 2-3-1-3 2-2-2-3-3-1-1-3Z"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.4 9a2.7 2.7 0 0 1 5.2 1c0 2-2.6 2-2.6 4m0 3h.01"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>',
   download:'<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>',
   logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"/>',
@@ -171,7 +174,7 @@ function openWorkspaceMenu(){
  document.body.classList.add('workspace-menu-open');
 }
 async function navigateWorkspace(route){
- if(!['home','expenses','tasks','polls','shopping','budget','groups','profile','activity'].includes(route))return;
+ if(!['home','expenses','tasks','polls','shopping','budget','groups','profile','help','activity'].includes(route))return;
  closeModal();
  if(route==='shopping'){await showShopping();return;}
  page=['expenses','tasks','polls'].includes(route)?'home':route;
@@ -187,10 +190,12 @@ function render() {
  if(cloud.recovering){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');renderRecovery(true);return;}
  if(!accountUser&&!demoMode){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
  root.classList.add('personal-shell');document.body.classList.add('personal-app');
- const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Cuenta',activity:'Gastos y pagos'}[page])||'Inicio';
- root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
+ const helpFocus=page==='help'&&document.activeElement?.matches('[data-help-search]')?{start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd}:null;
+ const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Cuenta',help:'Centro de ayuda',activity:'Gastos y pagos'}[page])||'Inicio';
+ root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():page==='help'?helpCentreView(helpQuery):!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
  root.inert=authLoading||!!modalRoot.firstElementChild;
  if(page==='shopping')renderShoppingList();
+ if(page==='help'){filterHelp(root,helpQuery);if(helpFocus){const input=root.querySelector('[data-help-search]');input?.focus({preventScroll:true});input?.setSelectionRange(helpFocus.start,helpFocus.end);}}
 
 }
 function homeGroupHeader(g){
@@ -610,7 +615,7 @@ function expenseDetails(id) {
 }
 function profileContent() {
  const profile=currentProfile();
- return ui`<div class="account-settings"><div class="account-summary">${avatar(profile)}<div><h2>${esc(profile.name)}</h2><p>${accountUser?esc(accountUser.email):tr('Tu perfil de demo')}</p></div></div><section class="account-section" aria-label="Ayuda y asistencia"><h2>Ayuda y asistencia</h2><a class="account-row" href="mailto:support@divzplit.com"><span class="account-row-icon">${icon('mail')}</span><span class="account-row-label">Contacto</span>${icon('chevron')}</a></section><section class="account-section" aria-label="Tus datos"><h2>Tus datos</h2><button class="account-row" data-action="${accountUser?'privacy-export-full':'export'}"><span class="account-row-icon">${icon('download')}</span><span class="account-row-label">${accountUser?tr('Descargar datos de mi cuenta'):tr('Exportar mis grupos (JSON)')}</span>${icon('chevron')}</button></section><div class="account-session">${accountUser?ui`<button class="account-signout" data-action="signout">${icon('logout')} Cerrar sesión</button>`:ui`<button class="account-signout" data-action="account">Entrar o crear una cuenta ${icon('chevron')}</button><button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`}</div><p class="account-brand-note">DivZplit.</p></div>`;
+ return ui`<div class="account-settings"><div class="account-summary">${avatar(profile)}<div><h2>${esc(profile.name)}</h2><p>${accountUser?esc(accountUser.email):tr('Tu perfil de demo')}</p></div></div><section class="account-section" aria-label="Ayuda y asistencia"><h2>Ayuda y asistencia</h2><button class="account-row" data-route="help"><span class="account-row-icon">${icon('help')}</span><span class="account-row-label">Centro de ayuda</span>${icon('chevron')}</button><a class="account-row" href="mailto:support@divzplit.com"><span class="account-row-icon">${icon('mail')}</span><span class="account-row-label">Contacto</span>${icon('chevron')}</a></section><section class="account-section" aria-label="Tus datos"><h2>Tus datos</h2><button class="account-row" data-action="${accountUser?'privacy-export-full':'export'}"><span class="account-row-icon">${icon('download')}</span><span class="account-row-label">${accountUser?tr('Descargar datos de mi cuenta'):tr('Exportar mis grupos (JSON)')}</span>${icon('chevron')}</button></section><div class="account-session">${accountUser?ui`<button class="account-signout" data-action="signout">${icon('logout')} Cerrar sesión</button>`:ui`<button class="account-signout" data-action="account">Entrar o crear una cuenta ${icon('chevron')}</button><button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`}</div><p class="account-brand-note">DivZplit.</p></div>`;
 }
 
 function oauthConsentModal(provider){
@@ -766,6 +771,7 @@ async function onAppClick(event) {
     case 'new-task':planningModal('tasks');break;
     case 'new-poll':planningModal('polls');break;
     case 'settings':settingsModal();break;
+    case 'help-clear':helpQuery='';{const input=root.querySelector('[data-help-search]');if(input){input.value='';filterHelp(root,'');input.focus();}}break;
     case 'privacy-export-full':await exportAccountData();break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
@@ -1292,3 +1298,5 @@ window.addEventListener('storage',event=>{
 });
 
 setInterval(()=>{if(page==='shopping'&&!modalRoot.firstElementChild&&shoppingCurrent()&&!remoteBusy&&!document.hidden)loadShopping();},10000);
+
+document.addEventListener('input',event=>{if(event.target.matches('[data-help-search]')){helpQuery=event.target.value;filterHelp(root,helpQuery);}});

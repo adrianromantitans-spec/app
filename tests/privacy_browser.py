@@ -27,7 +27,7 @@ with sync_playwright() as p:
    c.route('**/__auth_fixture/rest/v1/rpc/divzplit_privacy_export',lambda r:r.fulfill(content_type='application/json',body=json.dumps({'account':{'id':USER['id']},'groups':[],'scope':{'fixture':True}})))
    with page.expect_download() as info:page.get_by_role('button',name='Descargar datos de mi cuenta',exact=True).click()
    assert json.loads(Path(info.value.path()).read_text())['account']['id']==USER['id']
-  dialog=page.locator('.account-page');expect(dialog.locator('.account-row')).to_have_count(2)
+  dialog=page.locator('.account-page');expect(dialog.locator('.account-row')).to_have_count(3)
   expect(dialog.get_by_role('link',name='Contacto',exact=True)).to_have_attribute('href','mailto:support@divzplit.com')
   assert dialog.get_by_role('button',name='Copiar solicitud',exact=True).count()==0
   assert dialog.get_by_role('button',name='Exportar mis grupos (JSON)',exact=True).count()==0
@@ -37,7 +37,7 @@ with sync_playwright() as p:
   if provider=='apple':
    page.set_viewport_size({'width':393,'height':852});page.screenshot(path='/tmp/divzplit-account-list.png',full_page=True)
   c.close()
- print('PASS: both social providers require a separate explicit step, PKCE survives, account privacy section contains only Contact and account download and fits mobile widths')
+ print('PASS: both social providers require a separate explicit step, PKCE survives, account privacy section contains Help centre, Contact and account download and fits mobile widths')
  for lang,label in [('en-US','I am 16 or older'),('ro-RO','Am cel puțin 16 ani')]:
   c,seen=context(browser);c.add_init_script("Object.defineProperty(navigator,'languages',{get:()=>["+json.dumps(lang)+"]})");page=c.new_page();page.goto(BASE+'#registro');expect(page.get_by_role('option',name=label,exact=True)).to_have_count(1);assert 'Acepto las' not in page.locator('#account-form').inner_text();c.close()
  print('PASS: legal registration UI is localized to English and Romanian')

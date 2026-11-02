@@ -1,4 +1,4 @@
-import {tr,ui,language} from './i18n.js?v=account-list-49';
+import {tr,ui,language} from './i18n.js?v=help-50';
 export const TERMS_VERSION='2026-11-02.2';
 export const PRIVACY_VERSION='2026-11-02.3';
 export const SUPPORT_EMAIL='support@divzplit.com';

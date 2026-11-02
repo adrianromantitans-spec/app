@@ -1,5 +1,6 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Centro de ayuda":{"en":"Help centre","ro":"Centrul de ajutor"},
   "Cuenta":{"en": "Account", "ro": "Cont"},
   "Ayuda y asistencia":{"en": "Help and support", "ro": "Ajutor și asistență"},
   "Tus datos":{"en": "Your data", "ro": "Datele tale"},

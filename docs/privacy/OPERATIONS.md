@@ -25,7 +25,7 @@ postal address has been supplied. These facts do not establish complete complian
 
 ## Requests: check the support inbox every working day
 
-The account privacy section contains Contact and Download my account data only.
+The account page contains Help centre, Contact and Download my account data.
 Contact opens the person's mail app addressed to support; they write and send
 the request themselves. Assign a case reference on receipt; it is not proof of
 identity. Gmail is the current mailbox, via Cloudflare forwarding.

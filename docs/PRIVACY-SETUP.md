@@ -26,7 +26,7 @@ por correo. Los archivos de tickets y datos externos requieren revisión aparte.
 
 ## Funcionamiento de las solicitudes
 
-**Cuenta** muestra directamente **Contacto** y
+**Cuenta** incluye el **Centro de ayuda**, **Contacto** y
 **Descargar datos de mi cuenta**. Contacto abre el correo dirigido a soporte; el
 usuario escribe su solicitud y debe enviarla. No se envía automáticamente. Revisar a
 diario `support@divzplit.com` y seguir el [procedimiento operativo](privacy/OPERATIONS.md).
