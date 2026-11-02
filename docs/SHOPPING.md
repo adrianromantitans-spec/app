@@ -1,6 +1,6 @@
 # Lista de la compra compartida
 
-La lista se abre desde una tarjeta compacta del inicio de Casa, sin mostrar todos los productos en el inicio. También está en el menú «+» de cualquier grupo. Usa el diseño morado, hojas inferiores y navegación Liquid Glass existentes.
+La lista se abre desde una tarjeta compacta del inicio de Casa, sin mostrar todos los productos en el inicio. También está en el menú «+» de cualquier grupo. Usa el diseño morado, ventanas centradas y navegación Liquid Glass existentes.
 
 Permite añadir productos y cantidades opcionales, marcar o desmarcar comprados y crear un gasto a partir de los productos comprados que aún no tienen gasto. El formulario exige revisar importe, pagador y reparto; cancelarlo no crea gastos. Los productos se vinculan al gasto únicamente cuando se guarda. La lista se actualiza al abrir, al pulsar actualizar y cada diez segundos mientras está abierta.
 

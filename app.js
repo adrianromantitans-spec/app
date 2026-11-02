@@ -447,10 +447,20 @@ async function showHistory() {
 
 function budgetView() {const g=group(); const spent=totalSpent(g); const categories=['Alojamiento','Transporte','Comida','Actividades','Otros'];return ui`<div class="welcome-row"><div><div class="eyebrow">DISFRUTAR, CON LAS CUENTAS CLARAS</div><h1>Un poquito de previsión<span class="purple-text">.</span></h1><p>El presupuesto de ${esc(g.name)}, de un vistazo.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><div class="budget-layout">${budgetCard()}<section class="panel">${sectionTitle(tr('¿En qué se va el plan?'),tr('Tus gastos agrupados por categoría.'))}${categories.map(cat=>{const sum=g.expenses.filter(e=>e.category===cat).reduce((s,e)=>s+e.amount,0);return `<div class="category-row"><span class="expense-icon lavender">${icon(categoryIcon(cat))}</span><div><span>${tr(cat)}</span><div class="progress-track"><span style="width:${spent?sum/spent*100:0}%"></span></div></div><strong>${money(sum)}</strong></div>`;}).join('')}</section></div>`;}
 
+function syncModalViewport(){
+  const overlay=modalRoot.querySelector('.modal-overlay');if(!overlay)return;
+  const viewport=window.visualViewport;
+  overlay.style.setProperty('--modal-viewport-height',`${viewport?.height||innerHeight}px`);
+  overlay.style.setProperty('--modal-viewport-top',`${viewport?.offsetTop||0}px`);
+}
+window.visualViewport?.addEventListener('resize',syncModalViewport);
+window.visualViewport?.addEventListener('scroll',syncModalViewport);
+window.addEventListener('resize',syncModalViewport);
 function openModal(title, content, subtitle='',kind='') {
   if (!modalRoot.contains(document.activeElement)) modalOpener = document.activeElement;
   root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');
   modalRoot.innerHTML=ui`<div class="modal-overlay"><section class="modal ${esc(kind)}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-heading"><div><div class="eyebrow">TODO CONECTADO</div><h2 id="modal-title">${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div><button class="icon-button" data-action="close-modal" aria-label="Cerrar">${icon('close')}</button></div>${content}</section></div>`;
+  syncModalViewport();
   document.body.classList.add('modal-open');
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
