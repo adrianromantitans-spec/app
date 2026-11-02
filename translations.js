@@ -1,5 +1,9 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Cuenta":{"en": "Account", "ro": "Cont"},
+  "Ayuda y asistencia":{"en": "Help and support", "ro": "Ajutor și asistență"},
+  "Tus datos":{"en": "Your data", "ro": "Datele tale"},
+  "Tu perfil de demo":{"en": "Your demo profile", "ro": "Profilul tău demonstrativ"},
   "Debes tener al menos 16 años para registrarte.":{"en": "You must be at least 16 to register.", "ro": "Trebuie să ai cel puțin 16 ani pentru a te înregistra."},
   "El registro está disponible solo para personas de 16 años o más.":{"en": "Registration is available only to people aged 16 or older.", "ro": "Înregistrarea este disponibilă doar persoanelor de cel puțin 16 ani."},
   "Registro a partir de 16 años":{"en": "Registration for ages 16 and over", "ro": "Înregistrare de la 16 ani"},

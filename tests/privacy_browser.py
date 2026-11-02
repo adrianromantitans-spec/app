@@ -21,19 +21,21 @@ with sync_playwright() as p:
   expect(page.locator('#oauth-consent-form')).to_be_visible();page.locator('select[name=ageBand]').select_option('under_16');expect(page.get_by_role('heading',name='Registro a partir de 16 años',exact=True)).to_be_visible();assert seen['oauth']==[]
   page.get_by_role('button',name='Entendido',exact=True).click();page.get_by_role('button',name='Continuar con '+provider.title(),exact=True).click();page.locator('select[name=ageBand]').select_option('16_or_over');page.locator('input[name=acceptTerms]').check();page.locator('#oauth-consent-form').get_by_role('button',name='Continuar',exact=True).click()
   expect(page.locator('.workspace-sidebar')).to_be_visible();assert len(seen['oauth'])==1 and len(seen['exchange'])==1
-  page.locator('.drawer-profile').click();page.get_by_role('button',name='Privacidad y mis datos',exact=True).click()
+  page.locator('.drawer-profile').click();expect(page.get_by_role('heading',name='Cuenta',exact=True)).to_be_visible()
   if provider=='google':
    page.get_by_role('button',name='Descargar datos de mi cuenta',exact=True).click();expect(page.locator('#toast')).to_contain_text('no está disponible todavía')
    c.route('**/__auth_fixture/rest/v1/rpc/divzplit_privacy_export',lambda r:r.fulfill(content_type='application/json',body=json.dumps({'account':{'id':USER['id']},'groups':[],'scope':{'fixture':True}})))
    with page.expect_download() as info:page.get_by_role('button',name='Descargar datos de mi cuenta',exact=True).click()
    assert json.loads(Path(info.value.path()).read_text())['account']['id']==USER['id']
-  dialog=page.get_by_role('dialog');expect(dialog.locator('.privacy-actions > *')).to_have_count(2)
+  dialog=page.locator('.account-page');expect(dialog.locator('.account-row')).to_have_count(2)
   expect(dialog.get_by_role('link',name='Contacto',exact=True)).to_have_attribute('href','mailto:support@divzplit.com')
   assert dialog.get_by_role('button',name='Copiar solicitud',exact=True).count()==0
   assert dialog.get_by_role('button',name='Exportar mis grupos (JSON)',exact=True).count()==0
 
   assert c.cookies()==[]
   for width in [320,393,768,1440]:page.set_viewport_size({'width':width,'height':852});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+  if provider=='apple':
+   page.set_viewport_size({'width':393,'height':852});page.screenshot(path='/tmp/divzplit-account-list.png',full_page=True)
   c.close()
  print('PASS: both social providers require a separate explicit step, PKCE survives, account privacy section contains only Contact and account download and fits mobile widths')
  for lang,label in [('en-US','I am 16 or older'),('ro-RO','Am cel puțin 16 ani')]:
