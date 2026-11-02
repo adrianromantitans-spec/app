@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="{{ if eq .Data.language "ro" }}ro{{ else if eq .Data.language "es" }}es{{ else }}en{{ end }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{{ if eq .Data.language "ro" }}Confirmă contul | DivZplit{{ else if eq .Data.language "es" }}Confirma tu cuenta | DivZplit{{ else }}Confirm your account | DivZplit{{ end }}</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#f3f4f8;font-family:Arial,Helvetica,sans-serif;color:#202239;">
+  <div style="display:none;font-size:1px;color:#f3f4f8;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    {{ if eq .Data.language "ro" }}Mai ai un singur pas! Confirmă adresa de e-mail și începe să împarți cheltuielile cu DivZplit.{{ else if eq .Data.language "es" }}¡Ya casi estás dentro! Confirma tu correo y empieza a compartir gastos con DivZplit.{{ else }}You’re almost there! Confirm your email and start sharing expenses with DivZplit.{{ end }}
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f4f8;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:540px;background-color:#ffffff;border:1px solid #e8e9f0;border-radius:18px;overflow:hidden;">
+          <tr>
+            <td height="5" bgcolor="#7654e8" style="height:5px;background-color:#7654e8;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <tr>
+            <td style="padding:32px 42px 12px;">
+              <p style="margin:0;font-size:22px;line-height:28px;font-weight:800;letter-spacing:-0.8px;color:#202239;">
+                Div<span style="color:#7654e8;">Z</span>plit<span style="color:#7654e8;">.</span>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:35px 42px 12px;">
+              <p style="margin:0 0 14px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:1.6px;color:#7654e8;">
+                {{ if eq .Data.language "ro" }}ÎNCĂ UN PAS{{ else if eq .Data.language "es" }}UN PASO MÁS{{ else }}ONE MORE STEP{{ end }}
+              </p>
+              <h1 style="margin:0 0 15px;font-size:32px;line-height:38px;font-weight:800;letter-spacing:-1px;color:#202239;">
+                {{ if eq .Data.language "ro" }}Mai ai un singur pas!{{ else if eq .Data.language "es" }}¡Ya casi estás dentro!{{ else }}You’re almost there!{{ end }}
+              </h1>
+              <p style="margin:0;font-size:16px;line-height:26px;color:#666b7d;">
+                {{ if eq .Data.language "ro" }}Confirmă adresa de e-mail și începe să împarți cheltuielile fără complicații.{{ else if eq .Data.language "es" }}Confirma tu correo y empieza a compartir gastos sin complicaciones.{{ else }}Confirm your email and start sharing expenses with ease.{{ end }}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:26px 42px 0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="28" valign="top" style="width:28px;padding-top:1px;font-size:17px;line-height:22px;color:#7654e8;">
+                    &#10003;
+                  </td>
+                  <td>
+                    <h2 style="margin:0 0 9px;font-size:20px;line-height:27px;font-weight:750;color:#202239;">
+                      {{ if eq .Data.language "ro" }}Confirmă adresa de e-mail{{ else if eq .Data.language "es" }}Confirma tu email{{ else }}Confirm your email{{ end }}
+                    </h2>
+                    <p style="margin:0;font-size:14px;line-height:23px;color:#666b7d;">
+                      {{ if eq .Data.language "ro" }}Bun venit la <strong style="color:#202239;">DivZplit</strong>! Ești la un clic distanță de organizarea cheltuielilor cu prietenii, colegii de apartament și grupurile tale, simplu și transparent.{{ else if eq .Data.language "es" }}¡Bienvenido a <strong style="color:#202239;">DivZplit</strong>! Estás a un clic de organizar tus gastos con amigos, compañeros de piso y grupos, de forma sencilla y transparente.{{ else }}Welcome to <strong style="color:#202239;">DivZplit</strong>! You’re one click away from organizing expenses with friends, housemates and groups, simply and transparently.{{ end }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:30px 42px 0 70px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#7654e8" style="background-color:#7654e8;border-radius:9px;">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:15px 24px;font-size:15px;line-height:20px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:9px;">
+                      {{ if eq .Data.language "ro" }}Confirmă contul &rarr;{{ else if eq .Data.language "es" }}Confirmar mi cuenta &rarr;{{ else }}Confirm my account &rarr;{{ end }}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:13px 0 0;font-size:12px;line-height:20px;color:#888c9b;">
+                {{ if eq .Data.language "ro" }}Un clic și contul tău este gata.{{ else if eq .Data.language "es" }}Un clic y tu cuenta estará lista.{{ else }}One click and your account is ready.{{ end }}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:25px 42px 0 70px;">
+              <p style="margin:0 0 6px;font-size:12px;line-height:19px;color:#888c9b;">
+                {{ if eq .Data.language "ro" }}Dacă butonul nu funcționează, copiază acest link în browser:{{ else if eq .Data.language "es" }}Si el botón no funciona, copia este enlace en tu navegador:{{ else }}If the button doesn’t work, copy this link into your browser:{{ end }}
+              </p>
+              <p style="margin:0;font-size:12px;line-height:19px;word-break:break-all;">
+                <a href="{{ .ConfirmationURL }}" style="color:#6344cd;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:30px 42px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #ececf2;">
+                <tr>
+                  <td style="padding:20px 0 0;">
+                    <p style="margin:0 0 6px;font-size:13px;line-height:20px;font-weight:700;color:#383b50;">
+                      {{ if eq .Data.language "ro" }}O notă despre siguranța ta{{ else if eq .Data.language "es" }}Una nota sobre tu seguridad{{ else }}A note about your security{{ end }}
+                    </p>
+                    <p style="margin:0;font-size:12px;line-height:20px;color:#777b8b;">
+                      {{ if eq .Data.language "ro" }}Dacă nu ai creat un cont DivZplit, poți ignora acest mesaj. Nu trebuie să faci nimic.{{ else if eq .Data.language "es" }}Si no has creado una cuenta en DivZplit, puedes ignorar este mensaje. No necesitas realizar ninguna acción.{{ else }}If you didn’t create a DivZplit account, you can ignore this message. No action is needed.{{ end }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 42px 32px;border-top:1px solid #ececf2;">
+              <p style="margin:0 0 8px;font-size:12px;line-height:19px;color:#777b8b;">
+                {{ if eq .Data.language "ro" }}Mai puține griji. Mai multe momente împreună.{{ else if eq .Data.language "es" }}Divide menos preocupaciones. Comparte más momentos.{{ else }}Fewer worries. More moments together.{{ end }}
+              </p>
+              <p style="margin:0;font-size:11px;line-height:18px;color:#999cab;">
+                {{ if eq .Data.language "ro" }}Mesaj automat: te rugăm să nu răspunzi la acest e-mail.{{ else if eq .Data.language "es" }}Mensaje automático: por favor, no respondas a este correo.{{ else }}Automated message: please don’t reply to this email.{{ end }}<br>
+                &copy; 2026 DivZplit. {{ if eq .Data.language "ro" }}Toate drepturile rezervate.{{ else if eq .Data.language "es" }}Todos los derechos reservados.{{ else }}All rights reserved.{{ end }}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

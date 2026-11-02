@@ -29,3 +29,21 @@ Para una comprobación completa, crear una cuenta de prueba desde un navegador
 en español y otra desde un navegador en rumano y comprobar el mensaje recibido
 y su enlace. Las pruebas automáticas simulan el envío a Supabase y no envían
 correos reales ni verifican la entrega del proveedor.
+
+## Instalar el diseño del correo
+
+La plantilla lista para copiar está en
+[`supabase/templates/confirm-signup.html`](../supabase/templates/confirm-signup.html).
+Conserva el diseño enviado por el propietario y añade los tres idiomas.
+
+En el proyecto de Supabase, abrir Authentication → Email → Templates
+(o Email Templates, según el panel) → Confirm signup. Sustituir el campo
+**Body / Source** completo por ese archivo y guardar. No se pega en React,
+en una Edge Function ni en el campo de dirección del remitente.
+
+El SMTP mantiene `noreply@divzplit.com`. Publicar el archivo en GitHub no instala
+la plantilla en Supabase: requiere guardarla en el panel. Antes de reemplazarla,
+guardar una copia del HTML actual para poder recuperarlo. Usar Preview y luego
+un registro de prueba para verificar la entrega. El asunto es un campo separado;
+puede mantenerse como `DivZplit · Email confirmation` si el panel no permite
+traducirlo dinámicamente.
