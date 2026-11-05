@@ -2,9 +2,9 @@
 
 ## Aplicación
 
-- `app.js`: usa la función original `startBrandIntro`, con sus fotogramas, duración de 2700 ms y animaciones de letras originales. Mantiene la comprobación de sesión y retiene el cambio de pantalla hasta terminar. No añade icono DZ ni muestra el mensaje de conexión. Elimina el icono DZ de las cabeceras y la franja Casa/Viaje del selector, manteniendo las tarjetas de todos los grupos y sus acciones.
+- `app.js` e `intro-transition.js`: conservan las animaciones originales de las letras y el giro de la Z, con 1539 ms de ensamblado y 1161 ms de desplazamiento. La pantalla real se prepara bajo la cortina y el nombre llega directamente a su cabecera, medida después de cargar la fuente y restaurar la sesión. El final no vuelve a renderizar la pantalla ni cambia el nombre de sitio. Una sesión lenta mantiene el fondo cubierto hasta estar lista. Elimina el icono DZ de las cabeceras y la franja Casa/Viaje del selector, manteniendo las tarjetas de todos los grupos y sus acciones.
 - `home.js`: obtiene hasta cuatro gastos del grupo seleccionado, ordenados por fecha descendente; conserva el orden de llegada para empates y no modifica el documento del grupo. No mezcla grupos ni completa filas con datos inventados.
-- `auth-ui.js`: mantiene el nombre DivZplit sin el icono cuadrado, el acceso por correo y Google/Apple, el registro y los enlaces de recuperación.
+- `auth-ui.js`: comparte el mismo marcado del nombre entre la animación y las cabeceras para conservar sus métricas, sin el icono cuadrado, el acceso por correo y Google/Apple, el registro y los enlaces de recuperación.
 - `glass.css`: alinea la marca de texto, mantiene la Z y el punto morados y da estilo al estado de comprobación de sesión.
 - `app/index.html`: renueva las versiones de recursos para evitar que una caché antigua oculte los cambios.
 
@@ -24,7 +24,7 @@ La conversión se presenta como la consulta disponible al saldar: el cambio es o
 ## Validación
 
 - `npm run check` y `npm test`, incluida una prueba de fechas desordenadas, límite de cuatro filas y conservación del grupo original.
-- `tests/intro_browser.py`: animación de texto, llegada a la cabecera, ausencia de icono y mensaje, movimiento reducido y restauración lenta sin mostrar un formulario incorrecto.
+- `tests/intro_browser.py`: diferencia inferior a un píxel entre el último fotograma y la cabecera real en 320, 393, 768 y 1440 px, con y sin sesión; identidad de la pantalla sin reconstrucción al terminar, fondo transparente durante el fundido, ausencia de icono y mensaje, movimiento reducido y sesión lenta.
 - `tests/visual_refinements_browser.py`: Chromium, con opción `DIVZPLIT_TEST_WEBKIT=1` para WebKit en un entorno compatible; cuatro gastos ordenados, aislamiento entre grupos, selector sin franja en anchos 320–1440, cabecera de texto, cambio de voto, compra compartida, tareas y «Ver todos». Usa fixtures locales; necesita los motores y sus dependencias.
 - `tests/landing_browser.py`: siete imágenes distintas en los tres idiomas, adaptabilidad, navegación, movimiento reducido y uso sin JavaScript.
 - `tests/auth_browser.py`, `tests/privacy_browser.py`, `tests/landing_migration_browser.py`, `tests/personal_browser.py`, `tests/help_browser.py` y `tests/notifications_browser.py`: acceso por correo, Google/Apple con PKCE, recuperación, invitaciones, exportación, cambios de grupo, creación/edición de gastos y funciones de Cuenta.

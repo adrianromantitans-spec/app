@@ -1,3 +1,4 @@
+import {startIntroTransition} from './intro-transition.js?v=handoff-56';
 import {helpCentreView,filterHelp} from './help.js?v=landing-51';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=landing-51';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';
@@ -12,7 +13,7 @@ import {Cloud} from './cloud.js?v=landing-51';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
 import {NotificationCentre} from './notifications.js?v=logo-52';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=visual-53';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=handoff-56';
 
 initializeLanguage();
 // Keep Supabase's existing allowed root callback; landing-route forwards it to /app/.
@@ -21,7 +22,7 @@ const authReturnURL=new URL('./',import.meta.url).href;
 let cloud;
 let configError='';
 try {cloud=new Cloud(cloudConfig);} catch (error) {configError=error.message;cloud=new Cloud({});}
-const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>state.groups,closeModal,canOfferOnboarding:()=>!!accountUser&&!authLoading&&!remoteBusy&&!pendingInvite&&!modalRoot.firstElementChild,openGroup:async(id,kind)=>{
+const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>state.groups,closeModal,canOfferOnboarding:()=>!!accountUser&&!authLoading&&!remoteBusy&&!brandIntroActive&&!pendingInvite&&!modalRoot.firstElementChild,openGroup:async(id,kind)=>{
   if(!state.groups.some(g=>g.id===id))await loadSharedGroups();
   if(!state.groups.some(g=>g.id===id))throw new Error(tr('No tienes acceso a este grupo.'));
   closeModal();state.activeGroup=id;rememberActiveGroup();
@@ -38,7 +39,7 @@ let authMode=location.hash==='#registro'?'signup':'login';
 let authStage=location.hash==='#registro'?'signup':'login';
 let brandIntroShown=false;
 let brandIntroActive=false;
-let brandIntroPendingRender=false;
+let markIntroSessionReady=()=>{};
 let finishBrandIntro=()=>{};
 let demoMode=false;
 let providers=null;
@@ -170,7 +171,7 @@ function workspaceMenu(){
  return `${g?`<button class="drawer-group" data-action="choose-group"><span class="home-group-symbol">${icon(groupMode(g)==='travel'?'plane':'home')}</span><span><strong>${esc(g.name)}</strong><small>${g.members.length} · ${esc(tr(g.type))}</small></span>${icon('chevron')}</button>`:''}<div class="drawer-section-label">${tr('Tu grupo')}</div><nav class="workspace-links" aria-label="${tr('Secciones del grupo')}">${links.map(([id,ic,label])=>`<button class="workspace-link ${selected===id||(id==='expenses'&&page==='activity')?'active':''}" data-route="${id}" ${selected===id||(id==='expenses'&&page==='activity')?'aria-current="page"':''}>${icon(ic)}<span>${tr(label)}</span></button>`).join('')}</nav><div class="drawer-divider"></div><button class="workspace-link ${page==='groups'?'active':''}" data-route="groups">${icon('users')}<span>${tr('Mis grupos')}</span><small>${state.groups.length}</small></button><div class="workspace-menu-footer"><button class="drawer-profile" data-route="profile">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${tr('Tu perfil y preferencias')}</small></span>${icon('chevron')}</button></div>`;
 }
 function openWorkspaceMenu(){
- openModal(`<span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span>`,workspaceMenu(),'','navigation-drawer');
+ openModal(`<span class="brand-wordmark">${brandWordmark}</span>`,workspaceMenu(),'','navigation-drawer');
  modalRoot.querySelector('.modal-overlay').classList.add('navigation-overlay');
  root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','true');
  document.body.classList.add('workspace-menu-open');
@@ -188,7 +189,6 @@ function quickAddButton(){
  return '<div class="mobile-quick-add"><button class="nav-add" data-action="quick-add" aria-label="'+tr('Añadir')+'" aria-haspopup="dialog" aria-expanded="false">'+icon('plus')+'</button></div>';
 }
 function render() {
- if(brandIntroActive){brandIntroPendingRender=true;return;}
  root.toggleAttribute('aria-busy',authLoading);
  if(authLoading){if(!brandIntroShown)renderWelcome();return;}
  if(cloud.recovering){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');renderRecovery(true);return;}
@@ -196,8 +196,8 @@ function render() {
  root.classList.add('personal-shell');document.body.classList.add('personal-app');
  const helpFocus=page==='help'&&document.activeElement?.matches('[data-help-search]')?{start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd}:null;
  const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Cuenta',help:'Centro de ayuda',activity:'Gastos y pagos'}[page])||'Inicio';
- root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home" aria-label="DivZplit, ${tr('Inicio')}">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():page==='help'?helpCentreView(helpQuery):!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
- root.inert=authLoading||!!modalRoot.firstElementChild;
+ root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">${brandWordmark}</span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home" aria-label="DivZplit, ${tr('Inicio')}">${brandWordmark}</a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():page==='help'?helpCentreView(helpQuery):!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
+ root.inert=brandIntroActive||authLoading||!!modalRoot.firstElementChild;
  if(page==='shopping')renderShoppingList();
  if(page==='help'){filterHelp(root,helpQuery);if(helpFocus){const input=root.querySelector('[data-help-search]');input?.focus({preventScroll:true});input?.setSelectionRange(helpFocus.start,helpFocus.end);}}
 
@@ -487,7 +487,7 @@ function openModal(title, content, subtitle='',kind='') {
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
 }
-function closeModal() {document.body.classList.remove('workspace-menu-open');root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','false');root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
+function closeModal() {document.body.classList.remove('workspace-menu-open');root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','false');root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=brandIntroActive;modalOpener?.focus();}
 const actions = label => ui`<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" type="submit">${label}${icon('arrow')}</button></div>`;
 const memberOptions = ({selfFirst=false,selected=null,ownName=false}={}) => {
   const members=selfFirst?[...group().members.filter(m=>m.id==='you'),...group().members.filter(m=>m.id!=='you')]:group().members;
@@ -990,7 +990,7 @@ function renderRecovery(reset) {
   const prompt=root.querySelector('.signup-prompt');
   if(reset){prompt.remove();const back=root.querySelector('.auth-back');back.dataset.action='signout';back.textContent=tr('← Cancelar recuperación');}
   else prompt.innerHTML=tr('¿Recuerdas tu contraseña? <a href="#acceso" data-action="login">Iniciar sesión</a>');
-  root.inert=!!modalRoot.firstElementChild;
+  root.inert=brandIntroActive||!!modalRoot.firstElementChild;
 }
 async function handleRecoveryForm(form,data) {
   if(!['recovery-form','password-form'].includes(form.id))return false;
@@ -1031,96 +1031,20 @@ function renderWelcome() {
   if(pendingInvite) notice=tr('<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>');
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
   root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:authStage==='welcome'}),notice});
-  root.inert=!!modalRoot.firstElementChild;
+  root.inert=brandIntroActive||!!modalRoot.firstElementChild;
   if(authLoading){root.querySelectorAll('.auth-main,.auth-footer,.header-note').forEach(el=>el.remove());}
   if(!brandIntroShown){brandIntroShown=true;startBrandIntro();}
 }
-// Move the one header logo from the centre to its final layout position.
+// Preserve the original assembly; finish at the actual authenticated/login header.
 function startBrandIntro() {
-  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  const brand=root.querySelector('.auth-header .brand');
-  if(reduced.matches || !brand?.animate){root.classList.add('welcome-ready');return;}
-  const bounds=brand.getBoundingClientRect();
-  if(!bounds.width)return;
-  root.classList.add('brand-intro-active');
-  const header=brand.closest('.auth-header');
-  const headerBounds=header.getBoundingClientRect();
-  const fontSize=parseFloat(getComputedStyle(brand).fontSize);
-  const spacing=parseFloat(getComputedStyle(brand).letterSpacing)||0;
-  const viewport=window.visualViewport;
-  const visibleCentre=()=>({x:(viewport?.offsetLeft||0)+(viewport?.width||innerWidth)/2,y:(viewport?.offsetTop||0)+(viewport?.height||innerHeight)/2});
-  const ratio=Math.min((viewport?.width||innerWidth)-64,360)/bounds.width;
-  // Anchor the centre of the text throughout the size change. A fixed left
-  // edge lets the changing text width push the logo sideways mid-flight.
-  header.style.height=`${headerBounds.height}px`;
-  const finalX=bounds.left+bounds.width/2-headerBounds.left;
-  const finalY=bounds.top+bounds.height/2-headerBounds.top;
-  const centre=visibleCentre();
-  const startX=centre.x-headerBounds.left;
-  const startY=centre.y-headerBounds.top;
-  Object.assign(brand.style,{
-    position:'absolute',left:`${finalX}px`,top:`${finalY}px`,
-    transform:'translate(-50%,-50%)'
-  });
-  const curtain=document.createElement('div');
-  curtain.className='brand-intro-curtain';
-  curtain.setAttribute('aria-hidden','true');
-  (root.querySelector('.welcome-stage')||brand.closest('.auth-shell')).prepend(curtain);
-  brandIntroActive=true;
-  const content=[...root.querySelectorAll(root.querySelector('.welcome-entry')?'.entry-controls,.welcome-phone':'.auth-main,.auth-footer')];
-  content.forEach(el=>el.inert=true);
-  let large={left:`${startX}px`,top:`${startY}px`,fontSize:`${fontSize*ratio}px`,letterSpacing:`${spacing*ratio}px`};
-  const movement=brand.animate([
-    {...large,offset:0},
-    {...large,offset:.57,easing:'cubic-bezier(.22,1,.36,1)'},
-    {left:`${finalX}px`,top:`${finalY}px`,fontSize:`${fontSize}px`,letterSpacing:`${spacing}px`,offset:1}
-  ],{duration:2700,fill:'both'});
-  const fade=curtain.animate([{opacity:1,offset:0},{opacity:1,offset:.57},{opacity:0,offset:1}],{duration:2700,fill:'both'});
-  const onKey=event=>{if(event.key==='Escape'){event.preventDefault();finishBrandIntro();}};
-  const initialWidth=innerWidth;
-  // Safari can emit resize while its browser bars settle on first paint.
-  // Only a real width change (rotation/window resize) should skip the intro.
-  const onResize=()=>{if(Math.abs(innerWidth-initialWidth)>40)finishBrandIntro();};
-  const onViewportChange=()=>{
-    if(!brandIntroActive)return;
-    const currentHeader=header.getBoundingClientRect();
-    const currentCentre=visibleCentre();
-    large={...large,left:`${currentCentre.x-currentHeader.left}px`,top:`${currentCentre.y-currentHeader.top}px`};
-    movement.effect.setKeyframes([
-      {...large,offset:0},
-      {...large,offset:.57,easing:'cubic-bezier(.22,1,.36,1)'},
-      {left:`${finalX}px`,top:`${finalY}px`,fontSize:`${fontSize}px`,letterSpacing:`${spacing}px`,offset:1}
-    ]);
-  };
-  const onMotionChange=()=>{if(reduced.matches)finishBrandIntro();};
-  let timeout;
-  finishBrandIntro=()=>{
-    if(!brandIntroActive)return;
-    brandIntroActive=false;
-    clearTimeout(timeout);
-    movement.cancel();fade.cancel();curtain.remove();
-    for(const property of ['position','left','top','font-size','letter-spacing','transform'])brand.style.removeProperty(property);
-    header.style.removeProperty('height');
-    root.classList.remove('brand-intro-active');
-    root.classList.add('welcome-ready');
-    content.forEach(el=>el.inert=false);
-    document.removeEventListener('keydown',onKey);
-    window.removeEventListener('resize',onResize);
-    viewport?.removeEventListener('resize',onViewportChange);
-    viewport?.removeEventListener('scroll',onViewportChange);
-    reduced.removeEventListener('change',onMotionChange);
-    if(brandIntroPendingRender){
-      brandIntroPendingRender=false;render();
-      root.querySelector('.auth-header .brand')?.replaceWith(brand);
-    }
-  };
-  document.addEventListener('keydown',onKey);
-  window.addEventListener('resize',onResize);
-  viewport?.addEventListener('resize',onViewportChange);
-  viewport?.addEventListener('scroll',onViewportChange);
-  reduced.addEventListener('change',onMotionChange);
-  timeout=setTimeout(()=>finishBrandIntro(),3300);
-  movement.finished.then(()=>finishBrandIntro(),()=>{});
+ const brand=root.querySelector('.auth-header .brand');
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches||!brand?.animate){root.classList.add('welcome-ready');return;}
+ brandIntroActive=true;root.inert=true;
+ const ready=new Promise(resolve=>{markIntroSessionReady=resolve;if(!authLoading)resolve();});
+ const transition=startIntroTransition({root,brand,ready,onFinish:()=>{
+  brandIntroActive=false;root.inert=!!modalRoot.firstElementChild;root.classList.add('welcome-ready');
+ }});
+ finishBrandIntro=()=>transition.skip();
 }
 function accountModal() {
   if(accountUser){settingsModal();return;}
@@ -1269,7 +1193,7 @@ async function startAccount() {
     if (cloud.user) {accountUser=cloud.user;state={version:1,groups:[],activeGroup:null};syncMessage=tr('Sin conexión · Reintentar');}
     storageWarning=error.message;
   } finally {
-    authLoading=false;render();
+    authLoading=false;render();markIntroSessionReady();
     if(returnedFromEmail&&!accountUser){authMode='login';authStage='login';accountModal();toast(tr('Has vuelto del enlace de correo. Entra para comprobar tu cuenta.'));}
     else if(storageWarning)toast(storageWarning);
   }

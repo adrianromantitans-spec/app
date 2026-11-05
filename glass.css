@@ -85,3 +85,10 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 .modern-auth .auth-header .brand{align-items:center}
 
 .brand-dot,.word-period{color:var(--purple)}
+
+/* Keep the animated wordmark outside rerenders and reveal the real screen below. */
+.brand-intro-host.modern-auth{background:transparent;position:fixed;inset:0;z-index:1000;margin:0;padding:0;min-height:0;pointer-events:auto;isolation:isolate}
+.brand-intro-host>.auth-header{position:absolute;inset:0;margin:0;padding:0;pointer-events:none}
+.brand-intro-host .brand{pointer-events:auto;will-change:left,top,font-size,letter-spacing}
+.brand-intro-host .split-word,.brand-wordmark .split-word{perspective:none;line-height:1.2;letter-spacing:inherit;font-weight:inherit}
+.brand-wordmark .word-z{color:var(--purple)}
