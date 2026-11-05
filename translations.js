@@ -1058,6 +1058,10 @@ export const translations = {
     "en": "Google and Apple are not available yet. You can sign in with your email for now.",
     "ro": "Google și Apple nu sunt încă disponibile. Deocamdată te poți autentifica prin e-mail."
   },
+  "Google todavía no está disponible. Por ahora puedes entrar con tu correo.": {
+    "en": "Google is not available yet. You can sign in with your email for now.",
+    "ro": "Google nu este încă disponibil. Deocamdată te poți autentifica prin e-mail."
+  },
   "Guardando…": {
     "en": "Saving…",
     "ro": "Se salvează…"

@@ -1,19 +1,19 @@
 import {startIntroTransition} from './intro-transition.js?v=start-57';
 import {helpCentreView,filterHelp} from './help.js?v=play-58';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=landing-51';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=play-59';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';
 import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=visual-53';
 import {convertedAmount,validConversion} from './fx.js?v=landing-51';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=landing-51';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=landing-51';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=play-58';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=play-59';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=landing-51';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=landing-51';
 import {Cloud} from './cloud.js?v=play-58';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
 import {NotificationCentre} from './notifications.js?v=logo-52';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=handoff-56';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=play-59';
 
 initializeLanguage();
 // Keep Supabase's existing allowed root callback; landing-route forwards it to /app/.

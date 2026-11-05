@@ -5,10 +5,10 @@ const arrowMark='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="curre
 
 export function socialButtons({providers=null,error=false,enabled=true,compact=false}={}) {
   const pending=enabled&&!providers&&!error;
-  return `<div class="social-buttons">${[['google','Google',googleMark],['apple','Apple',appleMark]].map(([id,label,mark])=>{
+  return `<div class="social-buttons">${[['google','Google',googleMark]].map(([id,label,mark])=>{
     const available=enabled&&providers?.[id]===true;
     return ui`<button type="button" class="social-button" data-action="oauth-${id}" aria-label="${ui`Continuar con ${label}`}" ${available?'':'disabled'}>${mark}<span>${compact?label:ui`Continuar con ${label}`}</span>${!available?`<small>${pending?tr('Comprobando…'):tr('No disponible')}</small>`:''}</button>`;
-  }).join('')}</div>${error?tr('<p class="social-note">No hemos podido comprobar estas opciones. Puedes usar tu correo o <button type="button" data-action="retry-providers">volver a intentarlo</button>.</p>'):providers&&!providers.google&&!providers.apple?tr('<p class="social-note">Google y Apple todavía no están disponibles. Por ahora puedes entrar con tu correo.</p>'):''}`;
+  }).join('')}</div>${error?tr('<p class="social-note">No hemos podido comprobar estas opciones. Puedes usar tu correo o <button type="button" data-action="retry-providers">volver a intentarlo</button>.</p>'):providers&&providers.google===false?tr('<p class="social-note">Google todavía no está disponible. Por ahora puedes entrar con tu correo.</p>'):''}`;
 }
 
 export const brandWordmark=`<span class="split-word"><span class="word-left">Div</span><span class="word-z">Z</span><span class="word-right">plit<span class="word-period">.</span></span></span>`;
