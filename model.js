@@ -20,7 +20,7 @@ export function inferExpenseCategory(title){
  return categoryKeywords.find(([,pattern])=>pattern.test(normalized))?.[0]||'Otros';
 }
 
-import {locale,tr} from './i18n.js?v=expenses-83';
+import {locale,tr} from './i18n.js?v=recovery-84';
 import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=landing-51';
 export {currencies,currencyDigits,currencyScale,currencyStep};
 export function currencyOf(group) {

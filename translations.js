@@ -1,5 +1,22 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Elegir foto del ticket": {"en": "Choose receipt photo", "ro": "Alege fotografia bonului"},
+  "Elegir foto": {"en": "Choose photo", "ro": "Alege o fotografie"},
+  "Ninguna foto seleccionada": {"en": "No photo selected", "ro": "Nicio fotografie selectată"},
+  "Código del correo": {"en": "Email code", "ro": "Codul din e-mail"},
+  "Si existe una cuenta con {0}, recibirás un código. Revisa también spam.": {"en": "If an account exists for {0}, you will receive a code. Check spam too.", "ro": "Dacă există un cont pentru {0}, vei primi un cod. Verifică și dosarul spam."},
+  "Introduce el código aquí para elegir una contraseña nueva.": {"en": "Enter the code here to choose a new password.", "ro": "Introdu codul aici pentru a alege o parolă nouă."},
+  "Verificar código": {"en": "Verify code", "ro": "Verifică codul"},
+  "Reenviar código": {"en": "Resend code", "ro": "Retrimite codul"},
+  "Cambiar correo": {"en": "Change email", "ro": "Schimbă adresa de e-mail"},
+  "Te enviaremos un código para cambiar tu contraseña.": {"en": "We will email you a code to reset your password.", "ro": "Îți vom trimite un cod prin e-mail pentru a-ți reseta parola."},
+  "Enviar código": {"en": "Send code", "ro": "Trimite codul"},
+  "Si existe la cuenta, hemos enviado otro código.": {"en": "If the account exists, we have sent another code.", "ro": "Dacă există contul, am trimis un alt cod."},
+  "El código no es válido o ha caducado. Solicita uno nuevo.": {"en": "The code is invalid or has expired. Request a new one.", "ro": "Codul nu este valid sau a expirat. Solicită unul nou."},
+  "Introduce el código numérico del correo.": {"en": "Enter the numeric code from the email.", "ro": "Introdu codul numeric din e-mail."},
+  "No se ha podido verificar el código. Solicita uno nuevo.": {"en": "The code could not be verified. Request a new one.", "ro": "Codul nu a putut fi verificat. Solicită unul nou."},
+  "Verifica primero el código de recuperación.": {"en": "Verify the recovery code first.", "ro": "Verifică mai întâi codul de recuperare."},
+
   "Ej. Cena del grupo": {"en": "E.g. Group dinner", "ro": "Ex. Cină cu grupul"},
   "1 día": {"en": "1 day", "ro": "1 zi"},
   "Editar": {"en": "Edit", "ro": "Editează"},

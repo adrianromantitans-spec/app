@@ -1,7 +1,7 @@
-import {legalMetadata} from './legal.js?v=expenses-83';
-import {currencyOf} from './model.js?v=expenses-83';
-import {tr,language} from './i18n.js?v=expenses-83';
-import {receiptPath} from './extras.js?v=expenses-83';
+import {legalMetadata} from './legal.js?v=recovery-84';
+import {currencyOf} from './model.js?v=recovery-84';
+import {tr,language} from './i18n.js?v=recovery-84';
+import {receiptPath} from './extras.js?v=recovery-84';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;
@@ -48,6 +48,7 @@ function messageFor(error, status) {
   if (code === 'NEXO_PAYMENT_FLOW') return tr('Este pago necesita la confirmación de quien recibe el dinero. Actualiza la aplicación.');
   if (code === 'NEXO_OWNER') return tr('Solo quien creó el grupo puede modificar sus detalles o gestionar invitaciones.');
   if (code === 'NEXO_DELETE_OWNER') return tr('No se ha podido pasar la administración del grupo. Escribe a soporte antes de eliminar la cuenta.');
+  if (code === 'otp_expired' || code === 'otp_disabled' || code === 'invalid_otp') return tr('El código no es válido o ha caducado. Solicita uno nuevo.');
   if (code === 'NEXO_FORBIDDEN' || status === 403) return tr('No tienes acceso a este grupo.');
   if (code === 'email_address_not_authorized') return tr('El servicio de correo todavía no permite enviar confirmaciones a esta dirección. Hace falta configurar el envío de correos de la aplicación.');
   if (code === 'email_address_invalid') return tr('Revisa tu dirección de correo electrónico.');
@@ -199,8 +200,19 @@ export class Cloud {
     try{this.storage.setItem(this.storageKey+':recovery-pkce',record);if(this.storage.getItem(this.storageKey+':recovery-pkce')!==record)throw new Error();}catch{throw new CloudError(tr('Permite guardar datos en este navegador para recuperar tu contraseña.'));}
     return this.request('/auth/v1/recover?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,code_challenge:url.searchParams.get('code_challenge'),code_challenge_method:'s256'},authenticated:false,timeoutMs:45000});
   }
+  async verifyRecoveryCode(email,token) {
+    if(typeof email!=='string'||!email.trim()||!/^\d{6,10}$/.test(token))throw new CloudError(tr('Introduce el código numérico del correo.'));
+    const result=await this.request('/auth/v1/verify',{method:'POST',body:{email:email.trim(),token,type:'recovery'},authenticated:false});
+    const session=this.sessionFrom(result);
+    if(!session||!result?.user?.id)throw new CloudError(tr('No se ha podido verificar el código. Solicita uno nuevo.'));
+    this.persistSession(session);this.user=result.user;
+    try{this.temporaryStorage.setItem(this.storageKey+':recovery',this.user.id);}
+    catch{this.persistSession(null);this.user=null;throw new CloudError(tr('Permite guardar datos en este navegador para recuperar tu contraseña.'));}
+    try{this.storage?.removeItem(this.storageKey+':recovery-pkce');}catch{/* old links are no longer needed */}
+    return this.user;
+  }
   async updatePassword(password) {
-    if(!this.recovering)throw new CloudError(tr('Abre primero el enlace de recuperación en este navegador.'));
+    if(!this.recovering)throw new CloudError(tr('Verifica primero el código de recuperación.'));
     await this.request('/auth/v1/user',{method:'PUT',body:{password}});
     this.temporaryStorage.removeItem(this.storageKey+':recovery');
   }

@@ -328,3 +328,30 @@ test('EUR settlement requests bind the quote and exact amount while retaining th
  const missing=authed(async()=>response({code:'PGRST202'},404));await assert.rejects(()=>missing.createGroup({...seed().groups[0],currency:'USD'}),/todavía no están activadas/);
  let changed;changed=authed(async()=>{changed.user={id:'other'};return response(true);});await assert.rejects(()=>changed.requestPayment(g,{from:'you',amount:100},'x'),/cuenta ha cambiado/);
 });
+
+test('recovery codes work without the requesting browser PKCE state and only unlock password updates after verification',async()=>{
+ let updates=0,verifications=0;
+ const c=new Cloud(config,{storage:storage(),temporaryStorage:storage(),fetcher:async(url,options)=>{
+  const body=JSON.parse(options.body||'{}');
+  if(url.endsWith('/auth/v1/verify')){
+   verifications++;assert.deepEqual(body,{email:'ana@example.test',token:body.token,type:'recovery'});
+   assert.equal(options.headers.Authorization,undefined);
+   if(body.token==='000000')return response({error_code:'otp_expired'},403);
+   return response({...session(),user});
+  }
+  if(options.method==='PUT'){assert.equal(body.password,'new-safe-password');updates++;return response(user);}
+  throw new Error('Unexpected request '+url);
+ }});
+ await assert.rejects(()=>c.updatePassword('new-safe-password'));assert.equal(updates,0);
+ await assert.rejects(()=>c.verifyRecoveryCode('ana@example.test','abcdef'));assert.equal(verifications,0);
+ await assert.rejects(()=>c.verifyRecoveryCode('ana@example.test','000000'),e=>e.code==='otp_expired');assert.equal(c.session,null);assert.equal(c.recovering,false);
+ await c.verifyRecoveryCode('ana@example.test','12345678');assert.equal(c.recovering,true);
+ await c.updatePassword('new-safe-password');assert.equal(updates,1);assert.equal(c.recovering,false);
+ await assert.rejects(()=>c.updatePassword('new-safe-password'));
+});
+test('an incomplete verification response cannot create a recovery session',async()=>{
+ for(const result of [{user},{...session()},{}]){
+  const c=new Cloud(config,{storage:storage(),temporaryStorage:storage(),fetcher:async()=>response(result)});
+  await assert.rejects(()=>c.verifyRecoveryCode('ana@example.test','123456'));assert.equal(c.recovering,false);assert.equal(c.session,null);
+ }
+});

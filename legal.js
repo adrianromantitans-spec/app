@@ -1,4 +1,4 @@
-import {tr,ui,language} from './i18n.js?v=expenses-83';
+import {tr,ui,language} from './i18n.js?v=recovery-84';
 export const TERMS_VERSION='2026-11-02.2';
 export const PRIVACY_VERSION='2026-11-02.3';
 export const SUPPORT_EMAIL='support@divzplit.com';

@@ -79,3 +79,10 @@
 .welcome-entry .social-button.social-icon>svg{width:28px;height:28px;flex:none;margin:0}
 .welcome-entry .social-button.social-icon:focus-visible{outline:2px solid #8550d3;outline-offset:4px}
 .welcome-entry .social-button.social-icon:disabled{opacity:.5}
+
+/* Keep browser-language file-picker chrome out of the localized receipt form. */
+.receipt-file-control{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-width:0;padding:12px;border:1px solid #ded5e9;border-radius:14px;background:#fff;overflow:hidden}
+.receipt-file-control .receipt-file-input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;z-index:1}
+.receipt-file-button{flex:none;padding:8px 11px;border-radius:9px;background:#f0e8fa;color:#7140b7;font-size:13px;font-weight:650}
+.receipt-file-control [data-receipt-filename]{min-width:0;overflow-wrap:anywhere;font-size:13px;color:#6c607a}
+.receipt-file-control:focus-within{outline:2px solid #8550d3;outline-offset:2px}

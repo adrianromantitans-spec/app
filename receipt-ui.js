@@ -1,6 +1,6 @@
 import {currencyDigits,currencyStep} from './currencies.js?v=landing-51';
-import {openReceiptCrop,closeReceiptCrop,applyReceiptCrop} from './receipt-crop.js?v=expenses-83';
-import {tr,ui,locale} from './i18n.js?v=expenses-83';
+import {openReceiptCrop,closeReceiptCrop,applyReceiptCrop} from './receipt-crop.js?v=recovery-84';
+import {tr,ui,locale} from './i18n.js?v=recovery-84';
 import {readReceipt,parseReceipt} from './receipt-ocr.js?v=landing-51';
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function setAutomaticValue(form,name,value) {

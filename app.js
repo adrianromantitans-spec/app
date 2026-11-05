@@ -1,19 +1,19 @@
 import {startIntroTransition} from './intro-transition.js?v=start-64';
-import {helpCentreView,filterHelp} from './help.js?v=expenses-83';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=expenses-83';
-import {settlementPlan} from './settlement-plan.js?v=expenses-83';
-import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=expenses-83';
-import {convertedAmount,validConversion} from './fx.js?v=expenses-83';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=expenses-83';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=expenses-83';
-import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=expenses-83';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=expenses-83';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=expenses-83';
-import {Cloud} from './cloud.js?v=expenses-83';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=expenses-83';
-import {NotificationCentre} from './notifications.js?v=expenses-83';
+import {helpCentreView,filterHelp} from './help.js?v=recovery-84';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=recovery-84';
+import {settlementPlan} from './settlement-plan.js?v=recovery-84';
+import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=recovery-84';
+import {convertedAmount,validConversion} from './fx.js?v=recovery-84';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=recovery-84';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=recovery-84';
+import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=recovery-84';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=recovery-84';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=recovery-84';
+import {Cloud} from './cloud.js?v=recovery-84';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=recovery-84';
+import {NotificationCentre} from './notifications.js?v=recovery-84';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=expenses-83';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=recovery-84';
 
 import {languageSelection} from './language.js?v=language-78';
 const languageLabels={es:'Español',en:'English',ro:'Română'};
@@ -41,6 +41,7 @@ let syncMessage='';
 function guestStage(){if(location.hash==='#registro')return 'signup';if(location.hash==='#acceso'||location.hash==='#eliminar-cuenta')return 'login';return 'welcome';}
 let authMode=location.hash==='#registro'?'signup':'login';
 let authStage=guestStage();
+let recoveryEmail='';
 let brandIntroShown=false;
 let brandIntroActive=false;
 let markIntroSessionReady=()=>{};
@@ -528,7 +529,7 @@ function expenseModal(id=null) {
   const editing=!!existing;
   const participantMembers=existing?[...existing.participants.map(id=>group().members.find(m=>m.id===id)).filter(Boolean),...group().members.filter(m=>!existing.participants.includes(m.id))]:group().members;
   const g=group(),payer=member(existing?.payer||'you');
-  openModal(tr(editing?'Editar gasto':'Añadir gasto'),ui`<form id="expense-form" class="compact-expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}" data-expense-group="${esc(g.id)}"><label class="expense-amount-field"><span>Importe</span><div><input name="amount" type="number" min="${currencyStep(currencyOf(g))}" max="1000000" step="${currencyStep(currencyOf(g))}" placeholder="0,00" required inputmode="decimal" aria-label="${esc(ui`Importe (${currencyUnit(g)})`)}"><strong aria-hidden="true">${esc(currencyUnit(g))}</strong></div></label><label class="field expense-concept">Concepto<input name="title" placeholder="Ej. Cena del grupo" aria-label="${tr('¿Qué habéis pagado?')}" required maxlength="100"></label><label class="field expense-payer-field"><span>Pagado por</span><div class="expense-payer-select"><span class="expense-payer-avatar" aria-hidden="true">${avatar(payer,true)}</span><select name="payer" aria-label="${tr('Pagado por')}">${memberOptions({selfFirst:true,selected:existing?.payer||'you',ownName:true})}</select></div></label><div class="expense-participants-heading"><span>${tr('Repartir entre')}</span><select name="splitMode" aria-label="${tr('Tipo de reparto')}"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></div><fieldset class="participants compact-participants"><legend class="sr-only">Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant person-chip"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}><span class="chip-check">${icon('check')}</span><span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><p class="form-note receipt-amount-status" role="status" aria-live="polite"></p><details class="expense-more-options" ${existing?.receipt||existing?.recurrence||existing?.seriesId?'open':''}><summary>${tr('Más opciones')}<span>${tr('Fecha, categoría y ticket')}</span></summary><div class="expense-more-content"><div class="form-columns"><label class="field">Categoría<select name="category">${expenseCategories.map(([c,emoji])=>`<option value="${esc(c)}">${emoji} ${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div>${receiptTools()}</div></details><p class="form-error" role="alert"></p><div class="modal-actions expense-actions"><button class="button primary" type="submit">${icon('check')}${tr(editing?'Guardar cambios':'Guardar gasto')}</button></div></form>`,esc(g.name),'compact-expense-modal');
+  openModal(tr(editing?'Editar gasto':'Añadir gasto'),ui`<form id="expense-form" class="compact-expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}" data-expense-group="${esc(g.id)}"><label class="expense-amount-field"><span>Importe</span><div><input name="amount" type="number" min="${currencyStep(currencyOf(g))}" max="1000000" step="${currencyStep(currencyOf(g))}" placeholder="0,00" required inputmode="decimal" aria-label="${esc(ui`Importe (${currencyUnit(g)})`)}"><strong aria-hidden="true">${esc(currencyUnit(g))}</strong></div></label><label class="field expense-concept">Concepto<input name="title" placeholder="Ej. Cena del grupo" aria-label="${tr('¿Qué habéis pagado?')}" required maxlength="100"></label><label class="field expense-payer-field"><span>Pagado por</span><div class="expense-payer-select"><span class="expense-payer-avatar" aria-hidden="true">${avatar(payer,true)}</span><select name="payer" aria-label="${tr('Pagado por')}">${memberOptions({selfFirst:true,selected:existing?.payer||'you',ownName:true})}</select></div></label><div class="expense-participants-heading"><span>${tr('Repartir entre')}</span><select name="splitMode" aria-label="${tr('Tipo de reparto')}"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></div><fieldset class="participants compact-participants"><legend class="sr-only">Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant person-chip"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}><span class="chip-check">${icon('check')}</span><span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><p class="form-note receipt-amount-status" role="status" aria-live="polite"></p><details class="expense-more-options" ${existing?.receipt||existing?.recurrence||existing?.seriesId?'open':''}><summary>${tr('Más opciones')}<span>${tr('Fecha, categoría y ticket')}</span></summary><div class="expense-more-content"><div class="form-columns"><label class="field">Categoría<select name="category">${expenseCategories.map(([c,emoji])=>`<option value="${esc(c)}">${emoji} ${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field receipt-upload-field"><span>Foto del ticket (opcional)</span><span class="receipt-file-control"><input class="receipt-file-input" type="file" name="receipt" aria-label="Elegir foto del ticket" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="receipt-file-button" aria-hidden="true">Elegir foto</span><span data-receipt-filename aria-live="polite">Ninguna foto seleccionada</span></span><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div>${receiptTools()}</div></details><p class="form-error" role="alert"></p><div class="modal-actions expense-actions"><button class="button primary" type="submit">${icon('check')}${tr(editing?'Guardar cambios':'Guardar gasto')}</button></div></form>`,esc(g.name),'compact-expense-modal');
   const form=modalRoot.querySelector('#expense-form');
   form.splitDrafts={};
   // Keep existing expenses and explicit choices stable while suggesting categories for new titles.
@@ -875,7 +876,7 @@ async function onAppClick(event) {
     case 'signout':await signOutAccount();break;
     case 'invite':inviteModal();break;
     case 'generate-invite':await generateInvite();break;
-    case 'recover':authStage='recover';demoMode=false;closeModal();render();break;
+    case 'recover':recoveryEmail='';authStage='recover';demoMode=false;closeModal();render();break;
     case 'copy-invite':await copyInvite();break;
     case 'revoke-invites':await revokeInvites();break;
     case 'accept-invite':await acceptInvite();break;
@@ -910,7 +911,7 @@ async function onAppChange(event) {
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'||page==='home'){await loadActivity();render();}}
 }
 document.addEventListener('submit',async event=>{
-  const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);
+  const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','recovery-code-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);if(event.submitter?.name==='recoveryAction')data.set('recoveryAction',event.submitter.value);
   if(await handleDeleteGroupForm(form,data))return;
   if(await handleRecoveryForm(form,data))return;
   if(await handlePrivacyForm(form,data))return;
@@ -1050,7 +1051,7 @@ async function processRecurrences() {
   if(changed)await save();
 }
 async function receiptChanged(input) {
-  const form=input.form;const attempt={};form.receiptAttempt=attempt;
+  const form=input.form;const filename=form.querySelector('[data-receipt-filename]');if(filename)filename.textContent=input.files?.[0]?.name||tr('Ninguna foto seleccionada');const attempt={};form.receiptAttempt=attempt;
   clearReceiptAutofill(form);form.querySelector('.receipt-amount-status').textContent='';
   form.receiptBlob=null;form.receiptOCRSource=null;form.uploadedReceipt=null;form.receiptUploadId=uid();
   resetReceiptReader(form);
@@ -1061,7 +1062,7 @@ async function receiptChanged(input) {
     form.receiptPending=prepareReceipt(input.files[0]);const blob=await form.receiptPending;
     if(form.receiptAttempt!==attempt||!form.isConnected)return;
     if(blob){form.receiptBlob=blob;form.receiptOCRSource=input.files[0];form.receiptPreviewURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=form.receiptPreviewURL;img.alt=tr('Vista previa del ticket');preview.append(img);resetReceiptReader(form);}
-  }catch(error){if(form.receiptAttempt===attempt){input.value='';toast(error.message);}}
+  }catch(error){if(form.receiptAttempt===attempt){input.value='';if(filename)filename.textContent=tr('Ninguna foto seleccionada');toast(error.message);}}
   finally{if(form.receiptAttempt===attempt)form.receiptPending=null;}
   if(form.isConnected&&form.receiptAttempt===attempt&&form.receiptBlob&&form.dataset.edit!=='true'&&form.elements.amount.value===''){
     await handleReceiptAction(form.querySelector('[data-receipt-action=read]'),currencyOf(group()),updateSplitTotal);
@@ -1080,7 +1081,7 @@ async function viewReceipt(id) {
   }catch(error){if(container.isConnected)container.querySelector('.receipt-loading').textContent=error.message;}
 }
 function renderRecovery(reset) {
-  const form=reset?ui`<form id="password-form"><label class="field">Nueva contraseña<input type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" required></label><label class="field">Repetir contraseña<input type="password" name="confirm" autocomplete="new-password" minlength="10" maxlength="128" required></label><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Guardar contraseña</button></form>`:ui`<form id="recovery-form"><label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" required maxlength="254"></label><p class="form-note">Abre el enlace del correo en este mismo navegador. No cierres esta pestaña hasta recibirlo.</p><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Enviar enlace de recuperación</button></form>`;
+  const form=reset?ui`<form id="password-form"><label class="field">Nueva contraseña<input type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" required></label><label class="field">Repetir contraseña<input type="password" name="confirm" autocomplete="new-password" minlength="10" maxlength="128" required></label><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Guardar contraseña</button></form>`:recoveryEmail?ui`<form id="recovery-code-form"><p class="form-note">Si existe una cuenta con ${esc(recoveryEmail)}, recibirás un código. Revisa también spam.</p><label class="field">Código del correo<input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" minlength="6" maxlength="10" required></label><p class="form-note">Introduce el código aquí para elegir una contraseña nueva.</p><p class="form-error" role="alert"></p><p class="form-note" role="status"></p><button class="button primary full-width" type="submit">Verificar código</button><button class="text-button" type="submit" name="recoveryAction" value="resend" formnovalidate>Reenviar código</button><button class="text-button" type="button" data-action="recover">Cambiar correo</button></form>`:ui`<form id="recovery-form"><label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" required maxlength="254"></label><p class="form-note">Te enviaremos un código para cambiar tu contraseña.</p><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Enviar código</button></form>`;
   root.innerHTML=welcomePage({stage:'recover',form,social:'',notice:'',signup:false,title:reset?tr('Elige una contraseña'):tr('Recupera tu cuenta'),description:reset?tr('Una contraseña nueva para volver a tus planes.'):tr('Te ayudamos a volver a entrar.')});
   const prompt=root.querySelector('.signup-prompt');
   if(reset){prompt.remove();const back=root.querySelector('.auth-back');back.dataset.action='signout';back.textContent=tr('← Cancelar recuperación');}
@@ -1088,12 +1089,18 @@ function renderRecovery(reset) {
   root.inert=brandIntroActive||!!modalRoot.firstElementChild;
 }
 async function handleRecoveryForm(form,data) {
-  if(!['recovery-form','password-form'].includes(form.id))return false;
-  remoteBusy=true;const submit=form.querySelector('[type=submit]');submit.disabled=true;const original=submit.textContent;submit.textContent=tr('Un momento…');
+  if(!['recovery-form','recovery-code-form','password-form'].includes(form.id))return false;
+  remoteBusy=true;form.querySelector('.form-error').textContent='';const status=form.querySelector('[role=status]');if(status)status.textContent='';const submit=form.querySelector(data.get('recoveryAction')==='resend'?'[value=resend]':'[type=submit]');submit.disabled=true;const original=submit.textContent;submit.textContent=tr('Un momento…');
   try {
     if(form.id==='recovery-form'){
       await cloud.recoverPassword(data.get('email').trim(),authReturnURL);
-      openModal(tr('Revisa tu correo'),tr('<p class="form-note">Si existe una cuenta con esa dirección, recibirás un enlace para elegir una nueva contraseña. Ábrelo en este mismo navegador. Revisa también spam.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>'));
+      recoveryEmail=data.get('email').trim();renderRecovery(false);
+    }else if(form.id==='recovery-code-form'){
+      if(data.get('recoveryAction')==='resend'){
+        await cloud.recoverPassword(recoveryEmail,authReturnURL);form.querySelector('[role=status]').textContent=tr('Si existe la cuenta, hemos enviado otro código.');
+      }else{
+        await cloud.verifyRecoveryCode(recoveryEmail,String(data.get('code')||'').trim());renderRecovery(true);
+      }
     }else{
       const password=data.get('password');if(password.length<10||password!==data.get('confirm'))throw new Error(tr('Las contraseñas deben coincidir y tener al menos 10 caracteres.'));
       await cloud.updatePassword(password);try{await cloud.signOut();}catch{/* local session is cleared even when sign-out is unreachable */}accountUser=null;authStage='login';authMode='login';history.replaceState(null,'',location.pathname+location.search+'#acceso');render();toast(tr('Contraseña actualizada. Entra con tu nueva contraseña.'));
