@@ -12,28 +12,11 @@ body.personal-app{--bg:#f9f7fd;--text:#2d203e;--muted:#81718f;--purple:#8552db;-
 .personal-shell .home-balance .stat-copy .stat-amount{color:var(--text);font-size:43px;font-weight:850;letter-spacing:-1.5px}.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:inherit;font-weight:inherit;letter-spacing:inherit;color:var(--text)}.personal-shell .home-balance .stat-copy .stat-amount .stat-currency{font-size:.85em;font-weight:inherit;letter-spacing:inherit;color:var(--text)}
 @media(max-width:760px){.personal-shell .home-balance .stat-copy .stat-amount{font-size:34px;letter-spacing:-1.1px}}
 @media(max-width:360px){.personal-shell .home-balance .stat-copy .stat-amount{font-size:31px}}
-/* Native pickers ignore the app's rounded style, so selects open in this menu. */
-.app-select{position:relative;min-width:0;max-width:100%}
-.app-select>select{opacity:0}
-.app-select-face{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:0;padding:0 12px;border:1px solid #e8dfef;border-radius:14px;background:#fff;color:#2d203e;font:inherit;font-weight:650;text-align:left}
-.app-select-face:after{content:"⌄";color:#8552db;font-size:18px;line-height:1}
-.app-select-face:focus-visible{outline:2px solid #8552db;outline-offset:3px}
-.app-select-menu{position:fixed;z-index:160;display:grid;gap:4px;margin:0;padding:6px;border:1px solid #ece5f3;border-radius:16px;background:#fff;box-shadow:0 18px 50px #38224824;overflow:auto}
-.app-select-menu[hidden]{display:none}
-.app-select-option{width:100%;border-radius:12px;min-height:44px;padding:10px 12px;text-align:left;color:#2d203e;font-weight:650}
-.app-select-option.is-selected,.app-select-option:hover{background:#f3ebfc;color:#7240c7}
-.expense-payer-select .app-select-face{padding-left:52px;border:0;background:transparent}
-.expense-payer-select .expense-payer-avatar{z-index:2;pointer-events:none}
-.field>.app-select,.expense-payer-select>.app-select,.fx-target-field .app-select{flex:1;width:100%}
-.welcome-row>.app-select{width:min(180px,46vw);margin-left:auto;align-self:center}
-.welcome-row>.app-select>select{width:100%;max-width:none;margin:0}
-.expense-participants-heading>.app-select{flex:1 1 180px;width:180px;min-width:0;max-width:62%;height:44px;margin-left:auto}
-.expense-participants-heading .app-select>select{position:absolute;inset:0;width:100%;height:100%;max-width:none;min-height:0;margin:0}
+/* Native selects keep their platform picker, including touch and keyboard support. */
+.field select,.fx-target-field select{width:100%;max-width:100%;min-width:0;box-sizing:border-box;cursor:pointer;touch-action:manipulation}
+.expense-participants-heading>select{flex:1 1 180px;width:180px;max-width:62%;min-width:0;min-height:44px;margin-left:auto;padding:8px;border:1px solid #e8dfef;border-radius:10px;background:#fff;font-size:12px}
 .expense-icon .category-emoji,.category-row .category-emoji{font-size:18px;line-height:1}
 .group-card-dates{display:block;margin:6px 0 0;font-size:11px;line-height:1.5;color:#81718f}
 
 
-/* Keep split controls inside the form, including long translated option names. */
-.expense-participants-heading>.app-select .app-select-face{font-size:12px;padding:0 10px;line-height:1.4;text-align:left}
-.expense-participants-heading>.app-select .app-select-face:after{flex-shrink:0}
-@media(max-width:360px){.expense-participants-heading{flex-wrap:wrap}.expense-participants-heading>span{flex-basis:100%}.expense-participants-heading>.app-select{flex-basis:100%;width:100%;max-width:100%;margin-left:0}}
+@media(max-width:360px){.expense-participants-heading{flex-wrap:wrap}.expense-participants-heading>span{flex-basis:100%}.expense-participants-heading>select{flex-basis:100%;width:100%;max-width:100%;margin-left:0}}

@@ -504,50 +504,6 @@ function syncModalViewport(){
 window.visualViewport?.addEventListener('resize',syncModalViewport);
 window.visualViewport?.addEventListener('scroll',syncModalViewport);
 window.addEventListener('resize',syncModalViewport);
-function dressSelects(scope=document){
- scope.querySelectorAll('select:not([data-dressed])').forEach(select=>{
-  if(select.multiple||select.size>1)return;
-  select.dataset.dressed='true';
-  const wrap=document.createElement('div');wrap.className='app-select';
-  select.before(wrap);wrap.append(select);
-  const face=document.createElement('button');face.type='button';face.className='app-select-face';face.setAttribute('aria-haspopup','listbox');face.setAttribute('aria-expanded','false');
-  const menu=document.createElement('div');menu.className='app-select-menu';menu.hidden=true;menu.setAttribute('role','listbox');
-  wrap.append(face,menu);
-  const place=()=>{
-   const rect=face.getBoundingClientRect(),space=innerHeight-rect.bottom,below=space>160||space>=rect.top;
-   Object.assign(menu.style,{left:Math.max(8,rect.left)+'px',width:Math.min(rect.width,innerWidth-16)+'px',top:below?rect.bottom+6+'px':'auto',bottom:below?'auto':innerHeight-rect.top+6+'px',maxHeight:Math.max(120,(below?space:rect.top)-16)+'px'});
-  };
-  const paint=()=>{
-   face.firstChild?face.firstChild.textContent=select.selectedOptions[0]?.textContent||'':face.prepend(document.createTextNode(select.selectedOptions[0]?.textContent||''));
-   face.disabled=select.disabled;menu.replaceChildren();
-   [...select.options].forEach((option,index)=>{
-    const choice=document.createElement('button');choice.type='button';choice.className='app-select-option'+(option.selected?' is-selected':'');choice.setAttribute('role','option');choice.textContent=option.textContent;choice.disabled=option.disabled;
-    choice.addEventListener('click',event=>{
-     // Cancel label activation before change repaints and removes the clicked option.
-     event.preventDefault();event.stopPropagation();
-     menu.hidden=true;face.setAttribute('aria-expanded','false');
-     select.selectedIndex=index;select.dispatchEvent(new Event('change',{bubbles:true}));
-     face.focus({preventScroll:true});
-    });
-    menu.append(choice);
-   });
-  };
-  paint();
-  select.addEventListener('change',paint);
-  select.addEventListener('pointerdown',event=>event.preventDefault());
-  select.addEventListener('click',event=>event.preventDefault());
-  face.addEventListener('click',event=>{
-   event.preventDefault();
-   document.querySelectorAll('.app-select-menu').forEach(other=>{if(other!==menu)other.hidden=true;});
-   menu.hidden=!menu.hidden;face.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden){paint();place();}
-  });
-  select.closest('label')?.addEventListener('click',event=>{if(event.target.closest('select,button,a,input'))return;event.preventDefault();face.click();});
- });
-}
-document.addEventListener('click',event=>{if(!event.target.closest('.app-select'))document.querySelectorAll('.app-select-menu').forEach(menu=>{menu.hidden=true;});});
-document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.app-select-menu').forEach(menu=>menu.hidden=true);});
-new MutationObserver(()=>dressSelects()).observe(document.body,{childList:true,subtree:true});
-dressSelects();
 function openModal(title, content, subtitle='',kind='') {
   document.body.classList.remove('workspace-menu-open');
   if (!modalRoot.contains(document.activeElement)) modalOpener = document.activeElement;
