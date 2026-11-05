@@ -92,8 +92,11 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 .brand-intro-host .brand{pointer-events:auto;will-change:left,top,font-size,letter-spacing}
 .brand-intro-host .split-word,.brand-wordmark .split-word{perspective:none;line-height:1.2;letter-spacing:inherit;font-weight:inherit}
 .brand-wordmark .word-z{color:var(--purple)}
-/* The opening wordmark keeps the same face as the app header. Do not restyle it when the flight starts. */
-.welcome-entry .auth-header .split-word,.brand-intro-host .auth-header .split-word{font-family:DivZplitManrope,Arial,sans-serif;font-weight:850;font-style:normal}
+/* The animated and fixed auth wordmarks must share the same face at handoff. */
+.modern-auth .auth-header{--ink:#2d203e;--accent:#8552db}
+.modern-auth .auth-header .brand,.modern-auth .auth-header .split-word{font-family:DivZplitManrope,Arial,sans-serif;font-weight:850;font-style:normal}
+.modern-auth .auth-header .split-word{perspective:none;line-height:1.2;letter-spacing:inherit}
+.modern-auth .auth-header .word-z,.modern-auth .auth-header .word-period{color:#8552db}
 .brand-intro-host.modern-auth{--ink:#2d203e;--accent:#8552db}
 
 /* Prevent the opening letters from being clipped on narrow screens. */
