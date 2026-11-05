@@ -35,14 +35,26 @@ export function startIntroTransition({root,brand,ready,onFinish}) {
   try{
    try{await document.fonts.load('850 48px DivZplitManrope');}catch{/* the assembly still runs with the fallback */}
    await document.fonts.ready;
-   const natural=brand.getBoundingClientRect(),ratio=Math.min((viewport?.width||innerWidth)-64,360)/natural.width;
-   const centre=visibleCentre(),large={left:centre.x+'px',top:centre.y+'px',fontSize:baseSize*ratio+'px',letterSpacing:baseSpacing*ratio+'px'};
-   Object.assign(brand.style,large,{visibility:'visible'});
-   // Keep the original lateral entrance within the visible phone screen.
-   // Measure the settled text before its letter animations start.
-   const text=brand.querySelector('.split-word').getBoundingClientRect();
-   const viewportLeft=viewport?.offsetLeft||0,viewportRight=viewportLeft+(viewport?.width||innerWidth);
-   const sideDistance=Math.max(0,Math.min(95,text.left-viewportLeft-12,viewportRight-text.right-12));
+   const centre=visibleCentre();
+   const viewW=viewport?.width||innerWidth,viewLeft=viewport?.offsetLeft||0,narrow=viewW<760;
+   const margin=narrow?44:72;
+   const natural=brand.getBoundingClientRect();
+   const cap=Math.min(viewW-margin*2,narrow?viewW*0.72:420);
+   let ratio=Math.min((cap||1)/Math.max(natural.width,1),narrow?1:1.35);
+   if(!Number.isFinite(ratio)||ratio<=0)ratio=1;
+   const apply=amount=>{
+    const next={left:centre.x+'px',top:centre.y+'px',fontSize:baseSize*amount+'px',letterSpacing:baseSpacing*amount+'px'};
+    Object.assign(brand.style,next,{visibility:'visible'});
+    return next;
+   };
+   let large=apply(ratio);
+   let text=brand.querySelector('.split-word').getBoundingClientRect();
+   for(let pass=0;pass<4&&(text.width>viewW-margin*2||text.left<viewLeft+16||text.right>viewLeft+viewW-16);pass++){
+    ratio*=Math.min(1,(viewW-margin*2)/Math.max(text.width,1))*0.96;
+    large=apply(ratio);text=brand.querySelector('.split-word').getBoundingClientRect();
+   }
+   const sideRoom=Math.max(0,Math.min(text.left-viewLeft-12,viewLeft+viewW-text.right-12));
+   const sideDistance=Math.min(narrow?28:95,sideRoom);
    host.style.setProperty('--intro-side-distance',sideDistance+'px');
    host.classList.add('brand-intro-active');
    // Original assembly and original 57% hold, then the same remaining 1161 ms.

@@ -1,4 +1,4 @@
-import {startIntroTransition} from './intro-transition.js?v=start-58';
+import {startIntroTransition} from './intro-transition.js?v=start-64';
 import {helpCentreView,filterHelp} from './help.js?v=play-58';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=play-61';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';
@@ -13,7 +13,7 @@ import {Cloud} from './cloud.js?v=play-58';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
 import {NotificationCentre} from './notifications.js?v=logo-52';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=play-59';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=play-64';
 
 initializeLanguage();
 // Keep Supabase's existing allowed root callback; landing-route forwards it to /app/.
