@@ -8,7 +8,7 @@ import os
 from urllib.parse import urlsplit, parse_qs
 from playwright.sync_api import sync_playwright, expect
 
-BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3000/').rstrip('/')+'/'
+BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3000/app/').rstrip('/')+'/'
 errors=[]
 USER={'id':'11111111-1111-4111-8111-111111111111','email':'ana@example.test',
       'user_metadata':{'display_name':'Ana'}}

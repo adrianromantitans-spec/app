@@ -1,7 +1,7 @@
 """Real browser languages; local demo data only, no emails or real accounts."""
 import os
 from playwright.sync_api import sync_playwright,expect
-BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3000/')
+BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3000/app/')
 with sync_playwright() as p:
  browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  errors=[]

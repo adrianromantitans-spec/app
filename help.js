@@ -1,4 +1,4 @@
-import {language} from './i18n.js?v=help-50';
+import {language} from './i18n.js?v=landing-51';
 const copy={
  es:{title:'Centro de ayuda',back:'Volver a Cuenta',intro:'Respuestas para compartir gastos sin complicaciones.',search:'Buscar en la ayuda',placeholder:'Pagos, monedas, notificaciones…',count:'respuestas',countOne:'respuesta',empty:'No encontramos una respuesta para esa búsqueda.',clear:'Borrar búsqueda',contactTitle:'¿Necesitas más ayuda?',contactText:'Escríbenos y cuéntanos qué ha pasado.',contact:'Contactar con soporte'},
  en:{title:'Help centre',back:'Back to Account',intro:'Answers to make sharing expenses easier.',search:'Search help',placeholder:'Payments, currencies, notifications…',count:'answers',countOne:'answer',empty:'We could not find an answer for that search.',clear:'Clear search',contactTitle:'Need more help?',contactText:'Write to us and tell us what happened.',contact:'Contact support'},

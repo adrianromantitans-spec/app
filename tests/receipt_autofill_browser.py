@@ -2,7 +2,7 @@
 from pathlib import Path
 from time import monotonic
 exec(Path('tests/receipt_ocr_browser.py').read_text().split('with sync_playwright() as p:')[0])
-BASE=os.environ.get('OCR_URL','http://127.0.0.1:3002/')
+BASE=os.environ.get('OCR_URL','http://127.0.0.1:3002/app/')
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  for lang in ['es-ES','en-GB','ro-RO']:

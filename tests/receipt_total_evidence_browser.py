@@ -1,7 +1,7 @@
 """A weakly read TOTAL row needs corroboration; VAT lines cannot corroborate it."""
 from pathlib import Path
 exec(Path('tests/receipt_ocr_browser.py').read_text().split('with sync_playwright() as p:')[0])
-BASE=os.environ.get('OCR_URL','http://127.0.0.1:3002/')
+BASE=os.environ.get('OCR_URL','http://127.0.0.1:3002/app/')
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  for price,repeated,accepted in [('145.00',True,True),('14.37',True,False),('145.00',False,False)]:

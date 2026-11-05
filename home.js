@@ -1,4 +1,4 @@
-import {balances,expenseShares} from './model.js?v=simplify-42';
+import {balances,expenseShares} from './model.js?v=landing-51';
 export const groupMode=g=>g?.type==='Viaje'?'travel':'home';
 export function dayOffset(iso,now=new Date()) {
  const date=new Date(iso);if(!Number.isFinite(date.getTime()))return null;

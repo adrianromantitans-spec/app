@@ -66,7 +66,7 @@ def context(browser,actor,locale='es-ES',enabled=True):
   else:fulfill(route,{'code':'PGRST202'},404)
  c.route('https://nexo-test.supabase.co/**',api)
  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
- page.goto(__import__('os').environ.get('NEXO_URL','http://127.0.0.1:3003/'));expect(page.locator('.balance-stat')).to_be_visible();return c,page
+ page.goto(__import__('os').environ.get('NEXO_URL','http://127.0.0.1:3003/app/'));expect(page.locator('.balance-stat')).to_be_visible();return c,page
 
 
 def go(page,route):

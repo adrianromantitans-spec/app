@@ -23,9 +23,10 @@ self.addEventListener('push',event=>event.waitUntil((async()=>{
 self.addEventListener('notificationclick',event=>{
  event.notification.close();event.waitUntil((async()=>{
   const data=event.notification.data,binding=await readBinding();if(!validId(data?.notificationId)||binding?.userId!==data?.userId)return;
-  const url=new URL('./',self.registration.scope);url.searchParams.set('notification',data.notificationId);
+  const url=new URL('./app/',self.registration.scope);url.searchParams.set('notification',data.notificationId);
   const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
-  const client=windows.find(window=>window.url.startsWith(self.registration.scope));
+  const appURL=new URL('./app/',self.registration.scope).href;
+  const client=windows.find(window=>window.url.startsWith(appURL))||windows.find(window=>window.url.startsWith(self.registration.scope));
   if(client?.navigate){await client.navigate(url.href);await client.focus();}else await self.clients.openWindow(url.href);
  })());
 });

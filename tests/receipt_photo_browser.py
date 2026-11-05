@@ -2,7 +2,7 @@
 import io,json,os,subprocess
 from PIL import Image,ImageDraw,ImageFont
 from playwright.sync_api import sync_playwright,expect
-BASE=os.environ.get('OCR_URL','http://127.0.0.1:3002/')
+BASE=os.environ.get('OCR_URL','http://127.0.0.1:3002/app/')
 def photo(rotation=0):
  paper=Image.new('RGB',(900,3300),(242,239,232));draw=ImageDraw.Draw(paper)
  font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf',24)

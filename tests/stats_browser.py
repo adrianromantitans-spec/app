@@ -12,7 +12,7 @@ with sync_playwright() as p:
     c=b.new_context(locale=language,reduced_motion='reduce',viewport={'width':402,'height':874})
     c.add_init_script('localStorage.setItem("nexo-local-v1",'+json.dumps(json.dumps(state))+')')
     c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',body='export const cloudConfig={};'))
-    page=c.new_page();page.goto('http://127.0.0.1:3000/')
+    page=c.new_page();page.goto('http://127.0.0.1:3000/app/')
     page.locator('[data-action=demo]').click()
     expect(page.locator('.balance-stat')).to_have_class('stat-card balance-stat '+balance)
     if payer:

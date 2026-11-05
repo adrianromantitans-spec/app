@@ -1,6 +1,6 @@
 """Navigation and action tests for the glass layout. Demo data only."""
 from playwright.sync_api import sync_playwright,expect
-BASE='http://127.0.0.1:3000/'
+BASE='http://127.0.0.1:3000/app/'
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  labels={

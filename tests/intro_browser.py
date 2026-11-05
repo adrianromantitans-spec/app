@@ -1,7 +1,7 @@
 """One logo moves into the centred glass panel; skipping and reduced motion work."""
 from playwright.sync_api import sync_playwright, expect
 
-BASE='http://127.0.0.1:3000/'
+BASE='http://127.0.0.1:3000/app/'
 with sync_playwright() as p:
     browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
     for width,height in [(390,844),(1440,1000)]:

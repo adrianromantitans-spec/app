@@ -31,7 +31,7 @@ with sync_playwright() as p:
    else:route.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}');return
    route.fulfill(content_type='application/json',body=json.dumps(value))
   c.route('https://nexo-test.supabase.co/**',api)
-  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3005/'))
+  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3005/app/'))
   expect(page.locator('.notification-onboarding')).to_be_visible()
   assert page.evaluate('window.__permissionCalls')==0
   page.wait_for_function("localStorage.getItem('divzplit-notification-intro:22222222-2222-4222-8222-222222222222')==='1'")

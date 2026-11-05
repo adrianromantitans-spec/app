@@ -1,0 +1,101 @@
+{
+  "source": "Actual DivZplit UI rendered by Playwright with fictional local data",
+  "images": {
+    "es-home": {
+      "width": 393,
+      "height": 852
+    },
+    "es-balance": {
+      "width": 349,
+      "height": 191
+    },
+    "es-recent": {
+      "width": 349,
+      "height": 80
+    },
+    "es-group": {
+      "width": 393,
+      "height": 852
+    },
+    "es-expense": {
+      "width": 393,
+      "height": 852
+    },
+    "es-settlements": {
+      "width": 393,
+      "height": 852
+    },
+    "es-house": {
+      "width": 393,
+      "height": 852
+    },
+    "es-friends": {
+      "width": 393,
+      "height": 852
+    },
+    "en-home": {
+      "width": 393,
+      "height": 852
+    },
+    "en-balance": {
+      "width": 349,
+      "height": 191
+    },
+    "en-recent": {
+      "width": 349,
+      "height": 80
+    },
+    "en-group": {
+      "width": 393,
+      "height": 852
+    },
+    "en-expense": {
+      "width": 393,
+      "height": 852
+    },
+    "en-settlements": {
+      "width": 393,
+      "height": 852
+    },
+    "en-house": {
+      "width": 393,
+      "height": 852
+    },
+    "en-friends": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-home": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-balance": {
+      "width": 349,
+      "height": 191
+    },
+    "ro-recent": {
+      "width": 349,
+      "height": 80
+    },
+    "ro-group": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-expense": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-settlements": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-house": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-friends": {
+      "width": 393,
+      "height": 852
+    }
+  }
+}

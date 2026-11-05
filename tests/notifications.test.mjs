@@ -24,7 +24,7 @@ test('expired endpoints are disabled; temporary failures retry without leaking r
  assert.equal(finished[0].p_disable,true);assert.equal(finished[0].p_retry,false);assert.equal(finished[1].p_retry,true);assert.equal(finished[1].p_disable,false);
 });
 test('service worker shows only the bound account and opens only the app scope',async()=>{
- const events={},stored=new Map(),shown=[],opened=[];const scope='https://example.test/app/';
+ const events={},stored=new Map(),shown=[],opened=[];const scope='https://example.test/';
  const cache={match:async key=>stored.get(key)?.clone(),put:async(key,value)=>stored.set(key,value),delete:async key=>stored.delete(key)};
  const self={registration:{scope,showNotification:async(...args)=>shown.push(args)},clients:{claim:async()=>{},matchAll:async()=>[],openWindow:async url=>opened.push(url)},skipWaiting:()=>{},addEventListener:(name,handler)=>events[name]=handler};
  vm.runInNewContext(await readFile(new URL('../sw.js',import.meta.url),'utf8'),{self,caches:{open:async()=>cache},URL,Response});

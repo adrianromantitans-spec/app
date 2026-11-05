@@ -3,11 +3,15 @@
 Una web para organizar viajes y planes en grupo: gastos compartidos, presupuestos,
 votaciones y tareas, con un diseño adaptable a móvil.
 
-Al abrir sin sesión aparece **Bienvenido a Nexo**, con registro e inicio de sesión.
-La demo se abre únicamente con **Explorar una demo**. Una sesión válida conserva
-el acceso a los grupos al recargar. Las opciones de Google y Apple se habilitan
-según su configuración real en Supabase; consulta
-[la guía de acceso social](docs/SOCIAL-LOGIN.md) para activarlas.
+Esta rama prepara una landing pública en `/` y conserva la aplicación en `/app/`.
+Incluye capturas de la interfaz real con datos de ejemplo y textos en español,
+inglés y rumano. **Pendiente de publicación:** consulta la
+[guía de migración y revisión](docs/LANDING-MIGRATION.md), incluida la configuración
+necesaria de las URL de retorno en Supabase antes de desplegar.
+
+Dentro de la aplicación, una sesión válida conserva el acceso a los grupos al
+recargar. Google y Apple dependen de su configuración en Supabase; consulta
+[la guía de acceso social](docs/SOCIAL-LOGIN.md).
 
 ## Ejecutar
 

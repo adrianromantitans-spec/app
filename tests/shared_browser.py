@@ -12,7 +12,7 @@ import subprocess
 from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright, expect
 
-BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3000/')
+BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3000/app/')
 BASE=BASE.rstrip('/')+'/'
 CONTAINER=os.environ.get('NEXO_TEST_CONTAINER','nexo-postgres-tests')
 OWNER='11111111-1111-4111-8111-111111111111'

@@ -7,7 +7,7 @@ from time import monotonic
 from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright,expect
 photo=os.environ['RECEIPT_TEST_IMAGE'];amount=os.environ['RECEIPT_TEST_AMOUNT'];currency=os.environ.get('RECEIPT_TEST_CURRENCY','EUR')
-base=os.environ.get('OCR_URL','http://127.0.0.1:3002/')
+base=os.environ.get('OCR_URL','http://127.0.0.1:3002/app/')
 state=json.loads(subprocess.check_output(['node','--input-type=module','-e',"import {seed} from './model.js';console.log(JSON.stringify(seed()))"],text=True))
 for group in state['groups']:group['currency']=currency
 with sync_playwright() as p:

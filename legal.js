@@ -1,8 +1,8 @@
-import {tr,ui,language} from './i18n.js?v=help-50';
+import {tr,ui,language} from './i18n.js?v=landing-51';
 export const TERMS_VERSION='2026-11-02.2';
 export const PRIVACY_VERSION='2026-11-02.3';
 export const SUPPORT_EMAIL='support@divzplit.com';
-export function legalURL(kind){if(!['privacy','terms'].includes(kind))throw new Error('Invalid legal document');return './'+(kind==='privacy'?'privacidad':'condiciones')+'/'+(language==='en'?'':language+'/');}
+export function legalURL(kind){if(!['privacy','terms'].includes(kind))throw new Error('Invalid legal document');return new URL('./'+(kind==='privacy'?'privacidad':'condiciones')+'/'+(language==='en'?'':language+'/'),import.meta.url).href;}
 export function legalMetadata(accepted,ageBand,source){
  if(accepted!==true)throw new Error(tr('Debes aceptar las condiciones para crear una cuenta.'));
  if(ageBand!=='16_or_over')throw new Error(tr(ageBand==='under_16'?'Debes tener al menos 16 años para registrarte.':'Selecciona tu franja de edad.'));

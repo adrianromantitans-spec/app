@@ -1,11 +1,8 @@
-import {translations} from './translations.js?v=help-50';
+import {translations} from './translations.js?v=landing-51';
 
-const supported=new Set(['es','en','ro']);
-export function detectLanguage(preferences=[]) {
-  for(const preference of preferences){if(typeof preference!=='string')continue;const base=preference.toLowerCase().split(/[-_]/)[0];if(supported.has(base))return base;}
-  return 'en';
-}
-const preferences=typeof window==='undefined'?['es-ES']:(navigator.languages?.length?navigator.languages:[navigator.language]);
+export {detectLanguage} from './language.js?v=landing-51';
+import {detectLanguage,languagePreferences} from './language.js?v=landing-51';
+const preferences=languagePreferences();
 export const language=detectLanguage(preferences);
 export const locale=(()=>{
   for(const preference of preferences){if(typeof preference!=='string'||preference.toLowerCase().split(/[-_]/)[0]!==language)continue;try{if(Intl.DateTimeFormat.supportedLocalesOf([preference]).length)return preference;}catch{/* use a valid locale below */}}

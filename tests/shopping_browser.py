@@ -2,7 +2,7 @@
 from pathlib import Path
 import subprocess
 import os
-prefix=Path('tests/personal_browser.py').read_text().split('from datetime import datetime')[0].replace('http://127.0.0.1:3003/',os.environ.get('NEXO_URL','http://127.0.0.1:3007/'))
+prefix=Path('tests/personal_browser.py').read_text().split('from datetime import datetime')[0].replace('http://127.0.0.1:3003/app/',os.environ.get('NEXO_URL','http://127.0.0.1:3007/app/'))
 prefix=prefix.replace("  elif path.endswith('/nexo_save_group'):",'''  elif path.endswith('/divzplit_shopping_list'):fulfill(route,dbcall('divzplit_shopping_list',[q(data['p_id'])],actor))
   elif path.endswith('/divzplit_shopping_action'):
    result=dbcall('divzplit_shopping_action',[q(data['p_id']),q(data['p_action']),q(json.dumps(data['p_item']))+'::jsonb'],actor);fulfill(route,result)

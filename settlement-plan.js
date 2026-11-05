@@ -1,4 +1,4 @@
-import {balances,settlements} from './model.js?v=simplify-42';
+import {balances,settlements} from './model.js?v=landing-51';
 
 // A zero-sum component with k members can settle in at most k-1 direct
 // transfers. Maximizing disjoint zero-sum components minimizes transfers.

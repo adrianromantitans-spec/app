@@ -1,18 +1,18 @@
-import {helpCentreView,filterHelp} from './help.js?v=help-50';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=help-50';
-import {settlementPlan} from './settlement-plan.js?v=simplify-42';
-import {groupMode,homeSummary,groupForMode} from './home.js?v=simplify-42';
-import {convertedAmount,validConversion} from './fx.js?v=simplify-42';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=simplify-42';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=simplify-42';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=help-50';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=ocr-18';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=simplify-42';
-import {Cloud} from './cloud.js?v=help-50';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=simplify-42';
-import {NotificationCentre} from './notifications.js?v=simplify-42';
+import {helpCentreView,filterHelp} from './help.js?v=landing-51';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=landing-51';
+import {settlementPlan} from './settlement-plan.js?v=landing-51';
+import {groupMode,homeSummary,groupForMode} from './home.js?v=landing-51';
+import {convertedAmount,validConversion} from './fx.js?v=landing-51';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=landing-51';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=landing-51';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=landing-51';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=landing-51';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=landing-51';
+import {Cloud} from './cloud.js?v=landing-51';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
+import {NotificationCentre} from './notifications.js?v=landing-51';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons} from './auth-ui.js?v=help-50';
+import {welcomePage,socialButtons} from './auth-ui.js?v=landing-51';
 
 initializeLanguage();
 
@@ -1248,13 +1248,13 @@ async function startAccount() {
     else inviteError=tr('El enlace de invitación no está completo. Pide a tu amigo que lo copie de nuevo.');
   }
   const cleanURL=new URL(location.href);
-  const queryCallback=['code','error','error_description','error_code'].some(key=>cleanURL.searchParams.has(key));
-  if(queryCallback) for(const key of ['code','error','error_description','error_code'])cleanURL.searchParams.delete(key);
+  const queryCallback=['code','error','error_description','error_code','legacy_auth_return'].some(key=>cleanURL.searchParams.has(key));
+  if(queryCallback) for(const key of ['code','error','error_description','error_code','legacy_auth_return'])cleanURL.searchParams.delete(key);
   if(params.has('invite')||params.has('access_token')||params.has('error'))cleanURL.hash='';
   if(queryCallback||cleanURL.hash!==location.hash)history.replaceState(null,'',cleanURL.pathname+cleanURL.search+cleanURL.hash);
   try {
     if (cloud.enabled) {
-      const oauthComplete=await cloud.finishOAuth(callbackSearch,new URL('./',location.href).href);
+      const oauthComplete=await cloud.finishOAuth(callbackSearch,new URL('./',location.href).href,{allowLegacyRoot:new URLSearchParams(callbackSearch).get('legacy_auth_return')==='1'});
       returnedFromEmail=await cloud.acceptCallback(hash);
       if(!oauthComplete)await cloud.restore();
       if (cloud.user&&!cloud.recovering) await connectAccount();

@@ -1,7 +1,7 @@
-import {legalMetadata} from './legal.js?v=help-50';
-import {currencyOf} from './model.js?v=simplify-42';
-import {tr,language} from './i18n.js?v=help-50';
-import {receiptPath} from './extras.js?v=ocr-18';
+import {legalMetadata} from './legal.js?v=landing-51';
+import {currencyOf} from './model.js?v=landing-51';
+import {tr,language} from './i18n.js?v=landing-51';
+import {receiptPath} from './extras.js?v=landing-51';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;
@@ -159,7 +159,7 @@ export class Cloud {
     url.search=new URLSearchParams({provider,redirect_to:redirectURL.href,code_challenge:challenge,code_challenge_method:'s256'}).toString();
     return url.href;
   }
-  async finishOAuth(search,redirect) {
+  async finishOAuth(search,redirect,{allowLegacyRoot=false}={}) {
     const params=new URLSearchParams(search);
     if (params.has('error')) throw new CloudError(params.get('error')==='access_denied'?tr('Has cancelado el acceso. Puedes volver a intentarlo o entrar con tu correo.'):tr('No se ha podido completar el acceso con Google o Apple. Vuelve a intentarlo.'));
     const code=params.get('code');if (!code) return false;
@@ -169,7 +169,9 @@ export class Cloud {
       if(oauthRecord){record=JSON.parse(oauthRecord);this.temporaryStorage.removeItem(this.storageKey+':oauth');}
       else{record=JSON.parse(this.storage?.getItem(this.storageKey+':recovery-pkce')||'null');this.storage?.removeItem(this.storageKey+':recovery-pkce');if(record?.provider!=='recovery')record=null;}
     } catch {record=null;}
-    if (!record || !/^[A-Za-z0-9_-]{43,128}$/.test(record.verifier) || !['google','apple','recovery'].includes(record.provider) || record.redirect!==redirect || !Number.isFinite(record.createdAt) || Date.now()-record.createdAt>15*60*1000 || record.createdAt>Date.now()+60000) throw new CloudError(tr('Este enlace de acceso ha caducado o se abrió en otro navegador. Solicita un nuevo enlace o vuelve a continuar con Google o Apple.'));
+    let legacyReturn=false;
+    if(allowLegacyRoot&&record?.redirect){try{const old=new URL(record.redirect),current=new URL(redirect);legacyReturn=old.origin===current.origin&&!old.search&&!old.hash&&new URL('app/',old).href===current.href;}catch{/* preserve strict callback checks */}}
+    if (!record || !/^[A-Za-z0-9_-]{43,128}$/.test(record.verifier) || !['google','apple','recovery'].includes(record.provider) || (record.redirect!==redirect&&!legacyReturn) || !Number.isFinite(record.createdAt) || Date.now()-record.createdAt>15*60*1000 || record.createdAt>Date.now()+60000) throw new CloudError(tr('Este enlace de acceso ha caducado o se abrió en otro navegador. Solicita un nuevo enlace o vuelve a continuar con Google o Apple.'));
     const result=await this.request('/auth/v1/token?grant_type=pkce',{method:'POST',body:{auth_code:code,code_verifier:record.verifier},authenticated:false});
     const session=this.sessionFrom(result);
     if (!session) throw new CloudError(tr('No se ha podido abrir la sesión. Vuelve a intentarlo.'));

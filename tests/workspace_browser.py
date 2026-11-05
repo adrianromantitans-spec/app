@@ -1,7 +1,7 @@
 """Approved sidebar design, semantic balance states and navigation with local account fixtures."""
 import os
 from pathlib import Path
-exec(Path('tests/personal_browser.py').read_text().split('from datetime import datetime')[0].replace('http://127.0.0.1:3003/',os.environ.get('NEXO_URL','http://127.0.0.1:3010/')))
+exec(Path('tests/personal_browser.py').read_text().split('from datetime import datetime')[0].replace('http://127.0.0.1:3003/app/',os.environ.get('NEXO_URL','http://127.0.0.1:3010/app/')))
 group['document'].update({'type':'Convivencia','currency':'EUR','name':'Nuestro piso'})
 group['document']['expenses'][0]['title']='Compra semanal'
 requests.append({'id':str(uuid.uuid4()),'group_id':GID,'from_id':FRIEND,'to_id':OWNER,'amount':1850,'currency':'EUR','status':'pending'})

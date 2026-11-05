@@ -12,11 +12,11 @@ with sync_playwright() as p:
   settings={'expenses':True,'polls':True,'tasks':True,'payments':True,'shopping':True,'shopping_ready':True,'muted_groups':[],'push_ready':True,'public_key':'B'+'A'*86};read=False;deleted=False;saved=[];registered=[];open_kind='expenses.added'
   c.add_init_script('localStorage.setItem("nexo-session-v1:nexo-test.supabase.co",'+json.dumps(json.dumps({'access_token':'fixture','refresh_token':'fixture-refresh','expires_at':int(time.time())+3600}))+');')
   c.add_init_script('''
-   window.__permissionCalls=0;window.__binding=null;window.__subscription=null;window.__permission='default';
+   window.__registrationURLs=[];window.__permissionCalls=0;window.__binding=null;window.__subscription=null;window.__permission='default';
    Object.defineProperty(Notification,'permission',{get:()=>window.__permission});
    Notification.requestPermission=()=>{window.__permissionCalls++;window.__permission='granted';return Promise.resolve('granted');};
    const registration={active:{postMessage:(data,ports)=>{if(data.type==='CLEAR_PUSH_ACCOUNT')window.__binding=null;if(data.type==='SET_PUSH_ACCOUNT')window.__binding={userId:data.userId};ports[0].postMessage(window.__binding);}},pushManager:{getSubscription:()=>Promise.resolve(window.__subscription),subscribe:async()=>window.__subscription={endpoint:'https://fcm.googleapis.com/fcm/send/fixture',toJSON:()=>({endpoint:'https://fcm.googleapis.com/fcm/send/fixture',keys:{p256dh:'A'.repeat(87),auth:'A'.repeat(22)}}),unsubscribe:async()=>{window.__subscription=null;return true;}}}};
-   Object.defineProperty(navigator,'serviceWorker',{value:{register:async()=>registration,ready:Promise.resolve(registration)}});
+   Object.defineProperty(navigator,'serviceWorker',{value:{register:async(url,options)=>{window.__registrationURLs.push({url:String(url),scope:options.scope});return registration;},ready:Promise.resolve(registration)}});
   ''')
   c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body="export const cloudConfig={url:'https://nexo-test.supabase.co',publishableKey:'sb_publishable_fixture'};"))
   def api(route):
@@ -38,7 +38,7 @@ with sync_playwright() as p:
    else:route.fulfill(status=404,content_type='application/json',body='{"code":"PGRST202"}');return
    route.fulfill(content_type='application/json',body=json.dumps(value))
   c.route('https://nexo-test.supabase.co/**',api)
-  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3004/'))
+  page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3004/app/'))
   expect(page.locator('.notification-count')).to_have_text('1')
   assert page.evaluate('window.__permissionCalls')==0
   page.locator('.notification-bell').click();expect(page.locator('.notification-item')).to_be_visible()
@@ -53,6 +53,7 @@ with sync_playwright() as p:
    expect(page.locator('[data-notification-action="disable"]')).to_be_visible()
    assert page.evaluate('window.__permissionCalls')==1 and len(registered)==1
    assert registered[0]['p_language']==locale[:2]
+   assert page.evaluate("window.__registrationURLs.length>0 && window.__registrationURLs.every(r=>new URL(r.url).pathname==='/sw.js' && r.scope==='/')"), 'Keep the existing root worker and push subscription from /app/'
    assert page.evaluate('window.__binding.userId')==OWNER
   page.locator('[data-notification-pref="expenses"]').uncheck()
   page.locator('[data-notification-pref="shopping"]').uncheck()
@@ -87,7 +88,7 @@ with sync_playwright() as p:
   expect(page.locator('.planning-list-dialog')).to_have_attribute('data-kind','polls')
   page.locator('[data-action="close-modal"]').first.click()
   # An OS push link also opens only one alert, without navigating into creation.
-  page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3004/')+'?notification='+NID)
+  page.goto(os.environ.get('NEXO_URL','http://127.0.0.1:3004/app/')+'?notification='+NID)
   expect(page.locator('.notification-detail-subject')).to_be_visible()
   assert page.locator('#poll-form,#task-form,#expense-form,.planning-list-dialog').count()==0
   assert 'notification=' not in page.url

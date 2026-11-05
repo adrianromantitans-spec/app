@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
 from playwright.sync_api import sync_playwright,expect
-BASE=os.environ.get('OCR_URL','http://127.0.0.1:3001/')
+BASE=os.environ.get('OCR_URL','http://127.0.0.1:3001/app/')
 def receipt(lines):
  im=Image.new('RGB',(850,1000),'white');draw=ImageDraw.Draw(im)
  font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf',32)

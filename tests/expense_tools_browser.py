@@ -3,7 +3,7 @@ with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  page=b.new_page(locale='es-ES',viewport={'width':390,'height':844})
  page.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
- page.goto('http://127.0.0.1:3000/');page.get_by_role('button',name='Explorar una demo',exact=False).click()
+ page.goto('http://127.0.0.1:3000/app/');page.get_by_role('button',name='Explorar una demo',exact=False).click()
  page.get_by_role('button',name='Crear grupo',exact=True).first.click()
  f=page.locator('#group-form');f.get_by_label('Nombre del grupo',exact=True).fill('Repartos de prueba')
  f.get_by_label('¿Quién se apunta?',exact=False).fill('Ana, Luis');f.get_by_label('Presupuesto total del grupo',exact=False).fill('1000')

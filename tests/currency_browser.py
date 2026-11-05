@@ -4,7 +4,7 @@ with sync_playwright() as p:
  c=b.new_context(locale='en-GB',viewport={'width':390,'height':844})
  c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
  page=c.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
- page.goto('http://127.0.0.1:3000/')
+ page.goto('http://127.0.0.1:3000/app/')
  page.get_by_role('button',name='Explore a demo',exact=False).click()
  assert '€' in page.locator('body').inner_text()
  page.get_by_role('button',name='Create group',exact=True).first.click()
@@ -36,7 +36,7 @@ with sync_playwright() as p:
  assert '€' in page.locator('.group-cards').inner_text()
  saved=c.storage_state();romanian=b.new_context(locale='ro-RO',storage_state=saved)
  romanian.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
- rp=romanian.new_page();rp.goto('http://127.0.0.1:3000/')
+ rp=romanian.new_page();rp.goto('http://127.0.0.1:3000/app/')
  rp.get_by_role('button',name='Explorează un demo',exact=False).click()
  assert 'RON' in rp.locator('body').inner_text()
  assert rp.evaluate("JSON.parse(localStorage.getItem('nexo-local-v1'))")==state
