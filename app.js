@@ -513,14 +513,22 @@ function dressSelects(scope=document){
    face.disabled=select.disabled;menu.replaceChildren();
    [...select.options].forEach((option,index)=>{
     const choice=document.createElement('button');choice.type='button';choice.className='app-select-option'+(option.selected?' is-selected':'');choice.setAttribute('role','option');choice.textContent=option.textContent;choice.disabled=option.disabled;
-    choice.addEventListener('click',()=>{select.selectedIndex=index;select.dispatchEvent(new Event('change',{bubbles:true}));menu.hidden=true;face.setAttribute('aria-expanded','false');});
+    choice.addEventListener('click',event=>{
+     // Cancel label activation before change repaints and removes the clicked option.
+     event.preventDefault();event.stopPropagation();
+     menu.hidden=true;face.setAttribute('aria-expanded','false');
+     select.selectedIndex=index;select.dispatchEvent(new Event('change',{bubbles:true}));
+     face.focus({preventScroll:true});
+    });
     menu.append(choice);
    });
   };
   paint();
   select.addEventListener('change',paint);
   select.addEventListener('pointerdown',event=>event.preventDefault());
-  face.addEventListener('click',()=>{
+  select.addEventListener('click',event=>event.preventDefault());
+  face.addEventListener('click',event=>{
+   event.preventDefault();
    document.querySelectorAll('.app-select-menu').forEach(other=>{if(other!==menu)other.hidden=true;});
    menu.hidden=!menu.hidden;face.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden){paint();place();}
   });
