@@ -6,9 +6,9 @@ import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=vis
 import {convertedAmount,validConversion} from './fx.js?v=landing-51';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=landing-51';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=landing-51';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=cats-71';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=groceries-72';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=landing-51';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji} from './model.js?v=cats-69';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji} from './model.js?v=groceries-72';
 import {Cloud} from './cloud.js?v=play-58';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
 import {NotificationCentre} from './notifications.js?v=logo-52';
@@ -340,7 +340,7 @@ async function shoppingAction(el){
 
 function expenseList(items) {
   if (!items.length) return empty(tr('Las cuentas empiezan aquí'),tr('Añade el primer gasto y DivZplit calculará el reparto.'),'new-expense',tr('Añadir gasto'));
-  return `<div class="expense-list">${items.map(e=>ui`<button type="button" class="expense-row" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}"><span class="expense-icon ${categoryTone(e.category)}">${categoryMark(e.category)}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?tr(' · Ticket'):''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><span class="expense-detail-button" aria-hidden="true">${icon('chevron')}</span></button>`).join('')}</div>`;
+  return `<div class="expense-list">${items.map(e=>ui`<button type="button" class="expense-row" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}"><span class="expense-icon ${categoryTone(e.category)}">${categoryMark(e.category)}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?` <span class="expense-receipt-badge">${icon('receipt')}${tr('Ticket')}</span>`:''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><span class="expense-detail-button" aria-hidden="true">${icon('chevron')}</span></button>`).join('')}</div>`;
 }
 
 function expensesView() {

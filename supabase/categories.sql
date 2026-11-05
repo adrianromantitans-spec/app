@@ -1,17 +1,24 @@
--- Run once in the Supabase SQL editor. Keeps the current validation and adds the new expense categories.
+-- Run in the Supabase SQL editor to enable all expense categories, including Supermercado.
+-- Safe to repeat on both the original and expanded category lists.
 begin;
 do $$
 declare src text;
+        previous_list text;
+        categories text := '''Comida'',''Supermercado'',''Transporte'',''Gasolina'',''Alojamiento'',''Viaje'',''Actividades'',''Compras'',''Salud'',''Facturas'',''Ocio'',''Otros''';
 begin
   select pg_get_functiondef('public.nexo_assert_document(jsonb)'::regprocedure) into src;
-  if position('Gasolina' in src)>0 then
+  if position(categories in src)>0 then
     return;
   end if;
-  if position('Comida'',''Alojamiento'',''Transporte'',''Actividades'',''Otros' in src)=0 then
-    raise exception 'No se encontró la lista de categorías';
-  end if;
-  execute replace(src,
-    'Comida'',''Alojamiento'',''Transporte'',''Actividades'',''Otros''',
-    'Comida'',''Transporte'',''Gasolina'',''Alojamiento'',''Viaje'',''Actividades'',''Compras'',''Salud'',''Facturas'',''Ocio'',''Otros''');
+  foreach previous_list in array array[
+    '''Comida'',''Transporte'',''Gasolina'',''Alojamiento'',''Viaje'',''Actividades'',''Compras'',''Salud'',''Facturas'',''Ocio'',''Otros''',
+    '''Comida'',''Alojamiento'',''Transporte'',''Actividades'',''Otros'''
+  ] loop
+    if position(previous_list in src)>0 then
+      execute replace(src, previous_list, categories);
+      return;
+    end if;
+  end loop;
+  raise exception 'No se encontró la lista de categorías';
 end $$;
 commit;

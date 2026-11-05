@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=cats-71';
+import {translations} from './translations.js?v=groceries-72';
 
 export {detectLanguage} from './language.js?v=landing-51';
 import {detectLanguage,languagePreferences} from './language.js?v=landing-51';

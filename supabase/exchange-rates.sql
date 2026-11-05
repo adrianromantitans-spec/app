@@ -73,7 +73,7 @@ begin
       or jsonb_typeof(e->'amount') is distinct from 'number' or ((e->>'amount') ~ '^[0-9]+$') is not true
       or (e->>'amount')::numeric not between 1 and 100000000
       or jsonb_typeof(e->'participants') is distinct from 'array'
-      or (e->>'category' in ('Comida','Transporte','Gasolina','Alojamiento','Viaje','Actividades','Compras','Salud','Facturas','Ocio','Otros')) is not true
+      or (e->>'category' in ('Comida','Supermercado','Transporte','Gasolina','Alojamiento','Viaje','Actividades','Compras','Salud','Facturas','Ocio','Otros')) is not true
       or jsonb_typeof(e->'date') is distinct from 'string' or ((e->>'date') ~ '^\d{4}-\d{2}-\d{2}$') is not true then
       raise exception using errcode='22023',message='Invalid expense';
     end if;

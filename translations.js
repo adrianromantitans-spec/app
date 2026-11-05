@@ -1437,6 +1437,10 @@ export const translations = {
     "en": "Other",
     "ro": "Altele"
   },
+  "Supermercado": {
+    "en": "Groceries",
+    "ro": "Supermarket"
+  },
   "Compras": {
     "en": "Shopping",
     "ro": "Cumpărături"

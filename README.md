@@ -255,3 +255,11 @@ internos. Para avisos con la web cerrada también hay que desplegar la función 
 Supabase, configurar VAPID y programar Cron: [guía completa](docs/NOTIFICATIONS.md).
 El permiso de cada dispositivo se pide solo al pulsar Activar; en iPhone requiere
 abrir DivZplit desde la pantalla de inicio (iOS 16.4 o posterior).
+
+### Categoría Supermercado
+
+Los gastos de supermercado tienen su propia categoría **Supermercado 🛒**, además
+de **Comida 🍽️** y **Compras 🛍️**. Para guardarlos en grupos compartidos de una
+base existente, ejecuta `supabase/categories.sql` en el SQL Editor de Supabase
+antes de publicar la web actualizada. Se puede repetir y conserva los gastos.
+Las bases nuevas ya incluyen la categoría en `supabase/schema.sql`.

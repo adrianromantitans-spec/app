@@ -1,4 +1,4 @@
-export const expenseCategories=[['Comida','🍽️'],['Transporte','🚌'],['Gasolina','⛽'],['Alojamiento','🏨'],['Viaje','✈️'],['Actividades','🎟️'],['Compras','🛍️'],['Salud','💊'],['Facturas','💡'],['Ocio','🎬'],['Otros','📌']];
+export const expenseCategories=[['Comida','🍽️'],['Supermercado','🛒'],['Transporte','🚌'],['Gasolina','⛽'],['Alojamiento','🏨'],['Viaje','✈️'],['Actividades','🎟️'],['Compras','🛍️'],['Salud','💊'],['Facturas','💡'],['Ocio','🎬'],['Otros','📌']];
 export const expenseCategoryIds=expenseCategories.map(([id])=>id);
 export const categoryEmoji=category=>expenseCategories.find(([id])=>id===category)?.[1]||'📌';
 import {locale,tr} from './i18n.js?v=landing-51';
