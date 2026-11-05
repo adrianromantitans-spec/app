@@ -340,7 +340,7 @@ async function shoppingAction(el){
 
 function expenseList(items) {
   if (!items.length) return empty(tr('Las cuentas empiezan aquí'),tr('Añade el primer gasto y DivZplit calculará el reparto.'),'new-expense',tr('Añadir gasto'));
-  return `<div class="expense-list">${items.map(e=>ui`<div class="expense-row"><span class="expense-icon ${categoryTone(e.category)}">${categoryMark(e.category)}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?tr(' · Ticket'):''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><button class="icon-button expense-detail-button" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}">${icon('chevron')}</button></div>`).join('')}</div>`;
+  return `<div class="expense-list">${items.map(e=>ui`<button type="button" class="expense-row" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}"><span class="expense-icon ${categoryTone(e.category)}">${categoryMark(e.category)}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?tr(' · Ticket'):''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><span class="expense-detail-button" aria-hidden="true">${icon('chevron')}</span></button>`).join('')}</div>`;
 }
 
 function expensesView() {
@@ -735,6 +735,22 @@ function quickAddModal() {
 }
 
 document.addEventListener('click', event => {onAppClick(event).catch(handleActionError);});
+let edgeSwipe=null,edgeSwipeUsed=false;
+document.addEventListener('pointerdown',event=>{
+ if(!document.body.classList.contains('personal-app')||innerWidth>760||event.isPrimary===false)return;
+ const menuOpen=document.body.classList.contains('workspace-menu-open');
+ if(!menuOpen&&(event.clientX>32||modalRoot.firstElementChild||event.target.closest('input,textarea,select')))return;
+ edgeSwipe={x:event.clientX,y:event.clientY,open:menuOpen};
+},{passive:true});
+document.addEventListener('pointerup',event=>{
+ if(!edgeSwipe)return;
+ const dx=event.clientX-edgeSwipe.x,dy=event.clientY-edgeSwipe.y,sideways=Math.abs(dx)>56&&Math.abs(dx)>Math.abs(dy)*1.3;
+ if(sideways&&!edgeSwipe.open&&dx>0){edgeSwipeUsed=true;openWorkspaceMenu();}
+ else if(sideways&&edgeSwipe.open&&dx<0){edgeSwipeUsed=true;closeModal();}
+ edgeSwipe=null;
+});
+document.addEventListener('pointercancel',()=>{edgeSwipe=null;});
+document.addEventListener('click',event=>{if(!edgeSwipeUsed)return;edgeSwipeUsed=false;event.preventDefault();event.stopPropagation();},true);
 async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
