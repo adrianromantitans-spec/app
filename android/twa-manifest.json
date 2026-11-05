@@ -30,7 +30,7 @@
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "fullScopeUrl": "https://divzplit.com/app/",
-  "minSdkVersion": 21,
+  "minSdkVersion": 24,
   "orientation": "portrait",
   "fingerprints": [],
   "additionalTrustedOrigins": [],
