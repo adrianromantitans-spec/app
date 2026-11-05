@@ -2,7 +2,7 @@
 
 ## Aplicación
 
-- `app.js` y `brand-intro.js`: muestran una animación únicamente del nombre DivZplit mientras se recupera la sesión; después el nombre se desplaza a la cabecera del acceso o de la app. No muestran el icono DZ ni el mensaje de conexión. Las comprobaciones de sesión se mantienen y no se muestra un formulario incorrecto durante la recuperación. Elimina el icono DZ de las cabeceras y la franja Casa/Viaje del selector, manteniendo las tarjetas de todos los grupos y sus acciones.
+- `app.js`: usa la función original `startBrandIntro`, con sus fotogramas, duración de 2700 ms y animaciones de letras originales. Mantiene la comprobación de sesión y retiene el cambio de pantalla hasta terminar. No añade icono DZ ni muestra el mensaje de conexión. Elimina el icono DZ de las cabeceras y la franja Casa/Viaje del selector, manteniendo las tarjetas de todos los grupos y sus acciones.
 - `home.js`: obtiene hasta cuatro gastos del grupo seleccionado, ordenados por fecha descendente; conserva el orden de llegada para empates y no modifica el documento del grupo. No mezcla grupos ni completa filas con datos inventados.
 - `auth-ui.js`: mantiene el nombre DivZplit sin el icono cuadrado, el acceso por correo y Google/Apple, el registro y los enlaces de recuperación.
 - `glass.css`: alinea la marca de texto, mantiene la Z y el punto morados y da estilo al estado de comprobación de sesión.
