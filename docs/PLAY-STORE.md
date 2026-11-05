@@ -51,7 +51,7 @@ no podrás publicar actualizaciones.
 
 ## Enlaces en inglés para Play Console
 
-- Política de privacidad: `https://divzplit.com/privacidad/`
+- Política de privacidad: `https://divzplit.com/privacy/`
 - Condiciones: `https://divzplit.com/condiciones/`
 - Eliminación de cuenta: `https://divzplit.com/eliminar-cuenta/`
 
