@@ -1,3 +1,6 @@
+export const expenseCategories=[['Comida','🍽️'],['Transporte','🚌'],['Gasolina','⛽'],['Alojamiento','🏨'],['Viaje','✈️'],['Actividades','🎟️'],['Compras','🛍️'],['Salud','💊'],['Facturas','💡'],['Ocio','🎬'],['Otros','📌']];
+export const expenseCategoryIds=expenseCategories.map(([id])=>id);
+export const categoryEmoji=category=>expenseCategories.find(([id])=>id===category)?.[1]||'📌';
 import {locale,tr} from './i18n.js?v=landing-51';
 import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=landing-51';
 export {currencies,currencyDigits,currencyScale,currencyStep};
@@ -85,7 +88,7 @@ export function settlements(group) {
 
 export function validateExpense(group,{title,amount,payer,participants,category,date,split}) {
   const ids=group.members.map(m=>m.id);
-  if(typeof title!=='string'||!title.trim()||title.length>100||!ids.includes(payer)||!Array.isArray(participants)||!participants.every(id=>ids.includes(id))||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!['Comida','Transporte','Alojamiento','Actividades','Otros'].includes(category)||!Number.isSafeInteger(amount)||amount<1||amount>100000000)throw new Error(tr('Revisa los datos del gasto'));
+  if(typeof title!=='string'||!title.trim()||title.length>100||!ids.includes(payer)||!Array.isArray(participants)||!participants.every(id=>ids.includes(id))||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!expenseCategoryIds.includes(category)||!Number.isSafeInteger(amount)||amount<1||amount>100000000)throw new Error(tr('Revisa los datos del gasto'));
   const calendar=new Date(date+'T12:00:00Z');if(Number.isNaN(calendar.valueOf())||calendar.toISOString().slice(0,10)!==date)throw new Error(tr('Revisa los datos del gasto'));
   const expense={title:title.trim(),amount,payer,participants:[...participants],category,date};
   if(split&&split.mode!=='equal')expense.split=structuredClone(split);

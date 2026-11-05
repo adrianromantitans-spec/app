@@ -1426,6 +1426,30 @@ export const translations = {
     "en": "Other",
     "ro": "Altele"
   },
+  "Compras": {
+    "en": "Shopping",
+    "ro": "Cumpărături"
+  },
+  "Facturas": {
+    "en": "Bills",
+    "ro": "Facturi"
+  },
+  "Gasolina": {
+    "en": "Fuel",
+    "ro": "Carburant"
+  },
+  "Ocio": {
+    "en": "Leisure",
+    "ro": "Timp liber"
+  },
+  "Salud": {
+    "en": "Health",
+    "ro": "Sănătate"
+  },
+  "Viaje": {
+    "en": "Trip",
+    "ro": "Călătorie"
+  },
   "Pagado por": {
     "en": "Paid by",
     "ro": "Plătit de"
