@@ -35,8 +35,9 @@ let accountUser=null;
 let remoteBusy=false;
 let authLoading=cloud.enabled;
 let syncMessage='';
+function guestStage(){if(location.hash==='#registro')return 'signup';if(location.hash==='#acceso'||location.hash==='#eliminar-cuenta')return 'login';return 'welcome';}
 let authMode=location.hash==='#registro'?'signup':'login';
-let authStage=location.hash==='#registro'?'signup':'login';
+let authStage=guestStage();
 let brandIntroShown=false;
 let brandIntroActive=false;
 let markIntroSessionReady=()=>{};
@@ -635,7 +636,7 @@ function deleteAccountModal(){
 }
 async function finishDeletedAccount(){
  try{await notifications.disconnect();}catch{/* Local logout still proceeds. */}
- activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='login';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';closeModal();render();
+ activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';closeModal();render();
 }
 
 async function exportAccountData(){
@@ -799,7 +800,7 @@ async function onAppClick(event) {
     case 'delete-account':deleteAccountModal();break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
-    case 'welcome':demoMode=false;authStage='login';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
+    case 'welcome':demoMode=false;authStage='welcome';authMode='login';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
     case 'oauth-google':oauthConsentModal('google');break;
     case 'oauth-apple':oauthConsentModal('apple');break;
     case 'retry-providers':await refreshProviders();break;
@@ -1052,17 +1053,17 @@ function renderWelcome() {
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
   root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:authStage==='welcome'}),notice});
   root.inert=brandIntroActive||!!modalRoot.firstElementChild;
-  if(authLoading){root.querySelectorAll('.auth-main,.auth-footer,.header-note').forEach(el=>el.remove());}
+  if(authLoading&&!root.querySelector('.welcome-entry')){root.querySelectorAll('.auth-main,.auth-footer,.header-note').forEach(el=>el.remove());}
   if(!brandIntroShown){brandIntroShown=true;startBrandIntro();}
 }
 // Preserve the original assembly; finish at the actual authenticated/login header.
 function startBrandIntro() {
  const brand=root.querySelector('.auth-header .brand');
  if(matchMedia('(prefers-reduced-motion: reduce)').matches||!brand?.animate){root.classList.add('welcome-ready');return;}
- brandIntroActive=true;root.inert=true;
+ brandIntroActive=true;root.classList.add('brand-intro-active');root.inert=true;
  const ready=new Promise(resolve=>{markIntroSessionReady=resolve;if(!authLoading)resolve();});
  const transition=startIntroTransition({root,brand,ready,onFinish:()=>{
-  brandIntroActive=false;root.inert=!!modalRoot.firstElementChild;root.classList.add('welcome-ready');
+  brandIntroActive=false;root.classList.remove('brand-intro-active');root.inert=!!modalRoot.firstElementChild;root.classList.add('welcome-ready');
  }});
  finishBrandIntro=()=>transition.skip();
 }
@@ -1148,7 +1149,7 @@ async function signOutAccount() {
   try {await cloud.signOut();}
   catch {toast(tr('Has salido de este navegador. No se pudo cerrar la sesión en el servidor.'));}
   finally {
-    activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='login';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
+    activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='welcome';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';
     remoteBusy=false;closeModal();render();
   }
 }
@@ -1223,7 +1224,7 @@ async function startAccount() {
 }
 setInterval(()=>refreshShared(),8000);
 window.addEventListener('popstate',()=>{
-  if(!accountUser&&!demoMode){authStage=location.hash==='#registro'?'signup':'login';authMode=authStage==='signup'?'signup':'login';closeModal();render();}
+  if(!accountUser&&!demoMode){authStage=location.hash==='#registro'?'signup':location.hash==='#acceso'?'login':'welcome';authMode=authStage==='signup'?'signup':'login';closeModal();render();}
 });
 window.addEventListener('hashchange',()=>{
   const params=new URLSearchParams(location.hash.replace(/^#/,''));
