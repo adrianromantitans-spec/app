@@ -1422,6 +1422,14 @@ export const translations = {
     "en": "Another good idea",
     "ro": "O altă idee bună"
   },
+  "1 día": {"en": "1 day", "ro": "1 zi"},
+  "{0} días": {"en": "{0} days", "ro": "{0} zile"},
+  "1 noche": {"en": "1 night", "ro": "1 noapte"},
+  "{0} noches": {"en": "{0} nights", "ro": "{0} nopți"},
+  "El mismo día": {"en": "The same day", "ro": "Aceeași zi"},
+  "Desde el {0}. Añade la vuelta si ya la sabes.": {"en": "From {0}. Add the return date if you already know it.", "ro": "Din {0}. Adaugă data de întoarcere dacă o știi deja."},
+  "La vuelta no puede ser antes de la ida. Se deja el mismo día.": {"en": "The return cannot be before the departure. It stays on the same day.", "ro": "Întoarcerea nu poate fi înainte de plecare. Rămâne în aceeași zi."},
+  "La vuelta no puede ser anterior a la ida.": {"en": "The return cannot be earlier than the departure.", "ro": "Întoarcerea nu poate fi înainte de plecare."},
   "Otros": {
     "en": "Other",
     "ro": "Altele"

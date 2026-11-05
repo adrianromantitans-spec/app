@@ -30,4 +30,5 @@ body.personal-app{--bg:#f9f7fd;--text:#2d203e;--muted:#81718f;--purple:#8552db;-
 .expense-participants-heading>.app-select{width:auto;max-width:62%;margin-left:auto}
 .expense-participants-heading .app-select>select{position:absolute;inset:0;width:100%;height:100%;max-width:none;min-height:0;margin:0}
 .expense-icon .category-emoji,.category-row .category-emoji{font-size:18px;line-height:1}
+.group-card-dates{display:block;margin:6px 0 0;font-size:11px;line-height:1.5;color:#81718f}
 
