@@ -35,6 +35,7 @@
 .personal-shell .home-balance .stat-copy{position:relative;z-index:1;display:grid;justify-items:start}
 .personal-shell .home-balance .balance-status{display:inline-flex;align-items:center;gap:8px;max-width:100%;border-radius:10px;padding:7px 10px;background:#c9f2df;color:#145b43;font-size:12px;line-height:1.4;font-weight:800;text-transform:none;letter-spacing:0}
 .balance-status-sign{font-size:17px;line-height:1;font-weight:850}
+.balance-status-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .personal-shell .home-balance.is-owed .balance-status{background:#ffdfac;color:#744212}
 .personal-shell .home-balance.is-settled .balance-status{background:#eee3ff;color:#513278}
 .personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{color:#fff;font-size:43px;font-weight:850;letter-spacing:-1.4px;line-height:1.4}

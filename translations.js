@@ -1422,7 +1422,10 @@ export const translations = {
     "en": "Another good idea",
     "ro": "O altă idee bună"
   },
-  "1 día": {"en": "1 day", "ro": "1 zi"},
+  "Le debes a {0}": {"en": "You owe {0}", "ro": "Îi datorezi lui {0}"},
+  "Te debe {0}": {"en": "{0} owes you", "ro": "{0} îți datorează"},
+  "Debes a {0} personas": {"en": "You owe {0} people", "ro": "Datorezi la {0} persoane"},
+  "Te deben {0} personas": {"en": "{0} people owe you", "ro": "{0} persoane îți datorează"},
   "{0} días": {"en": "{0} days", "ro": "{0} zile"},
   "1 noche": {"en": "1 night", "ro": "1 noapte"},
   "{0} noches": {"en": "{0} nights", "ro": "{0} nopți"},
