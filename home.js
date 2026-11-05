@@ -19,3 +19,11 @@ export function homeSummary(g,now=new Date()) {
 export function groupForMode(groups,mode,rememberedId) {
  return groups.find(g=>g.id===rememberedId&&groupMode(g)===mode)||groups.find(g=>groupMode(g)===mode)||null;
 }
+
+// Sort a copy: imported or backdated expenses need not arrive in date order.
+export function recentExpenses(group) {
+ const time=value=>Number.isFinite(Date.parse(value))?Date.parse(value):0;
+ return (group?.expenses||[]).map((expense,index)=>({expense,index}))
+  .sort((a,b)=>time(b.expense.date)-time(a.expense.date)||time(b.expense.createdAt)-time(a.expense.createdAt)||a.index-b.index)
+  .slice(0,4).map(({expense})=>expense);
+}

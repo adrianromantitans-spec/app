@@ -1,95 +1,24 @@
-"""One logo moves into the centred glass panel; skipping and reduced motion work."""
-from playwright.sync_api import sync_playwright, expect
-
-BASE='http://127.0.0.1:3000/app/'
+"""Direct app entry and slow session restoration, without the former brand splash."""
+from pathlib import Path
+exec(Path('tests/auth_browser.py').read_text().split('with sync_playwright() as p:')[0])
 with sync_playwright() as p:
-    browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
-    for width,height in [(390,844),(1440,1000)]:
-        c=browser.new_context(locale='es-ES',viewport={'width':width,'height':height})
-        c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
-        page=c.new_page();errors=[]
-        page.on('pageerror',lambda e:errors.append(str(e)))
-        page.goto(BASE)
-        expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        expect(page.locator('.entry-controls')).to_have_css('opacity','0')
-        assert page.locator('.split-word').count()==1
-        page.locator('.auth-header .brand').evaluate('(el)=>window.introLogo=el')
-        page.wait_for_timeout(700)
-        assert page.locator('.auth-header .brand').evaluate('(el)=>parseFloat(getComputedStyle(el).fontSize)>60')
-        box=page.locator('.auth-header .brand').bounding_box()
-        assert abs(box['x']+box['width']/2-width/2)<2
-        assert abs(box['y']+box['height']/2-height/2)<2
-        assert page.locator('.auth-header .brand').evaluate('(el)=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}')
-        page.screenshot(path=f'work/intro-{width}.png')
-        expect(page.locator('.brand-intro-curtain')).to_have_count(0)
-        expect(page.get_by_role('link',name='Crear cuenta',exact=False)).to_be_visible()
-        assert page.locator('.auth-header .brand').evaluate('(el)=>el===window.introLogo')
-        assert page.locator('.split-word').count()==1
-        final=page.locator('.auth-header .brand').bounding_box()
-        panel=page.locator('.welcome-panel').bounding_box()
-        assert panel['y'] < final['y'] < panel['y']+panel['height']/2
-        assert abs(final['x']+final['width']/2-width/2)<2
-        page.screenshot(path=f'work/welcome-{width}.png',full_page=True)
-        page.get_by_role('link',name='Crear cuenta',exact=False).click()
-        assert page.locator('.brand-intro-curtain').count()==0
-        expect(page.get_by_role('heading',name='Crea tu cuenta',exact=True)).to_be_visible()
-        page.reload();expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        page.keyboard.press('Escape')
-        expect(page.locator('.brand-intro-curtain')).to_have_count(0)
-        expect(page.locator('.auth-main')).to_be_visible()
-        page.reload();expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        page.evaluate('window.dispatchEvent(new Event("resize"))')
-        expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        page.set_viewport_size({'width':width,'height':height-60})
-        page.wait_for_timeout(100)
-        expect(page.locator('.brand-intro-curtain')).to_be_visible()
-        page.set_viewport_size({'width':width+100,'height':height})
-        expect(page.locator('.brand-intro-curtain')).to_have_count(0)
-        assert not errors,errors
-        c.close()
-    # Mobile Safari can expose a visible viewport smaller than innerHeight.
-    c=browser.new_context(locale='es-ES',viewport={'width':393,'height':852})
-    c.add_init_script("""
-      const viewport=new EventTarget();
-      Object.assign(viewport,{width:393,height:700,offsetTop:12,offsetLeft:0});
-      Object.defineProperty(window,'visualViewport',{value:viewport});
-    """)
-    c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
-    page=c.new_page();page.goto(BASE)
-    page.wait_for_timeout(400)
-    def visible_centre():
-        return page.locator('.auth-header .brand').evaluate('(el)=>{const r=el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};}')
-    centre=visible_centre()
-    assert abs(centre['x']-196.5)<1 and abs(centre['y']-362)<1,centre
-    page.evaluate("Object.assign(visualViewport,{height:620,offsetTop:18});visualViewport.dispatchEvent(new Event('resize'))")
-    page.wait_for_timeout(100)
-    centre=visible_centre()
-    assert abs(centre['y']-328)<1,centre
-    expect(page.locator('.brand-intro-curtain')).to_have_count(0)
-    assert page.locator('.auth-header .brand').evaluate('(el)=>el.style.transform')==''
-    c.close()
-    c=browser.new_context(locale='es-ES',reduced_motion='reduce')
-    c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
-    page=c.new_page();page.goto(BASE)
-    expect(page.locator('.auth-main')).to_be_visible()
-    assert page.locator('.brand-intro-curtain').count()==0
-    assert page.locator('.split-word').count()==1
-    c.close()
-    for language,login in [('es-ES','Iniciar sesión'),('en-GB','Sign in'),('ro-RO','Autentificare')]:
-        c=browser.new_context(locale=language,reduced_motion='reduce',viewport={'width':320,'height':568})
-        c.route('**/config.js',lambda r:r.fulfill(content_type='application/javascript',body='export const cloudConfig={};'))
-        page=c.new_page();page.goto(BASE)
-        expect(page.locator('[data-action="login"]')).to_have_text(login)
-        image=page.locator('.welcome-phone img')
-        assert image.get_attribute('src')==f'./assets/welcome-{language[:2]}.png'
-        expect(image).to_be_visible()
-        page.wait_for_function("document.querySelector('.welcome-phone img').naturalWidth>0")
-        assert page.locator('.split-word').count()==1
-        assert 'Alex' not in page.locator('body').inner_text()
-        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-        panel=page.locator('.welcome-panel').bounding_box()
-        assert panel['y']>=0 and panel['y']+panel['height']<=568
-        assert page.locator('.auth-footer').count()==0
-        c.close()
-    browser.close()
-print('PASS: single logo centres, assembles, travels into centred panel; navigation, Escape, resize and reduced motion work')
+ browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+ for width in [320,393,768,1440]:
+  c,seen=context(browser);page=c.new_page();page.set_viewport_size({'width':width,'height':852});page.goto(BASE)
+  expect(page.locator('#account-form')).to_be_visible();assert page.locator('.brand-intro-curtain,.brand-intro-active').count()==0
+  assert page.locator('.auth-header img').count()==0
+  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+  c.close()
+ c,seen=context(browser);held=[]
+ token={'access_token':'fixture-access','refresh_token':'fixture-refresh','expires_at':int(__import__('time').time())+3600}
+ c.add_init_script('try{localStorage.setItem("nexo-session-v1:nexo-test.supabase.co",'+json.dumps(json.dumps(token))+');}catch{}')
+ c.route('**/__auth_fixture/auth/v1/user',lambda route:held.append(route))
+ page=c.new_page();page.goto(BASE);expect(page.locator('.session-check')).to_be_visible()
+ assert page.locator('#account-form,.workspace-sidebar,.brand-intro-curtain').count()==0
+ page.wait_for_function('document.querySelector(".session-check")!==null')
+ assert held
+ for route in held:route.fulfill(content_type='application/json',body=json.dumps(USER))
+ expect(page.locator('.workspace-sidebar')).to_be_visible();assert page.locator('#account-form,.brand-intro-curtain').count()==0
+ assert not errors,errors
+ c.close();browser.close()
+ print('PASS direct login at all sizes; pending session shows no incorrect form or brand splash; valid session restores app.')

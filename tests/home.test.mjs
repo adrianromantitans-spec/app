@@ -24,3 +24,11 @@ test('deadline day labels use the device calendar across month and DST boundarie
  const now=new Date(2030,2,30,12);const tomorrow=new Date(2030,2,31,12);const later=new Date(2030,3,1,12);
  assert.equal(dayOffset(tomorrow.toISOString(),now),1);assert.equal(dayOffset(later.toISOString(),now),2);assert.equal(dayOffset('not-a-date',now),null);
 });
+
+// Recent rows follow expense dates rather than import/insertion order.
+test('home shows at most four newest expenses without changing the group or mixing groups',async()=>{
+ const {recentExpenses}=await import('../home.js');
+ const group={expenses:[{id:'old',date:'2026-01-01'},{id:'new',date:'2026-11-05'},{id:'same-new',date:'2026-11-05'},{id:'middle',date:'2026-06-12'},{id:'fourth',date:'2026-05-02'}]};
+ const before=structuredClone(group);assert.deepEqual(recentExpenses(group).map(e=>e.id),['new','same-new','middle','fourth']);assert.deepEqual(group,before);
+ assert.deepEqual(recentExpenses({expenses:group.expenses.slice(0,1)}),[group.expenses[0]]);assert.deepEqual(recentExpenses({expenses:[]}),[]);
+});

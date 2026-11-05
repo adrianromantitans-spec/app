@@ -104,7 +104,7 @@ with sync_playwright() as p:
   page.locator('[data-action="close-modal"]').first.click()
   page.locator('[data-action="workspace-menu"]').click();page.locator('.navigation-drawer [data-route="profile"]').click()
   page.get_by_role('button',name={'es-ES':'Cerrar sesión','en-GB':'Sign out','ro-RO':'Deconectare'}[locale],exact=True).click()
-  expect(page.locator('.welcome-entry')).to_be_visible()
+  expect(page.locator('#account-form')).to_be_visible()
   assert page.evaluate('window.__binding') is None
   c.close()
  assert not errors,errors

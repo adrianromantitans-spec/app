@@ -67,9 +67,10 @@ with sync_playwright() as p:
                              headless=True,args=['--no-sandbox'])
     c,seen=context(browser,hold_settings=True)
     page=c.new_page();page.goto(BASE)
-    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
     assert page.locator('.sidebar').count()==0
-    assert page.locator('#account-form').count()==0
+    assert page.locator('#account-form').count()==1
+    assert page.locator('.brand-intro-curtain').count()==0
     for route in seen['settings']:route.fulfill(content_type='application/json',body=json.dumps({'external':{'google':False,'apple':False}}))
     seen['hold']=False
     expect(page.get_by_role('button',name='Continuar con Google',exact=False)).to_be_disabled()
@@ -80,15 +81,15 @@ with sync_playwright() as p:
     page.reload()
     expect(page.get_by_label('¿Cómo te llamas?')).to_be_visible()
     page.go_back()
-    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
-    assert page.locator('#account-form').count()==0
-    page.get_by_role('link',name='Iniciar sesión',exact=False).click()
+    expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
+    assert page.locator('#account-form').count()==1
+    assert page.locator('.brand-intro-curtain').count()==0
     page.get_by_label('Correo electrónico').fill('draft@example.test')
     expect(page.get_by_label('Correo electrónico')).to_have_value('draft@example.test')
     page.reload()
     expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
-    page.get_by_role('link',name='Volver al inicio',exact=False).click()
-    print('PASS: landing has no form; signup and login use separate URLs, reload and Back work')
+    assert page.locator('.brand-intro-curtain').count()==0
+    print('PASS: app opens directly at login without splash; signup/login URLs, reload and Back work')
 
     # New account entry, without sending any actual confirmation email.
     page.get_by_role('link',name='Crear cuenta',exact=False).click()
@@ -114,7 +115,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('heading',name='Tu próximo plan empieza aquí')).to_be_visible()
     page.locator('.drawer-profile').click()
     page.get_by_role('button',name='Cerrar sesión',exact=True).click()
-    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
     print('PASS: signup, confirmation guidance, login errors, session restoration and logout')
     c.close()
 
@@ -138,7 +139,7 @@ with sync_playwright() as p:
 
     c,seen=context(browser,enabled=True)
     page=c.new_page();page.goto(BASE+'?code=unsolicited')
-    expect(page.get_by_role('heading',name='Bienvenido a DivZplit.')).to_be_visible()
+    expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
     expect(page.locator('#toast')).to_contain_text('otro navegador')
     assert seen['tokens']==0 and 'code=' not in page.url
     page.goto(BASE+'?error=access_denied&error_description=untrusted-provider-text')
@@ -153,5 +154,5 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':1440,'height':1000})
     page.screenshot(path='/tmp/nexo-welcome-desktop.png',full_page=True)
     assert errors==[],errors
-    print('PASS: welcome fits phone/tablet/desktop widths with no JavaScript errors')
+    print('PASS: direct access fits phone/tablet/desktop widths with no JavaScript errors')
     browser.close()

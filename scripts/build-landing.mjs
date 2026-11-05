@@ -8,13 +8,16 @@ const paths={arrow:'M5 12h14m-5-5 5 5-5 5',down:'m7 10 5 5 5-5',receipt:'M5 3v18
 const icon=name=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
 const brand=`<img class="brand-logo" src="./assets/divzplit-logo.svg" alt="" width="40" height="40"><span class="wordmark">Div<span>Z</span>plit<span>.</span></span>`;
 const manifest=JSON.parse(await readFile(new URL('../assets/landing/manifest.json',import.meta.url),'utf8'));
-function image(shot,alt,cls='',eager=false){const size=manifest.images['es-'+shot]||{width:393,height:852};return `<img${cls?` class="${cls}"`:''} data-app-shot="${shot}" data-alt="${alt}" src="./assets/landing/es-${shot}.webp?v=logo-52" srcset="./assets/landing/es-${shot}.webp?v=logo-52 ${size.width}w, ./assets/landing/es-${shot}-2x.webp?v=logo-52 ${size.width*2}w" sizes="${['balance','recent'].includes(shot)?'250px':'(max-width: 600px) 270px, 310px'}" width="${size.width}" height="${size.height}" alt="${esc(c[alt])}" ${eager?'fetchpriority="high" loading="eager"':'loading="lazy"'} decoding="async">`;}
+function image(shot,alt,cls='',eager=false){const size=manifest.images['es-'+shot]||{width:393,height:852};return `<img${cls?` class="${cls}"`:''} data-app-shot="${shot}" data-alt="${alt}" src="./assets/landing/es-${shot}.webp?v=visual-53" srcset="./assets/landing/es-${shot}.webp?v=visual-53 ${size.width}w, ./assets/landing/es-${shot}-2x.webp?v=visual-53 ${size.width*2}w" sizes="${['balance','recent'].includes(shot)?'250px':'(max-width: 600px) 270px, 310px'}" width="${size.width}" height="${size.height}" alt="${esc(c[alt])}" ${eager?'fetchpriority="high" loading="eager"':'loading="lazy"'} decoding="async">`;}
 const cta=(key='start',cls='button-primary')=>`<a class="button ${cls}" data-app-link="signup" href="./app/#registro">${text(key)}${icon('arrow')}</a>`;
 const featureCards=['receipt','group','budget','poll','task','balance'].map((name,i)=>`<article class="feature-card reveal"><div class="feature-icon">${icon(name)}</div>${text('f'+(i+1)+'Title','h3')}${text('f'+(i+1)+'Body','p')}</article>`).join('');
 const steps=['group','expense','settlements'].map((shot,i)=>`<button class="step" data-step="${shot}" aria-pressed="${i===0}"><span class="step-number">0${i+1}</span><span class="step-copy">${text('step'+(i+1)+'Title','strong')}${text('step'+(i+1)+'Body')}</span></button>`).join('');
-const scenarios=[['home','travelTitle','travelBody','heroAlt'],['house','houseTitle','houseBody','houseAlt'],['friends','friendsTitle','friendsBody','friendsAlt']].map(([shot,title,body,alt],i)=>`<article class="scenario-card reveal"><div class="scenario-shot scenario-${i}">${image(shot,alt)}</div><div class="scenario-copy">${text(title,'h3')}${text(body,'p')}</div></article>`).join('');
+const featureStories=['expenses','shopping','polls','currency','groups','tasks','budget'].map((shot,i)=>{
+ const key='show'+shot[0].toUpperCase()+shot.slice(1);
+ return `<article class="feature-story reveal" data-feature="${shot}"><div class="feature-story-copy"><p class="eyebrow"><span class="feature-number" aria-hidden="true">0${i+1}</span>${text(key+'Label')}</p>${text(key+'Title','h3')}${text(key+'Body','p','section-description')}</div><figure class="feature-story-visual"><div class="feature-story-aura" aria-hidden="true"></div><div class="phone feature-story-phone">${image(shot,key+'Alt')}</div><figcaption data-copy="screenNote">${c.screenNote}</figcaption></figure></article>`;
+}).join('');
 const questions=[1,2,3,4,5].map(i=>`<details class="faq-item"><summary>${text('faq'+i)}<span class="faq-plus" aria-hidden="true">+</span></summary>${text('faq'+i+'Body','p')}</details>`).join('');
-const ld=JSON.stringify({'@context':'https://schema.org','@type':'SoftwareApplication',name:'DivZplit',url:'https://divzplit.com/app/',applicationCategory:'FinanceApplication',operatingSystem:'Web',inLanguage:['es','en','ro'],offers:{'@type':'Offer',price:'0',priceCurrency:'EUR'},image:'https://divzplit.com/assets/landing/share.webp?v=logo-52'});
+const ld=JSON.stringify({'@context':'https://schema.org','@type':'SoftwareApplication',name:'DivZplit',url:'https://divzplit.com/app/',applicationCategory:'FinanceApplication',operatingSystem:'Web',inLanguage:['es','en','ro'],offers:{'@type':'Offer',price:'0',priceCurrency:'EUR'},image:'https://divzplit.com/assets/landing/share.webp?v=visual-53'});
 const hash=createHash('sha256').update(ld).digest('base64');
 const html=`<!doctype html>
 <html lang="es">
@@ -30,13 +33,13 @@ const html=`<!doctype html>
  <link rel="canonical" href="https://divzplit.com/">
  <meta property="og:type" content="website"><meta property="og:site_name" content="DivZplit"><meta property="og:locale" content="es_ES">
  <meta property="og:title" content="${esc(c.title)}"><meta property="og:description" content="${esc(c.description)}"><meta property="og:url" content="https://divzplit.com/">
- <meta property="og:image" content="https://divzplit.com/assets/landing/share.webp?v=logo-52"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="DivZplit: gastos compartidos y planes en grupo">
+ <meta property="og:image" content="https://divzplit.com/assets/landing/share.webp?v=visual-53"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="DivZplit: gastos compartidos y planes en grupo">
  <meta name="twitter:card" content="summary_large_image">
- <link rel="icon" href="./favicon.svg?v=logo-52" type="image/svg+xml"><link rel="apple-touch-icon" href="./assets/app-icon-180.png?v=logo-52">
+ <link rel="icon" href="./favicon.svg?v=visual-53" type="image/svg+xml"><link rel="apple-touch-icon" href="./assets/app-icon-180.png?v=visual-53">
  <link rel="preload" href="./assets/Manrope.ttf" as="font" type="font/ttf" crossorigin>
- <link rel="stylesheet" href="./landing.css?v=logo-52">
+ <link rel="stylesheet" href="./landing.css?v=visual-53">
  <script type="application/ld+json">${ld}</script>
- <script type="module" src="./landing.js?v=logo-52"></script>
+ <script type="module" src="./landing.js?v=visual-53"></script>
 </head>
 <body>
  <a class="skip-link" href="#main" data-copy="skip">${c.skip}</a>
@@ -55,7 +58,7 @@ const html=`<!doctype html>
   </div></section>
   <section class="section feature-section" id="caracteristicas"><div class="container"><header class="section-heading reveal">${text('featureEyebrow','p','eyebrow')}${text('featureTitle','h2')}${text('featureText','p','section-description')}</header><div class="feature-grid">${featureCards}</div></div></section>
   <section class="section how-section" id="como-funciona"><div class="container how-shell"><div class="how-copy reveal">${text('howEyebrow','p','eyebrow')}${text('howTitle','h2')}${text('howText','p','section-description')}<div class="steps" role="group" aria-label="${c.stepsLabel}" data-label="stepsLabel">${steps}</div></div><figure class="how-visual reveal"><div class="how-aura" aria-hidden="true"></div><div class="phone step-phone">${image('group','groupAlt','step-image')}</div><figcaption data-copy="screenNote">${c.screenNote}</figcaption></figure></div></section>
-  <section class="section scenarios-section" id="planes"><div class="container"><header class="section-heading reveal">${text('plansEyebrow','p','eyebrow')}${text('plansTitle','h2')}${text('plansText','p','section-description')}</header><div class="scenario-grid">${scenarios}</div></div></section>
+  <section class="section scenarios-section" id="planes"><div class="container"><header class="section-heading reveal">${text('plansEyebrow','p','eyebrow')}${text('plansTitle','h2')}${text('plansText','p','section-description')}</header><div class="feature-stories">${featureStories}</div></div></section>
   <section class="section faq-section" id="preguntas"><div class="container faq-layout"><header class="faq-heading reveal">${text('faqEyebrow','p','eyebrow')}${text('faqTitle','h2')}</header><div class="faq-list reveal">${questions}</div></div></section>
   <section class="section final-section"><div class="container cta-box reveal"><p class="eyebrow" data-copy="ctaEyebrow">${c.ctaEyebrow}</p><h2>${text('cta1')}${text('cta2')}</h2>${text('ctaBody','p','cta-description')}${cta('ctaButton','button-white')}</div></section>
  </main>

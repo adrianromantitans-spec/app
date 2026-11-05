@@ -24,3 +24,16 @@ html[lang=ro] .hero h1{font-size:clamp(43px,4.5vw,65px);letter-spacing:-2.8px}ht
 @media(max-width:480px){.feature-card{min-height:265px}.feature-card p{font-size:12px;line-height:1.8}.feature-card h3{font-size:15px}.scenario-copy p{font-size:12px;line-height:1.8}.scenario-card,.scenario-shot{min-height:255px}.hero-note{font-size:10px}.screen-caption{font-size:9px}.how-visual figcaption{font-size:9px}.footer-bottom{font-size:10px}.step-copy>span{font-size:11px}}
 
 .brand-logo{width:40px;height:40px;object-fit:contain;flex-shrink:0;margin-right:10px}@media(max-width:720px){.brand-logo{width:34px;height:34px;margin-right:8px}}
+
+/* Distinct real app screens, alternating with the existing visual language. */
+.feature-stories{display:grid;gap:62px;margin-top:45px}
+.feature-story{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:70px;padding:34px 56px;border:1px solid #eee6f6;border-radius:36px;background:linear-gradient(125deg,#fff,#f7f1fc)}
+.feature-story:nth-child(even){background:linear-gradient(235deg,#fff,#f4edfb)}
+.feature-story:nth-child(even) .feature-story-copy{order:2}
+.feature-story-copy{max-width:435px}.feature-story-copy h3{font-size:clamp(29px,3vw,40px);line-height:1.18;letter-spacing:-1.5px;margin:22px 0}.feature-story-copy p.section-description{font-size:16px;line-height:1.85;margin:0}
+.feature-number{display:inline-grid;place-items:center;width:32px;height:32px;background:#eee3fa;color:var(--violet);border-radius:11px;margin-right:12px;letter-spacing:0;font-size:11px}
+.feature-story-visual{position:relative;display:grid;justify-items:center;margin:0;padding:12px 0;isolation:isolate}.feature-story-aura{position:absolute;width:340px;height:340px;max-width:100%;top:18%;border-radius:50%;background:radial-gradient(circle,#e4d4f9,#eee2fc44 65%,transparent 70%);z-index:-1}
+.feature-story-phone{width:245px;max-width:100%;padding:6px;border-radius:32px;box-shadow:0 20px 48px #64458020}.feature-story-phone img{border-radius:25px}
+.feature-story-visual figcaption{font-size:9px;line-height:1.6;color:#776382;text-align:center;margin-top:18px;max-width:245px}
+@media(max-width:900px){.feature-story{gap:28px;padding:30px}.feature-story-copy h3{font-size:31px}.feature-story-phone{width:228px}}
+@media(max-width:620px){.feature-stories{gap:28px;margin-top:25px}.feature-story{grid-template-columns:minmax(0,1fr);padding:28px 23px;gap:25px;border-radius:27px}.feature-story:nth-child(even) .feature-story-copy{order:0}.feature-story-copy h3{font-size:30px;margin:18px 0}.feature-story-copy p.section-description{font-size:14px}.feature-story-copy .eyebrow{font-size:9px;letter-spacing:1px}.feature-story-phone{width:230px}}

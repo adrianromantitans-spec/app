@@ -66,8 +66,8 @@ def context(browser,actor,locale='es-ES',enabled=True):
 from datetime import datetime,timedelta,timezone
 def new_expense(page):
  page.locator('.mobile-quick-add .nav-add').click();page.locator('.quick-add-modal [data-action="new-expense"]').click()
-def select_mode(page,mode):
- page.locator('.home-group-picker').click();page.locator('[data-group-mode="'+mode+'"]').click()
+def select_group(page,group_id):
+ page.locator('.home-group-picker').click();assert page.locator('.home-modes').count()==0;page.locator('#modal-root [data-group="'+group_id+'"]').click()
 from zoneinfo import ZoneInfo
 now=datetime.now(timezone.utc)
 local=now.astimezone(ZoneInfo('Europe/Bucharest'))
@@ -102,17 +102,17 @@ with sync_playwright() as p:
  expect(page.locator('.home-attention')).to_contain_text('Un pago espera tu confirmación')
  # Mode switches select existing groups and preserve all financial/group documents.
  original=copy.deepcopy(group_rows);save_count=len(saves)
- select_mode(page,'travel');expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
+ select_group(page,TRIP);expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
  expect(page.locator('.personal-home')).to_have_attribute('data-home-mode','travel')
  expect(page.locator('.home-attention')).to_have_count(0)
  for width in [320,393,430,768,1280]:
   page.set_viewport_size({'width':width,'height':900 if width>760 else 852});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),('trip',width)
  page.set_viewport_size({'width':393,'height':852});page.screenshot(path='work/personal-travel.png',full_page=True)
- select_mode(page,'home');expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
+ select_group(page,GID);expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
  page.locator('.home-group-picker').click();page.locator('#modal-root [data-group="'+SECOND+'"]').click()
  expect(page.locator('.home-group-copy strong')).to_contain_text('Casa de verano')
- select_mode(page,'travel');expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
- select_mode(page,'home');expect(page.locator('.home-group-copy strong')).to_contain_text('Casa de verano')
+ select_group(page,TRIP);expect(page.locator('.home-group-copy strong')).to_contain_text('Escapada a Praga')
+ select_group(page,SECOND);expect(page.locator('.home-group-copy strong')).to_contain_text('Casa de verano')
  assert group_rows==original and len(saves)==save_count
  page.locator('.home-group-picker').click();page.locator('#modal-root [data-group="'+GID+'"]').click()
  expect(page.locator('.home-group-copy strong')).to_contain_text('Nuestro piso')
@@ -151,10 +151,10 @@ with sync_playwright() as p:
  expect(page.locator('#expense-form [name="date"]')).to_have_value(local.strftime('%Y-%m-%d'))
  assert page.locator('.expense-more-options').evaluate('(e)=>e.open')
  page.keyboard.press('Escape');c.close()
- # Missing mode opens creation without making up a group or changing the current group type.
+ # The clean selector still offers creation without changing an existing group.
  group_rows[:]=[group]
  c,page=context(b,OWNER);original=copy.deepcopy(group_rows)
- select_mode(page,'travel');expect(page.locator('.dialog-copy')).to_contain_text('Aún no tienes grupos de viaje')
+ page.locator('.home-group-picker').click();expect(page.locator('.home-group-option')).to_have_count(1);assert page.locator('.home-modes').count()==0
  page.locator('[data-group-type="Viaje"]').click();expect(page.locator('#group-form [name="type"]')).to_have_value('Viaje')
  assert group_rows==original;page.keyboard.press('Escape');c.close()
  group_rows[:]=[group,trip,second]
@@ -169,5 +169,5 @@ with sync_playwright() as p:
   c.close()
  group['document']['name']=original_name
  assert not errors,errors
- print('PASS: video-matching personal home, real balances and pending counts, existing-group mode switching, no unintended saves, compact expense exact cents, preserved edit data, empty modes, mobile/desktop and ES/EN/RO')
+ print('PASS: video-matching personal home, real balances and pending counts, existing-group selection, no unintended saves, compact expense exact cents, preserved edit data, clean group selector, mobile/desktop and ES/EN/RO')
  b.close()

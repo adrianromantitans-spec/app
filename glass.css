@@ -83,3 +83,7 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 /* Shared uploaded DZ logo, sized with each existing wordmark. */
 .brand-logo{display:inline-block;width:1.25em;height:1.25em;object-fit:contain;flex-shrink:0;vertical-align:middle;margin-right:.32em;letter-spacing:0}
 .modern-auth .auth-header .brand{align-items:center}
+
+/* Session verification has no brand splash or authentication-form flash. */
+.session-check{min-height:55vh;display:grid;place-items:center;color:var(--muted);font-size:13px}
+.brand-dot,.word-period{color:var(--purple)}

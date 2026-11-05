@@ -21,8 +21,8 @@ with sync_playwright() as p:
   c.close();print('PASS migrated legacy root callback:',provider)
  c,seen=context(browser);page=c.new_page();page.goto(ROOT_URL+'#invite='+'a'*64);expect(page.get_by_text('Te han invitado a un grupo.',exact=False)).to_be_visible();assert page.url.startswith(BASE);c.close()
  c,seen=context(browser);page=c.new_page();page.goto(ROOT_URL+'#access_token=untrusted&refresh_token=untrusted');expect(page.locator('#account-form')).to_be_visible();assert page.evaluate('localStorage.getItem('+json.dumps(KEY)+')') is None;assert seen['tokens']==0;c.close()
- c,seen=context(browser);page=c.new_page();page.goto(ROOT_URL+'?notification=bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');expect(page.locator('.welcome-entry')).to_be_visible();assert page.url.startswith(BASE) and 'notification=' in page.url;c.close()
- c,seen=context(browser);page=c.new_page();page.goto(ROOT_URL+'?source=installed');expect(page.locator('.welcome-entry')).to_be_visible();assert page.url.startswith(BASE);c.close()
+ c,seen=context(browser);page=c.new_page();page.goto(ROOT_URL+'?notification=bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');expect(page.locator('#account-form')).to_be_visible();assert page.url.startswith(BASE) and 'notification=' in page.url;c.close()
+ c,seen=context(browser);page=c.new_page();page.goto(ROOT_URL+'?source=installed');expect(page.locator('#account-form')).to_be_visible();assert page.url.startswith(BASE);c.close()
  c,seen=context(browser);token={'access_token':'fixture-access','refresh_token':'fixture-refresh','expires_at':int(__import__('time').time())+3600}
  c.add_init_script('try{localStorage.setItem('+json.dumps(KEY)+','+json.dumps(json.dumps(token))+');}catch{}')
  page=c.new_page();page.goto(ROOT_URL);expect(page.locator('.hero h1')).to_be_visible();assert page.locator('.workspace-sidebar').count()==0;assert page.evaluate('JSON.parse(localStorage.getItem('+json.dumps(KEY)+')).access_token')=='fixture-access'

@@ -25,6 +25,34 @@
       "width": 393,
       "height": 852
     },
+    "es-currency": {
+      "width": 393,
+      "height": 852
+    },
+    "es-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "es-shopping": {
+      "width": 393,
+      "height": 852
+    },
+    "es-polls": {
+      "width": 393,
+      "height": 852
+    },
+    "es-tasks": {
+      "width": 393,
+      "height": 852
+    },
+    "es-budget": {
+      "width": 393,
+      "height": 852
+    },
+    "es-groups": {
+      "width": 393,
+      "height": 852
+    },
     "es-house": {
       "width": 393,
       "height": 852
@@ -57,6 +85,34 @@
       "width": 393,
       "height": 852
     },
+    "en-currency": {
+      "width": 393,
+      "height": 852
+    },
+    "en-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "en-shopping": {
+      "width": 393,
+      "height": 852
+    },
+    "en-polls": {
+      "width": 393,
+      "height": 852
+    },
+    "en-tasks": {
+      "width": 393,
+      "height": 852
+    },
+    "en-budget": {
+      "width": 393,
+      "height": 852
+    },
+    "en-groups": {
+      "width": 393,
+      "height": 852
+    },
     "en-house": {
       "width": 393,
       "height": 852
@@ -86,6 +142,34 @@
       "height": 852
     },
     "ro-settlements": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-currency": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-shopping": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-polls": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-tasks": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-budget": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-groups": {
       "width": 393,
       "height": 852
     },
