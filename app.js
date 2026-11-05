@@ -13,7 +13,7 @@ import {Cloud} from './cloud.js?v=language-78';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=language-78';
 import {NotificationCentre} from './notifications.js?v=language-78';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-78';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=google-82';
 
 import {languageSelection} from './language.js?v=language-78';
 const languageLabels={es:'Español',en:'English',ro:'Română'};
@@ -1117,7 +1117,7 @@ function renderWelcome() {
   let notice='';
   if(pendingInvite) notice=tr('<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>');
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
-  root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:authStage==='welcome'}),notice});
+  root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled}),notice});
   root.inert=brandIntroActive||!!modalRoot.firstElementChild;
   if(authLoading&&!root.querySelector('.welcome-entry')){root.querySelectorAll('.auth-main,.auth-footer,.header-note').forEach(el=>el.remove());}
   if(!brandIntroShown){brandIntroShown=true;startBrandIntro();}
@@ -1136,13 +1136,13 @@ function startBrandIntro() {
 function accountModal() {
   if(accountUser){settingsModal();return;}
   if(!demoMode){closeModal();render();document.querySelector('#account-form input')?.focus();return;}
-  openModal(authMode==='signup'?tr('Crea tu cuenta'):tr('Inicia sesión'),ui`<div class="social-providers">${socialButtons({providers,error:providerError,enabled:cloud.enabled})}</div><div class="auth-divider"><span>o continúa con tu correo</span></div>${accountForm()}<div class="account-switch">${authMode==='signup'?tr('¿Ya tienes cuenta?'):tr('¿Es tu primera vez?')} <button class="text-button" data-action="${authMode==='signup'?'login':'signup'}">${authMode==='signup'?tr('Iniciar sesión'):tr('Crear cuenta')}</button></div>`);
+  openModal(authMode==='signup'?tr('Crea tu cuenta'):tr('Inicia sesión'),ui`${accountForm()}<div class="account-switch">${authMode==='signup'?tr('¿Ya tienes cuenta?'):tr('¿Es tu primera vez?')} <button class="text-button" data-action="${authMode==='signup'?'login':'signup'}">${authMode==='signup'?tr('Iniciar sesión'):tr('Crear cuenta')}</button></div>`);
 }
 async function refreshProviders() {
   if(!cloud.enabled)return;
   try {providers=await cloud.providers();providerError=false;}
   catch {providerError=true;}
-  document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:!!el.closest('.welcome-entry')}));
+  document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled}));
 }
 async function beginOAuth(provider,acknowledgement) {
   remoteBusy=true;

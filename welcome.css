@@ -71,3 +71,11 @@
 #account-form .auth-legal{margin-top:14px;font-size:11px}
 
 .registration-legal{margin:18px 0}.legal-checkbox{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6}.legal-checkbox input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:#8550d3}.registration-legal a,.auth-legal a{color:#7041b2}.privacy-actions{display:grid;gap:10px;margin:18px 0}.privacy-actions .button{white-space:normal;text-align:left}#privacy-request-form textarea{width:100%;resize:vertical}
+
+/* A single Google mark on the entry screen; email forms stay focused on email. */
+.welcome-entry .social-buttons{display:flex;justify-content:center;align-items:center}
+.welcome-entry .social-button.social-icon{display:grid;grid-template-columns:minmax(0,1fr);place-items:center;gap:0;flex:none;width:48px;height:48px;min-height:48px;padding:10px;border:0;border-radius:50%;background:transparent;box-shadow:none;color:inherit}
+.welcome-entry .social-button.social-icon:hover,.welcome-entry .social-button.social-icon:active{border:0;background:transparent;box-shadow:none}
+.welcome-entry .social-button.social-icon>svg{width:28px;height:28px;flex:none;margin:0}
+.welcome-entry .social-button.social-icon:focus-visible{outline:2px solid #8550d3;outline-offset:4px}
+.welcome-entry .social-button.social-icon:disabled{opacity:.5}
