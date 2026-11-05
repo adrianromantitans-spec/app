@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.divzplit.app",
+      "sha256_cert_fingerprints": [
+        "90:65:22:5B:4D:37:F8:41:9D:EE:6E:A5:96:4F:81:EF:3D:80:D5:DF:D8:E4:FF:F6:4D:39:35:24:13:73:F0:72",
+        "7A:B0:37:0C:C1:18:70:90:F6:4D:50:51:D8:89:2C:83:2C:9A:0E:17:2C:83:DD:1F:DF:A5:A3:0E:95:75:02:58"
+      ]
+    }
+  }
+]

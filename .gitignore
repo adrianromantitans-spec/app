@@ -9,3 +9,22 @@ __pycache__/
 android/*.jks
 android/*.keystore
 android/*-signing.txt
+
+# Android builds and private signing material (all directories).
+**/*.jks
+**/*.keystore
+**/keystore.properties
+**/local.properties
+**/*.aab
+**/*.apk
+android/.gradle/
+android/.kotlin/
+android/**/build/
+android/.idea/
+android/captures/
+android/*.iml
+android/signing.env
+**/LEEME-CLAVE.txt
+**/signing-env.json
+**/firma-divzplit/
+**/divzplit-firma-privada.zip
