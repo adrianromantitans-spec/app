@@ -9,7 +9,7 @@ En el SQL Editor de Supabase, ejecuta una vez
 [`supabase/account-deletion.sql`](../supabase/account-deletion.sql).
 
 Después, en la app: **Cuenta → Eliminar cuenta**. La misma acción está en
-`https://divzplit.com/eliminar-cuenta/` (inicia sesión y confirma el correo).
+`https://divzplit.com/delete-account/` (inicia sesión y confirma el correo).
 
 Qué hace:
 
@@ -21,7 +21,7 @@ Qué hace:
 - Si administraba un grupo con más gente, otro miembro pasa a administrarlo.
 
 Play Console pide esa URL en **Política → Seguridad de los datos → Eliminación
-de cuentas**: `https://divzplit.com/eliminar-cuenta/`.
+de cuentas**: `https://divzplit.com/delete-account/`.
 
 ## 2. assetlinks.json
 
@@ -52,8 +52,8 @@ no podrás publicar actualizaciones.
 ## Enlaces en inglés para Play Console
 
 - Política de privacidad: `https://divzplit.com/privacy/`
-- Condiciones: `https://divzplit.com/condiciones/`
-- Eliminación de cuenta: `https://divzplit.com/eliminar-cuenta/`
+- Condiciones: `https://divzplit.com/terms/`
+- Eliminación de cuenta: `https://divzplit.com/delete-account/`
 
 En el cuestionario de clasificación de contenido, responde que no hay violencia,
 contenido sexual, drogas, apuestas ni miedo. Eso da una clasificación 3+, como

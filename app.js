@@ -1,6 +1,6 @@
 import {startIntroTransition} from './intro-transition.js?v=start-57';
 import {helpCentreView,filterHelp} from './help.js?v=play-58';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=play-60';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=play-61';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';
 import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=visual-53';
 import {convertedAmount,validConversion} from './fx.js?v=landing-51';

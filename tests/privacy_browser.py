@@ -4,7 +4,7 @@ exec(Path('tests/auth_browser.py').read_text().split('with sync_playwright() as 
 with sync_playwright() as p:
  browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  c,seen=context(browser,enabled=True);page=c.new_page();page.goto(BASE+'#registro')
- expect(page.locator('#account-form a[href*="/privacy/"]')).to_have_count(1);expect(page.locator('#account-form a[href*=condiciones]')).to_have_count(1)
+ expect(page.locator('#account-form a[href*="/privacy/"]')).to_have_count(1);expect(page.locator('#account-form a[href*="/terms/"]')).to_have_count(1)
  page.get_by_label('¿Cómo te llamas?').fill('Ana');page.get_by_label('Correo electrónico',exact=True).fill('ana@example.test');page.get_by_label('Contraseña',exact=True).fill('fixture-password')
  page.get_by_role('button',name='Crear cuenta',exact=True).click();assert len(seen['signup'])==0
  page.locator('select[name=ageBand]').select_option('under_16')

@@ -1,7 +1,7 @@
 # Activar las herramientas de privacidad
 
 El borrado de cuenta lo hace la propia persona desde **Cuenta → Eliminar cuenta**
-o desde [divzplit.com/eliminar-cuenta](https://divzplit.com/eliminar-cuenta/).
+o desde [divzplit.com/delete-account](https://divzplit.com/delete-account/).
 Para activarlo en un proyecto ya creado, ejecuta una vez
 [`supabase/account-deletion.sql`](../supabase/account-deletion.sql).
 Los grupos compartidos conservan gastos y saldos; el nombre pasa a ser

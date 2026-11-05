@@ -25,7 +25,7 @@ export function applyLanguage(language){
  document.querySelector('meta[property="og:locale"]').content={es:'es_ES',en:'en_GB',ro:'ro_RO'}[language];
  for(const image of document.querySelectorAll('[data-app-shot]'))setShot(image,language);
  for(const link of document.querySelectorAll('[data-app-link]')){const url=new URL('./app/',location.href);url.searchParams.set('lang',language);url.hash={signup:'registro',login:'acceso',open:''}[link.dataset.appLink]||'';link.href=url.href;}
- for(const link of document.querySelectorAll('[data-legal]'))link.href=new URL('./'+(link.dataset.legal==='privacy'?'privacy':'condiciones')+'/',location.href).href;
+ for(const link of document.querySelectorAll('[data-legal]'))link.href=new URL('./'+(link.dataset.legal==='privacy'?'privacy':'terms')+'/',location.href).href;
  languageSelect.value=language;
 }
 applyLanguage(currentLanguage);
