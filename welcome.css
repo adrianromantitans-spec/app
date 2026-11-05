@@ -68,5 +68,6 @@
 }
 
 .auth-legal{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:24px;color:#81758e;font-size:12px}.auth-legal a{color:inherit;text-underline-offset:3px}.auth-legal a:focus-visible{outline:2px solid #8550d3;outline-offset:4px}
+#account-form .auth-legal{margin-top:14px;font-size:11px}
 
 .registration-legal{margin:18px 0}.legal-checkbox{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6}.legal-checkbox input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:#8550d3}.registration-legal a,.auth-legal a{color:#7041b2}.privacy-actions{display:grid;gap:10px;margin:18px 0}.privacy-actions .button{white-space:normal;text-align:left}#privacy-request-form textarea{width:100%;resize:vertical}
