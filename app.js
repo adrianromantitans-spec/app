@@ -1,4 +1,4 @@
-import {startIntroTransition} from './intro-transition.js?v=start-57';
+import {startIntroTransition} from './intro-transition.js?v=start-58';
 import {helpCentreView,filterHelp} from './help.js?v=play-58';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=play-61';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';

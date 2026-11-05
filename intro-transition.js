@@ -6,7 +6,8 @@ export function startIntroTransition({root,brand,ready,onFinish}) {
  const host=document.createElement('div');host.className='brand-intro-host modern-auth';
  host.innerHTML='<div class="brand-intro-curtain" aria-hidden="true"></div><header class="auth-header"></header>';
  const curtain=host.firstElementChild;host.lastElementChild.append(brand);document.body.append(host);
- Object.assign(brand.style,{position:'fixed',left:'0px',top:'0px',margin:'0',fontSize:base.fontSize,letterSpacing:base.letterSpacing,visibility:'hidden',transform:'translate(-50%,-50%)'});
+ Object.assign(brand.style,{position:'fixed',left:'0px',top:'0px',margin:'0',fontFamily:'DivZplitManrope,Arial,sans-serif',fontWeight:'850',fontStyle:'normal',fontSize:base.fontSize,letterSpacing:base.letterSpacing,visibility:'hidden',transform:'translate(-50%,-50%)'});
+ const word=brand.querySelector('.split-word');if(word)Object.assign(word.style,{fontFamily:'DivZplitManrope,Arial,sans-serif',fontWeight:'850',fontStyle:'normal'});
  let skipped=false,movement,fade,target,oldVisibility='',closed=false,frame,timer,releaseHold;
  const hold=new Promise(resolve=>{releaseHold=resolve;});
  const visibleCentre=()=>({x:(viewport?.offsetLeft||0)+(viewport?.width||innerWidth)/2,y:(viewport?.offsetTop||0)+(viewport?.height||innerHeight)/2});
@@ -32,6 +33,7 @@ export function startIntroTransition({root,brand,ready,onFinish}) {
  document.addEventListener('keydown',onKey);window.addEventListener('resize',onResize);media.addEventListener('change',onMotion);
  (async()=>{
   try{
+   try{await document.fonts.load('850 48px DivZplitManrope');}catch{/* the assembly still runs with the fallback */}
    await document.fonts.ready;
    const natural=brand.getBoundingClientRect(),ratio=Math.min((viewport?.width||innerWidth)-64,360)/natural.width;
    const centre=visibleCentre(),large={left:centre.x+'px',top:centre.y+'px',fontSize:baseSize*ratio+'px',letterSpacing:baseSpacing*ratio+'px'};
@@ -49,9 +51,6 @@ export function startIntroTransition({root,brand,ready,onFinish}) {
    if(skipped||media.matches)return;
    let destination=selectTarget();if(!destination)return;
    const keyframes=()=>[large,{left:destination.rect.x+destination.rect.width/2+'px',top:destination.rect.y+destination.rect.height/2+'px',fontSize:destination.style.fontSize,letterSpacing:destination.style.letterSpacing}];
-   Object.assign(brand.style,{fontFamily:destination.style.fontFamily,fontWeight:destination.style.fontWeight,fontStyle:destination.style.fontStyle});
-   host.style.setProperty('--ink',destination.style.color);
-   host.style.setProperty('--accent',getComputedStyle(target.querySelector('.word-z')||target).color);
    movement=brand.animate(keyframes(),{duration:1161,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
    fade=curtain.animate([{opacity:1},{opacity:0}],{duration:1161,fill:'forwards'});
    // Safari's viewport or an async render can move the real header during flight.
