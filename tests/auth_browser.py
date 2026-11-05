@@ -14,7 +14,7 @@ USER={'id':'11111111-1111-4111-8111-111111111111','email':'ana@example.test',
       'user_metadata':{'display_name':'Ana'}}
 
 def context(browser,enabled=False,hold_settings=False):
-    c=browser.new_context(locale='es-ES',viewport={'width':1440,'height':1000})
+    c=browser.new_context(locale='es-ES',viewport={'width':1440,'height':1000},reduced_motion='reduce')
     seen={'settings':[],'oauth':[],'exchange':[],'signup':[],'tokens':0,'hold':hold_settings}
     c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',
         body="export const cloudConfig={url:'https://nexo-test.supabase.co',publishableKey:'sb_publishable_fixture'};"))
@@ -89,7 +89,7 @@ with sync_playwright() as p:
     page.reload()
     expect(page.get_by_role('heading',name='Inicia sesión',exact=True)).to_be_visible()
     assert page.locator('.brand-intro-curtain').count()==0
-    print('PASS: app opens directly at login without splash; signup/login URLs, reload and Back work')
+    print('PASS: signup/login URLs, reload and Back work with reduced motion')
 
     # New account entry, without sending any actual confirmation email.
     page.get_by_role('link',name='Crear cuenta',exact=False).click()

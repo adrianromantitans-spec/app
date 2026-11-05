@@ -1,3 +1,4 @@
+import {createBrandIntro} from './brand-intro.js?v=intro-54';
 import {helpCentreView,filterHelp} from './help.js?v=landing-51';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=landing-51';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';
@@ -15,6 +16,7 @@ import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=visual-53';
 
 initializeLanguage();
+const openingBrand=createBrandIntro();
 // Keep Supabase's existing allowed root callback; landing-route forwards it to /app/.
 const authReturnURL=new URL('./',import.meta.url).href;
 
@@ -184,14 +186,15 @@ function quickAddButton(){
  return '<div class="mobile-quick-add"><button class="nav-add" data-action="quick-add" aria-label="'+tr('Añadir')+'" aria-haspopup="dialog" aria-expanded="false">'+icon('plus')+'</button></div>';
 }
 function render() {
- if(authLoading){root.innerHTML=ui`<main class="session-check" aria-busy="true"><p role="status">Conectando con tu espacio…</p></main>`;return;}
+ root.toggleAttribute('aria-busy',authLoading);
+ if(authLoading){root.innerHTML='';return;}
  if(cloud.recovering){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');renderRecovery(true);return;}
  if(!accountUser&&!demoMode){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
  root.classList.add('personal-shell');document.body.classList.add('personal-app');
  const helpFocus=page==='help'&&document.activeElement?.matches('[data-help-search]')?{start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd}:null;
  const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Cuenta',help:'Centro de ayuda',activity:'Gastos y pagos'}[page])||'Inicio';
  root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home" aria-label="DivZplit, ${tr('Inicio')}">Div<span class="brand-z">Z</span>plit<span class="brand-dot">.</span></a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():page==='help'?helpCentreView(helpQuery):!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
- root.inert=authLoading||!!modalRoot.firstElementChild;
+ root.inert=openingBrand.active||authLoading||!!modalRoot.firstElementChild;
  if(page==='shopping')renderShoppingList();
  if(page==='help'){filterHelp(root,helpQuery);if(helpFocus){const input=root.querySelector('[data-help-search]');input?.focus({preventScroll:true});input?.setSelectionRange(helpFocus.start,helpFocus.end);}}
 
@@ -481,7 +484,7 @@ function openModal(title, content, subtitle='',kind='') {
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
 }
-function closeModal() {document.body.classList.remove('workspace-menu-open');root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','false');root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=false;modalOpener?.focus();}
+function closeModal() {document.body.classList.remove('workspace-menu-open');root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','false');root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=openingBrand.active;modalOpener?.focus();}
 const actions = label => ui`<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" type="submit">${label}${icon('arrow')}</button></div>`;
 const memberOptions = ({selfFirst=false,selected=null,ownName=false}={}) => {
   const members=selfFirst?[...group().members.filter(m=>m.id==='you'),...group().members.filter(m=>m.id!=='you')]:group().members;
@@ -983,7 +986,7 @@ function renderRecovery(reset) {
   const prompt=root.querySelector('.signup-prompt');
   if(reset){prompt.remove();const back=root.querySelector('.auth-back');back.dataset.action='signout';back.textContent=tr('← Cancelar recuperación');}
   else prompt.innerHTML=tr('¿Recuerdas tu contraseña? <a href="#acceso" data-action="login">Iniciar sesión</a>');
-  root.inert=!!modalRoot.firstElementChild;
+  root.inert=openingBrand.active||!!modalRoot.firstElementChild;
 }
 async function handleRecoveryForm(form,data) {
   if(!['recovery-form','password-form'].includes(form.id))return false;
@@ -1024,7 +1027,7 @@ function renderWelcome() {
   if(pendingInvite) notice=tr('<div class="auth-invite-note">✦ Te han invitado a un grupo. Entra o crea una cuenta para unirte.</div>');
   else if(inviteError) notice=`<p class="form-error" role="alert">${esc(inviteError)}</p>`;
   root.innerHTML=welcomePage({stage:authStage,loading:authLoading,signup:authMode==='signup',form:accountForm(),social:socialButtons({providers,error:providerError,enabled:cloud.enabled,compact:authStage==='welcome'}),notice});
-  root.inert=!!modalRoot.firstElementChild;
+  root.inert=openingBrand.active||!!modalRoot.firstElementChild;
   root.classList.add('welcome-ready');
 }
 function accountModal() {
@@ -1174,7 +1177,7 @@ async function startAccount() {
     if (cloud.user) {accountUser=cloud.user;state={version:1,groups:[],activeGroup:null};syncMessage=tr('Sin conexión · Reintentar');}
     storageWarning=error.message;
   } finally {
-    authLoading=false;render();
+    authLoading=false;render();openingBrand.finish();
     if(returnedFromEmail&&!accountUser){authMode='login';authStage='login';accountModal();toast(tr('Has vuelto del enlace de correo. Entra para comprobar tu cuenta.'));}
     else if(storageWarning)toast(storageWarning);
   }

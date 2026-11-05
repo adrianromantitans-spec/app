@@ -2,7 +2,7 @@
 
 ## Aplicación
 
-- `app.js`: elimina la animación adicional del logo, su bloqueo de interacción y su temporizador. Abre directamente el acceso o la sesión recuperada. Mientras se comprueba la sesión se muestra un estado neutro, sin logo ni formulario incorrecto. Elimina el icono DZ de las cabeceras y la franja Casa/Viaje del selector, manteniendo las tarjetas de todos los grupos y sus acciones.
+- `app.js` y `brand-intro.js`: muestran una animación únicamente del nombre DivZplit mientras se recupera la sesión; después el nombre se desplaza a la cabecera del acceso o de la app. No muestran el icono DZ ni el mensaje de conexión. Las comprobaciones de sesión se mantienen y no se muestra un formulario incorrecto durante la recuperación. Elimina el icono DZ de las cabeceras y la franja Casa/Viaje del selector, manteniendo las tarjetas de todos los grupos y sus acciones.
 - `home.js`: obtiene hasta cuatro gastos del grupo seleccionado, ordenados por fecha descendente; conserva el orden de llegada para empates y no modifica el documento del grupo. No mezcla grupos ni completa filas con datos inventados.
 - `auth-ui.js`: mantiene el nombre DivZplit sin el icono cuadrado, el acceso por correo y Google/Apple, el registro y los enlaces de recuperación.
 - `glass.css`: alinea la marca de texto, mantiene la Z y el punto morados y da estilo al estado de comprobación de sesión.
@@ -24,7 +24,7 @@ La conversión se presenta como la consulta disponible al saldar: el cambio es o
 ## Validación
 
 - `npm run check` y `npm test`, incluida una prueba de fechas desordenadas, límite de cuatro filas y conservación del grupo original.
-- `tests/intro_browser.py`: acceso directo y restauración lenta de una sesión sin mostrar un formulario incorrecto.
+- `tests/intro_browser.py`: animación de texto, llegada a la cabecera, ausencia de icono y mensaje, movimiento reducido y restauración lenta sin mostrar un formulario incorrecto.
 - `tests/visual_refinements_browser.py`: Chromium, con opción `DIVZPLIT_TEST_WEBKIT=1` para WebKit en un entorno compatible; cuatro gastos ordenados, aislamiento entre grupos, selector sin franja en anchos 320–1440, cabecera de texto, cambio de voto, compra compartida, tareas y «Ver todos». Usa fixtures locales; necesita los motores y sus dependencias.
 - `tests/landing_browser.py`: siete imágenes distintas en los tres idiomas, adaptabilidad, navegación, movimiento reducido y uso sin JavaScript.
 - `tests/auth_browser.py`, `tests/privacy_browser.py`, `tests/landing_migration_browser.py`, `tests/personal_browser.py`, `tests/help_browser.py` y `tests/notifications_browser.py`: acceso por correo, Google/Apple con PKCE, recuperación, invitaciones, exportación, cambios de grupo, creación/edición de gastos y funciones de Cuenta.
