@@ -1,5 +1,12 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Ej. Cena del grupo": {"en": "E.g. Group dinner", "ro": "Ex. Cină cu grupul"},
+  "1 día": {"en": "1 day", "ro": "1 zi"},
+  "Editar": {"en": "Edit", "ro": "Editează"},
+  "Continuar": {"en": "Continue", "ro": "Continuă"},
+  "← Iniciar sesión": {"en": "← Sign in", "ro": "← Autentificare"},
+  "tu@correo.com": {"en": "you@example.com", "ro": "tu@exemplu.com"},
+
   "Preferencias": {"en": "Preferences", "ro": "Preferințe"},
   "Idioma": {"en": "Language", "ro": "Limbă"},
   "Automático": {"en": "Automatic", "ro": "Automat"},

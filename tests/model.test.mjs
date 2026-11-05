@@ -63,3 +63,12 @@ test('currency defaults to EUR and supports RON without changing minor-unit calc
  assert.doesNotThrow(()=>checkCurrencyChange({expenses:[],payments:[]},'RON'));
  assert.throws(()=>checkCurrencyChange(null,'ZZZ'));
 });
+
+test('expense titles suggest categories across Spanish, English and Romanian without substring matches',async()=>{
+ const {inferExpenseCategory,categoryEmoji}=await import('../model.js');
+ for(const title of ['super','Súper','Compra super','supermercado','groceries','supermarket','Cumpărături alimentare','Kaufland','Lidl']){
+  assert.equal(inferExpenseCategory(title),'Supermercado',title);assert.equal(categoryEmoji(inferExpenseCategory(title)),'🛒');
+ }
+ for(const [category,titles] of Object.entries({Comida:['cena','Group dinner','Cină cu grupul'],Gasolina:['gasolina','fuel','benzină'],Transporte:['taxi','train','metrou'],Alojamiento:['alojamiento','hotel','cazare'],Viaje:['vuelo','flight','zbor'],Salud:['farmacia','pharmacy','farmacie'],Facturas:['factura','electricity','chirie'],Actividades:['excursión','museum','muzeu'],Ocio:['cine','movie','teatru'],Compras:['ropa','shopping','haine']}))for(const title of titles)assert.equal(inferExpenseCategory(title),category,title);
+ for(const title of ['',null,'superb','superación'])assert.equal(inferExpenseCategory(title),'Otros',String(title));
+});

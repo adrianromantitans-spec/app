@@ -1,7 +1,7 @@
-import {legalMetadata} from './legal.js?v=language-78';
-import {currencyOf} from './model.js?v=language-78';
-import {tr,language} from './i18n.js?v=language-78';
-import {receiptPath} from './extras.js?v=language-78';
+import {legalMetadata} from './legal.js?v=expenses-83';
+import {currencyOf} from './model.js?v=expenses-83';
+import {tr,language} from './i18n.js?v=expenses-83';
+import {receiptPath} from './extras.js?v=expenses-83';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;

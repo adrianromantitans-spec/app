@@ -9,3 +9,15 @@ test('every translation has English and Romanian copy with identical dynamic slo
  const slots=s=>(s.match(/\{\d+\}/g)||[]).sort();
  for(const [source,languages]of Object.entries(translations))for(const lang of ['en','ro']){assert.ok(languages[lang]?.trim(),source+' / '+lang);assert.deepEqual(slots(languages[lang]),slots(source),source+' / '+lang);}
 });
+
+test('all descriptive input examples have English and Romanian translations',async()=>{
+ const {readdir,readFile}=await import('node:fs/promises');
+ for(const name of (await readdir(new URL('../',import.meta.url))).filter(name=>name.endsWith('.js')&&name!=='translations.js')){
+  const source=await readFile(new URL('../'+name,import.meta.url),'utf8');
+  for(const [,example]of source.matchAll(/placeholder="([^"$]+)"/g)){
+   // Numbers and illustrative personal names are intentionally language-independent.
+   if(!/[a-záéíóúñ]/i.test(example)||example==='Marta, Pablo, Lucía')continue;
+   for(const lang of ['en','ro'])assert.ok(translations[example]?.[lang],name+': '+example+' / '+lang);
+  }
+ }
+});

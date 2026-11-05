@@ -1,5 +1,5 @@
-import {tr,ui,locale} from './i18n.js?v=language-78';
-import {money} from './model.js?v=language-78';
+import {tr,ui,locale} from './i18n.js?v=expenses-83';
+import {money} from './model.js?v=expenses-83';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={
  'tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación',

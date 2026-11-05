@@ -1,7 +1,26 @@
 export const expenseCategories=[['Comida','🍽️'],['Supermercado','🛒'],['Transporte','🚌'],['Gasolina','⛽'],['Alojamiento','🏨'],['Viaje','✈️'],['Actividades','🎟️'],['Compras','🛍️'],['Salud','💊'],['Facturas','💡'],['Ocio','🎬'],['Otros','📌']];
 export const expenseCategoryIds=expenseCategories.map(([id])=>id);
 export const categoryEmoji=category=>expenseCategories.find(([id])=>id===category)?.[1]||'📌';
-import {locale,tr} from './i18n.js?v=language-78';
+// Whole words avoid matching e.g. “super” inside “superb”. Ignore accents in all three languages.
+const categoryKeywords=[
+ ['Supermercado','super|supermercado|supermarket|supermarkets|supermercados|supermarketuri|supermarketul|supermarketului|supermarketurile|grocery|groceries|alimentara|alimente|cumparaturi alimentare|mercadona|carrefour|lidl|aldi|kaufland|auchan|mega image'],
+ ['Gasolina','gasolina|gasolinera|diesel|petrol|fuel|benzina|motorina|combustibil'],
+ ['Transporte','transporte|transport|taxi|uber|bolt|bus|autobus|autobuz|tren|train|metro|metrou|parking|aparcamiento|parcare'],
+ ['Alojamiento','alojamiento|hotel|hostel|airbnb|apartamento|accommodation|cazare|pensiune'],
+ ['Viaje','viaje|vuelo|vuelos|avion|flight|flights|calatorie|zbor|zboruri'],
+ ['Comida','comida|cena|desayuno|almuerzo|restaurante|restaurant|dinner|lunch|breakfast|food|mancare|cina|pranz|mic dejun|pizza|cafe|coffee|cafea'],
+ ['Salud','salud|farmacia|farmacie|pharmacy|medicina|medicamente|medicamentos|doctor|medic|health'],
+ ['Facturas','factura|facturas|luz|agua|electricidad|internet|alquiler|bill|bills|electricity|water|rent|facturi|curent|electricitate|apa|chirie'],
+ ['Actividades','actividades|actividad|excursion|excursie|activities|activity|tour|museo|museum|muzeu|entradas|tickets'],
+ ['Ocio','ocio|cine|cinema|movie|movies|concert|concierto|teatro|theatre|teatru|divertisment'],
+ ['Compras','compras|compra|shopping|clothes|ropa|haine|cumparaturi']
+].map(([category,words])=>[category,new RegExp(`(?:^|[^a-z0-9])(?:${words})(?=$|[^a-z0-9])`)]);
+export function inferExpenseCategory(title){
+ const normalized=String(title??'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
+ return categoryKeywords.find(([,pattern])=>pattern.test(normalized))?.[0]||'Otros';
+}
+
+import {locale,tr} from './i18n.js?v=expenses-83';
 import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=landing-51';
 export {currencies,currencyDigits,currencyScale,currencyStep};
 export function currencyOf(group) {

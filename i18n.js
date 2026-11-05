@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=language-78';
+import {translations} from './translations.js?v=expenses-83';
 
 export {detectLanguage} from './language.js?v=language-78';
 import {detectLanguage,languagePreferences,rememberLanguage,supportedLanguages} from './language.js?v=language-78';

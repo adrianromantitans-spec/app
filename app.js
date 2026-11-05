@@ -1,19 +1,19 @@
 import {startIntroTransition} from './intro-transition.js?v=start-64';
-import {helpCentreView,filterHelp} from './help.js?v=language-78';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=language-78';
-import {settlementPlan} from './settlement-plan.js?v=language-78';
-import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=language-78';
-import {convertedAmount,validConversion} from './fx.js?v=language-78';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=language-78';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=language-78';
-import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=language-78';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-78';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji} from './model.js?v=language-78';
-import {Cloud} from './cloud.js?v=language-78';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=language-78';
-import {NotificationCentre} from './notifications.js?v=language-78';
+import {helpCentreView,filterHelp} from './help.js?v=expenses-83';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=expenses-83';
+import {settlementPlan} from './settlement-plan.js?v=expenses-83';
+import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=expenses-83';
+import {convertedAmount,validConversion} from './fx.js?v=expenses-83';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=expenses-83';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=expenses-83';
+import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=expenses-83';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=expenses-83';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=expenses-83';
+import {Cloud} from './cloud.js?v=expenses-83';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=expenses-83';
+import {NotificationCentre} from './notifications.js?v=expenses-83';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=google-82';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=expenses-83';
 
 import {languageSelection} from './language.js?v=language-78';
 const languageLabels={es:'Español',en:'English',ro:'Română'};
@@ -531,6 +531,14 @@ function expenseModal(id=null) {
   openModal(tr(editing?'Editar gasto':'Añadir gasto'),ui`<form id="expense-form" class="compact-expense-form" data-entity-id="${existing?.id||uid()}" data-edit="${editing}" data-expense-group="${esc(g.id)}"><label class="expense-amount-field"><span>Importe</span><div><input name="amount" type="number" min="${currencyStep(currencyOf(g))}" max="1000000" step="${currencyStep(currencyOf(g))}" placeholder="0,00" required inputmode="decimal" aria-label="${esc(ui`Importe (${currencyUnit(g)})`)}"><strong aria-hidden="true">${esc(currencyUnit(g))}</strong></div></label><label class="field expense-concept">Concepto<input name="title" placeholder="Ej. Cena del grupo" aria-label="${tr('¿Qué habéis pagado?')}" required maxlength="100"></label><label class="field expense-payer-field"><span>Pagado por</span><div class="expense-payer-select"><span class="expense-payer-avatar" aria-hidden="true">${avatar(payer,true)}</span><select name="payer" aria-label="${tr('Pagado por')}">${memberOptions({selfFirst:true,selected:existing?.payer||'you',ownName:true})}</select></div></label><div class="expense-participants-heading"><span>${tr('Repartir entre')}</span><select name="splitMode" aria-label="${tr('Tipo de reparto')}"><option value="equal">Partes iguales</option><option value="amounts">Importes individuales</option><option value="percent">Porcentajes</option><option value="shares">Por partes</option></select></div><fieldset class="participants compact-participants"><legend class="sr-only">Participantes del gasto</legend>${participantMembers.map(m=>`<label class="participant person-chip"><input type="checkbox" name="participants" value="${esc(m.id)}" ${!existing||existing.participants.includes(m.id)?'checked':''}><span class="chip-check">${icon('check')}</span><span>${esc(memberName(m))}</span></label>`).join('')}</fieldset><div class="split-fields"></div><p class="split-total" aria-live="polite"></p><p class="form-note receipt-amount-status" role="status" aria-live="polite"></p><details class="expense-more-options" ${existing?.receipt||existing?.recurrence||existing?.seriesId?'open':''}><summary>${tr('Más opciones')}<span>${tr('Fecha, categoría y ticket')}</span></summary><div class="expense-more-content"><div class="form-columns"><label class="field">Categoría<select name="category">${expenseCategories.map(([c,emoji])=>`<option value="${esc(c)}">${emoji} ${tr(c)}</option>`).join('')}</select></label><label class="field">Fecha<input type="date" name="date" value="${today()}" required ${existing?.recurrence?.active?'readonly':''}></label></div><label class="field">Repetir<select name="frequency" ${editing?'disabled':''}><option value="">No repetir</option><option value="weekly">Cada semana</option><option value="monthly">Cada mes</option><option value="yearly">Cada año</option></select><span class="muted">${tr(existing?.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing?.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':editing?(existing?.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.'):'Se registrará al abrir la app cuando venza, con este importe y reparto. Podrás detenerlo desde el gasto original.')}</span></label><label class="field">Foto del ticket (opcional)<input type="file" name="receipt" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"><span class="muted">Elige una foto o usa la cámara. Hasta 20 MB; la optimizamos antes de subirla.</span></label>${existing?.receipt?ui`<label class="participant"><input type="checkbox" name="removeReceipt">Quitar la foto actual</label>`:''}<div class="receipt-preview" aria-live="polite"></div>${receiptTools()}</div></details><p class="form-error" role="alert"></p><div class="modal-actions expense-actions"><button class="button primary" type="submit">${icon('check')}${tr(editing?'Guardar cambios':'Guardar gasto')}</button></div></form>`,esc(g.name),'compact-expense-modal');
   const form=modalRoot.querySelector('#expense-form');
   form.splitDrafts={};
+  // Keep existing expenses and explicit choices stable while suggesting categories for new titles.
+  let categoryChosen=editing;
+  form.elements.category.addEventListener('change',()=>{categoryChosen=true;});
+  form.elements.title.addEventListener('input',()=>{
+    if(!categoryChosen)form.elements.category.value=inferExpenseCategory(form.elements.title.value);
+  });
+  if(!editing)form.elements.category.value='Otros';
+
   if(existing){
     for(const key of ['title','payer','category','date'])form.elements[key].value=existing[key];
     form.elements.amount.value=(existing.amount/currencyScale(currencyOf(group()))).toFixed(currencyDigits(currencyOf(group())));
