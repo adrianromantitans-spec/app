@@ -6,15 +6,15 @@ const esc=value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>
 const text=(key,tag='span',cls='')=>`<${tag}${cls?` class="${cls}"`:''} data-copy="${key}">${esc(c[key])}</${tag}>`;
 const paths={arrow:'M5 12h14m-5-5 5 5-5 5',down:'m7 10 5 5 5-5',receipt:'M5 3v18l3-2 4 2 4-2 3 2V3l-3 2-4-2-4 2-3-2Zm4 6h6m-6 4h6',group:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M15 3a4 4 0 0 1 0 8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',budget:'M3 3v18h18M7 14l4-4 4 3 6-8',poll:'M5 21V11m7 10V3m7 18v-7',task:'M9 11l3 3 7-7M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8',balance:'M4 7h16m-5-4 5 4-5 4M20 17H4m5-4-5 4 5 4',spark:'m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z',menu:'M4 6h16M4 12h16M4 18h16'};
 const icon=name=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
-const brand=`<span class="wordmark">Div<span>Z</span>plit<span>.</span></span>`;
+const brand=`<img class="brand-logo" src="./assets/divzplit-logo.svg" alt="" width="40" height="40"><span class="wordmark">Div<span>Z</span>plit<span>.</span></span>`;
 const manifest=JSON.parse(await readFile(new URL('../assets/landing/manifest.json',import.meta.url),'utf8'));
-function image(shot,alt,cls='',eager=false){const size=manifest.images['es-'+shot]||{width:393,height:852};return `<img${cls?` class="${cls}"`:''} data-app-shot="${shot}" data-alt="${alt}" src="./assets/landing/es-${shot}.webp" srcset="./assets/landing/es-${shot}.webp ${size.width}w, ./assets/landing/es-${shot}-2x.webp ${size.width*2}w" sizes="${['balance','recent'].includes(shot)?'250px':'(max-width: 600px) 270px, 310px'}" width="${size.width}" height="${size.height}" alt="${esc(c[alt])}" ${eager?'fetchpriority="high" loading="eager"':'loading="lazy"'} decoding="async">`;}
+function image(shot,alt,cls='',eager=false){const size=manifest.images['es-'+shot]||{width:393,height:852};return `<img${cls?` class="${cls}"`:''} data-app-shot="${shot}" data-alt="${alt}" src="./assets/landing/es-${shot}.webp?v=logo-52" srcset="./assets/landing/es-${shot}.webp?v=logo-52 ${size.width}w, ./assets/landing/es-${shot}-2x.webp?v=logo-52 ${size.width*2}w" sizes="${['balance','recent'].includes(shot)?'250px':'(max-width: 600px) 270px, 310px'}" width="${size.width}" height="${size.height}" alt="${esc(c[alt])}" ${eager?'fetchpriority="high" loading="eager"':'loading="lazy"'} decoding="async">`;}
 const cta=(key='start',cls='button-primary')=>`<a class="button ${cls}" data-app-link="signup" href="./app/#registro">${text(key)}${icon('arrow')}</a>`;
 const featureCards=['receipt','group','budget','poll','task','balance'].map((name,i)=>`<article class="feature-card reveal"><div class="feature-icon">${icon(name)}</div>${text('f'+(i+1)+'Title','h3')}${text('f'+(i+1)+'Body','p')}</article>`).join('');
 const steps=['group','expense','settlements'].map((shot,i)=>`<button class="step" data-step="${shot}" aria-pressed="${i===0}"><span class="step-number">0${i+1}</span><span class="step-copy">${text('step'+(i+1)+'Title','strong')}${text('step'+(i+1)+'Body')}</span></button>`).join('');
 const scenarios=[['home','travelTitle','travelBody','heroAlt'],['house','houseTitle','houseBody','houseAlt'],['friends','friendsTitle','friendsBody','friendsAlt']].map(([shot,title,body,alt],i)=>`<article class="scenario-card reveal"><div class="scenario-shot scenario-${i}">${image(shot,alt)}</div><div class="scenario-copy">${text(title,'h3')}${text(body,'p')}</div></article>`).join('');
 const questions=[1,2,3,4,5].map(i=>`<details class="faq-item"><summary>${text('faq'+i)}<span class="faq-plus" aria-hidden="true">+</span></summary>${text('faq'+i+'Body','p')}</details>`).join('');
-const ld=JSON.stringify({'@context':'https://schema.org','@type':'SoftwareApplication',name:'DivZplit',url:'https://divzplit.com/app/',applicationCategory:'FinanceApplication',operatingSystem:'Web',inLanguage:['es','en','ro'],offers:{'@type':'Offer',price:'0',priceCurrency:'EUR'},image:'https://divzplit.com/assets/landing/share.webp'});
+const ld=JSON.stringify({'@context':'https://schema.org','@type':'SoftwareApplication',name:'DivZplit',url:'https://divzplit.com/app/',applicationCategory:'FinanceApplication',operatingSystem:'Web',inLanguage:['es','en','ro'],offers:{'@type':'Offer',price:'0',priceCurrency:'EUR'},image:'https://divzplit.com/assets/landing/share.webp?v=logo-52'});
 const hash=createHash('sha256').update(ld).digest('base64');
 const html=`<!doctype html>
 <html lang="es">
@@ -30,13 +30,13 @@ const html=`<!doctype html>
  <link rel="canonical" href="https://divzplit.com/">
  <meta property="og:type" content="website"><meta property="og:site_name" content="DivZplit"><meta property="og:locale" content="es_ES">
  <meta property="og:title" content="${esc(c.title)}"><meta property="og:description" content="${esc(c.description)}"><meta property="og:url" content="https://divzplit.com/">
- <meta property="og:image" content="https://divzplit.com/assets/landing/share.webp"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="DivZplit: gastos compartidos y planes en grupo">
+ <meta property="og:image" content="https://divzplit.com/assets/landing/share.webp?v=logo-52"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="DivZplit: gastos compartidos y planes en grupo">
  <meta name="twitter:card" content="summary_large_image">
- <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./assets/app-icon-180.png">
+ <link rel="icon" href="./favicon.svg?v=logo-52" type="image/svg+xml"><link rel="apple-touch-icon" href="./assets/app-icon-180.png?v=logo-52">
  <link rel="preload" href="./assets/Manrope.ttf" as="font" type="font/ttf" crossorigin>
- <link rel="stylesheet" href="./landing.css?v=landing-51">
+ <link rel="stylesheet" href="./landing.css?v=logo-52">
  <script type="application/ld+json">${ld}</script>
- <script type="module" src="./landing.js?v=landing-51"></script>
+ <script type="module" src="./landing.js?v=logo-52"></script>
 </head>
 <body>
  <a class="skip-link" href="#main" data-copy="skip">${c.skip}</a>

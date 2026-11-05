@@ -18,7 +18,7 @@ self.addEventListener('push',event=>event.waitUntil((async()=>{
  let data;try{data=event.data?.json();}catch{return;}
  if(!validId(data?.notificationId)||!validId(data?.userId))return;
  const binding=await readBinding();if(binding?.userId!==data.userId)return;
- await self.registration.showNotification('DivZplit',{body:typeof data.body==='string'?data.body.slice(0,300):'DivZplit',icon:new URL('./assets/app-icon-192.png',self.registration.scope).href,badge:new URL('./assets/app-icon-192.png',self.registration.scope).href,tag:'divzplit-'+data.notificationId,data:{notificationId:data.notificationId,userId:data.userId}});
+ await self.registration.showNotification('DivZplit',{body:typeof data.body==='string'?data.body.slice(0,300):'DivZplit',icon:new URL('./assets/app-icon-192.png?v=logo-52',self.registration.scope).href,badge:new URL('./assets/app-icon-192.png?v=logo-52',self.registration.scope).href,tag:'divzplit-'+data.notificationId,data:{notificationId:data.notificationId,userId:data.userId}});
 })()));
 self.addEventListener('notificationclick',event=>{
  event.notification.close();event.waitUntil((async()=>{

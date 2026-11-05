@@ -52,8 +52,10 @@ def capture(browser,lang):
   route.fulfill(content_type='application/json',body=json.dumps(data,ensure_ascii=False))
  c.route('https://nexo-test.supabase.co/**',api)
  page=c.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(BASE)
- expect(page.locator('.home-balance')).to_be_visible();page.evaluate('document.fonts.ready');page.locator('.home-balance').scroll_into_view_if_needed();page.evaluate('scrollTo(0,0)')
+ expect(page.locator('.home-balance')).to_be_visible();page.locator('.mobile-logo .brand-logo').evaluate('(img)=>img.decode()');page.evaluate('document.fonts.ready');page.locator('.home-balance').scroll_into_view_if_needed();page.evaluate('scrollTo(0,0)')
  save(page.screenshot(),lang+'-home')
+ page.set_viewport_size({'width':402,'height':874});page.screenshot(path=str(ROOT/'assets'/('welcome-'+lang+'.png')))
+ page.set_viewport_size({'width':393,'height':852})
  save(page.locator('.home-balance').screenshot(),lang+'-balance')
  save(page.locator('.home-recent .expense-row').first.screenshot(),lang+'-recent')
  page.locator('.nav-add').click();page.locator('.quick-add-modal [data-action=new-group]').click()
@@ -64,7 +66,7 @@ def capture(browser,lang):
  page.locator('[data-action=close-modal]').first.click();page.locator('[data-action=settlements]').click();expect(page.locator('.settlements-dialog')).to_be_visible();save(page.screenshot(),lang+'-settlements')
  page.locator('[data-action=close-modal]').first.click()
  for i,key in [(1,'house'),(2,'friends')]:
-  page.evaluate('(value)=>sessionStorage.setItem('+json.dumps('nexo-active-'+OWNER)+',value)',rows[i]['id']);page.reload();expect(page.locator('.home-balance')).to_be_visible();page.evaluate('document.fonts.ready');save(page.screenshot(),lang+'-'+key)
+  page.evaluate('(value)=>sessionStorage.setItem('+json.dumps('nexo-active-'+OWNER)+',value)',rows[i]['id']);page.reload();expect(page.locator('.home-balance')).to_be_visible();page.locator('.mobile-logo .brand-logo').evaluate('(img)=>img.decode()');page.evaluate('document.fonts.ready');save(page.screenshot(),lang+'-'+key)
  assert not errors,errors
  c.close();print('CAPTURED',lang,'actual app screenshots with local example data',flush=True)
 
