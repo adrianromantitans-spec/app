@@ -15,6 +15,8 @@ import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons} from './auth-ui.js?v=landing-51';
 
 initializeLanguage();
+// Keep Supabase's existing allowed root callback; landing-route forwards it to /app/.
+const authReturnURL=new URL('./',import.meta.url).href;
 
 let cloud;
 let configError='';
@@ -993,7 +995,7 @@ async function handleRecoveryForm(form,data) {
   remoteBusy=true;const submit=form.querySelector('[type=submit]');submit.disabled=true;const original=submit.textContent;submit.textContent=tr('Un momento…');
   try {
     if(form.id==='recovery-form'){
-      await cloud.recoverPassword(data.get('email').trim(),new URL('./',location.href).href);
+      await cloud.recoverPassword(data.get('email').trim(),authReturnURL);
       openModal(tr('Revisa tu correo'),tr('<p class="form-note">Si existe una cuenta con esa dirección, recibirás un enlace para elegir una nueva contraseña. Ábrelo en este mismo navegador. Revisa también spam.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>'));
     }else{
       const password=data.get('password');if(password.length<10||password!==data.get('confirm'))throw new Error(tr('Las contraseñas deben coincidir y tener al menos 10 caracteres.'));
@@ -1133,7 +1135,7 @@ async function beginOAuth(provider,acknowledgement) {
   try {
     const latest=await cloud.providers();providers=latest;
     if(!latest[provider]) {await refreshProviders();throw new Error(ui`${provider==='google'?'Google':'Apple'} todavía no está disponible. Puedes usar tu correo.`);}
-    const url=await cloud.oauthURL(provider,new URL('./',location.href).href,acknowledgement);
+    const url=await cloud.oauthURL(provider,authReturnURL,acknowledgement);
     location.assign(url);
   } finally {remoteBusy=false;}
 }
@@ -1147,7 +1149,7 @@ async function handleAccountForm(form,data) {
     if (form.dataset.mode==='signup') {
       if(data.get('ageBand')==='under_16'){minimumAgeModal();return true;}
       const name=data.get('name').trim();if (!name) throw new Error(tr('Escribe tu nombre.'));
-      const signedIn=await cloud.signUp(email,password,name,new URL('./',location.href).href,{accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')});
+      const signedIn=await cloud.signUp(email,password,name,authReturnURL,{accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')});
       if (!signedIn) {
         openModal(tr('Revisa tu correo'),ui`<div class="privacy-note"><h3>Un paso más para empezar</h3><p>Si el correo puede registrarse, recibirás un enlace para confirmar tu cuenta. Revisa también la carpeta de spam. Si ya tienes cuenta, puedes entrar directamente.</p></div><button class="button primary full-width" data-action="login">Ya he confirmado: entrar</button>`);
         return true;

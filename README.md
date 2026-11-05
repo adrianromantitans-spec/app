@@ -3,11 +3,10 @@
 Una web para organizar viajes y planes en grupo: gastos compartidos, presupuestos,
 votaciones y tareas, con un diseño adaptable a móvil.
 
-Esta rama prepara una landing pública en `/` y conserva la aplicación en `/app/`.
+La landing pública está en `/` y la aplicación se conserva en `/app/`.
 Incluye capturas de la interfaz real con datos de ejemplo y textos en español,
-inglés y rumano. **Pendiente de publicación:** consulta la
-[guía de migración y revisión](docs/LANDING-MIGRATION.md), incluida la configuración
-necesaria de las URL de retorno en Supabase antes de desplegar.
+inglés y rumano. Consulta la [guía de migración y revisión](docs/LANDING-MIGRATION.md).
+El retorno raíz de Supabase se conserva para mantener los enlaces existentes.
 
 Dentro de la aplicación, una sesión válida conserva el acceso a los grupos al
 recargar. Google y Apple dependen de su configuración en Supabase; consulta

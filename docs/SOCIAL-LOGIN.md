@@ -54,10 +54,9 @@ Esta implementación usa el flujo web de Apple, no el SDK nativo de iOS.
 
 ## URL de vuelta a DivZplit
 
-**Migración preparada, todavía sin publicar:** cuando se despliegue la landing,
-la app y su retorno pasarán a `/app/`. Seguir primero la
-[guía de migración](LANDING-MIGRATION.md), añadiendo esa URL a Supabase y conservando
-la raíz durante la transición. Los valores siguientes describen la ruta anterior.
+La aplicación se sirve desde `/app/`, pero el retorno de autenticación sigue en
+la raíz ya permitida. El puente conserva el retorno e inicia la app con sus
+comprobaciones PKCE. Consulta la [guía de migración](LANDING-MIGRATION.md).
 
 En Supabase → Authentication → URL Configuration, conserva:
 

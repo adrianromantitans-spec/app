@@ -54,10 +54,10 @@ def context(browser,enabled=False,hold_settings=False):
     def authorize(route):
         query=parse_qs(urlsplit(route.request.url).query)
         assert query['code_challenge_method']==['s256']
-        assert query['redirect_to']==[BASE]
+        assert query['redirect_to']==[BASE.removesuffix('app/')]
         assert 'apikey' not in query and 'code_verifier' not in query
         seen['oauth'].append(query)
-        route.fulfill(status=302,headers={'Location':BASE+'?code=fixture-code'},body='')
+        route.fulfill(status=302,headers={'Location':query['redirect_to'][0]+'?code=fixture-code'},body='')
     c.route('https://nexo-test.supabase.co/auth/v1/authorize?**',authorize)
     c.on('page',lambda page:page.on('pageerror',lambda error:errors.append(str(error))))
     return c,seen
