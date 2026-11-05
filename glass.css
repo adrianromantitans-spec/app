@@ -92,3 +92,9 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 .brand-intro-host .brand{pointer-events:auto;will-change:left,top,font-size,letter-spacing}
 .brand-intro-host .split-word,.brand-wordmark .split-word{perspective:none;line-height:1.2;letter-spacing:inherit;font-weight:inherit}
 .brand-wordmark .word-z{color:var(--purple)}
+
+/* Prevent the opening letters from being clipped on narrow screens. */
+.brand-intro-host.brand-intro-active .word-left{animation-name:intro-left-contained}
+.brand-intro-host.brand-intro-active .word-right{animation-name:intro-right-contained}
+@keyframes intro-left-contained{0%{opacity:0;transform:translateX(calc(-1 * var(--intro-side-distance,95px)))}30%{opacity:1}100%{opacity:1;transform:translateX(0)}}
+@keyframes intro-right-contained{0%{opacity:0;transform:translateX(var(--intro-side-distance,95px))}30%{opacity:1}100%{opacity:1;transform:translateX(0)}}

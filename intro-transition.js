@@ -36,6 +36,12 @@ export function startIntroTransition({root,brand,ready,onFinish}) {
    const natural=brand.getBoundingClientRect(),ratio=Math.min((viewport?.width||innerWidth)-64,360)/natural.width;
    const centre=visibleCentre(),large={left:centre.x+'px',top:centre.y+'px',fontSize:baseSize*ratio+'px',letterSpacing:baseSpacing*ratio+'px'};
    Object.assign(brand.style,large,{visibility:'visible'});
+   // Keep the original lateral entrance within the visible phone screen.
+   // Measure the settled text before its letter animations start.
+   const text=brand.querySelector('.split-word').getBoundingClientRect();
+   const viewportLeft=viewport?.offsetLeft||0,viewportRight=viewportLeft+(viewport?.width||innerWidth);
+   const sideDistance=Math.max(0,Math.min(95,text.left-viewportLeft-12,viewportRight-text.right-12));
+   host.style.setProperty('--intro-side-distance',sideDistance+'px');
    host.classList.add('brand-intro-active');
    // Original assembly and original 57% hold, then the same remaining 1161 ms.
    timer=setTimeout(releaseHold,skipped?0:1539);
