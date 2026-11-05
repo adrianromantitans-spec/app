@@ -22,7 +22,8 @@ def close_modal(page):
 
 
 def contained(inner, outer, margin=0):
-    a, b = inner.bounding_box(), outer.bounding_box()
+    rect='(e)=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}}'
+    a, b = inner.evaluate(rect), outer.evaluate(rect)
     assert a and b and a['width']>0 and a['height']>0, (a,b)
     assert a['x']>=b['x']+margin-1 and a['x']+a['width']<=b['x']+b['width']-margin+1,(a,b)
 
@@ -47,6 +48,15 @@ with sync_playwright() as p:
         page.set_viewport_size({'width':393,'height':852})
         navigate(page,'groups');page.locator('[data-action="new-group"]').first.click()
         note=page.locator('[data-trip-span]')
+        for width in [320,393,430,768,1440]:
+            page.set_viewport_size({'width':width,'height':852})
+            form=page.locator('#group-form');dates=form.locator('.group-date-fields input')
+            contained(dates.nth(0),form);contained(dates.nth(1),form)
+            a,b=dates.nth(0).bounding_box(),dates.nth(1).bounding_box()
+            assert abs(a['width']-b['width'])<1 and abs(a['height']-b['height'])<1,(a,b)
+            if width>360:assert b['x']-(a['x']+a['width'])>=10,(a,b)
+            assert note.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)')<=10
+        page.set_viewport_size({'width':393,'height':852})
         assert note.inner_text() in ['Las fechas son opcionales. Puedes añadirlas más adelante.','Dates are optional. You can add them later.','Datele sunt opționale. Le poți adăuga mai târziu.']
         page.locator('#group-form [name="date"]').fill('2027-06-12');page.locator('#group-form [name="endDate"]').fill('2027-06-15')
         expect(note).to_contain_text('4');expect(note).to_contain_text('3')
