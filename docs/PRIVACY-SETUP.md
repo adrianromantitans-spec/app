@@ -1,5 +1,12 @@
 # Activar las herramientas de privacidad
 
+El borrado de cuenta lo hace la propia persona desde **Cuenta → Eliminar cuenta**
+o desde [divzplit.com/eliminar-cuenta](https://divzplit.com/eliminar-cuenta/).
+Para activarlo en un proyecto ya creado, ejecuta una vez
+[`supabase/account-deletion.sql`](../supabase/account-deletion.sql).
+Los grupos compartidos conservan gastos y saldos; el nombre pasa a ser
+«Cuenta eliminada». Consulta [la guía de Play](PLAY-STORE.md).
+
 Los cambios de la web no equivalen a una certificación legal. La política y las
 condiciones están en inglés, español y rumano, con el responsable al final.
 

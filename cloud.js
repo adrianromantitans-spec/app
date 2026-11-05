@@ -47,6 +47,7 @@ function messageFor(error, status) {
   if (code === 'NEXO_PAYMENT_CHANGED') return tr('El saldo o el pago ha cambiado. Actualiza el grupo y revisa los pagos pendientes.');
   if (code === 'NEXO_PAYMENT_FLOW') return tr('Este pago necesita la confirmación de quien recibe el dinero. Actualiza la aplicación.');
   if (code === 'NEXO_OWNER') return tr('Solo quien creó el grupo puede modificar sus detalles o gestionar invitaciones.');
+  if (code === 'NEXO_DELETE_OWNER') return tr('No se ha podido pasar la administración del grupo. Escribe a soporte antes de eliminar la cuenta.');
   if (code === 'NEXO_FORBIDDEN' || status === 403) return tr('No tienes acceso a este grupo.');
   if (code === 'email_address_not_authorized') return tr('El servicio de correo todavía no permite enviar confirmaciones a esta dirección. Hace falta configurar el envío de correos de la aplicación.');
   if (code === 'email_address_invalid') return tr('Revisa tu dirección de correo electrónico.');
@@ -329,6 +330,16 @@ export class Cloud {
     try{result=await this.rpc('divzplit_privacy_export',{});}
     catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('La descarga ampliada no está disponible todavía. Puedes solicitar una copia a soporte.'));throw error;}
     if(this.user?.id!==viewer||result?.account?.id!==viewer)throw new CloudError(tr('La cuenta ha cambiado. Vuelve a cargar tus grupos.'),'session',401);
+    return result;
+  }
+  async deleteAccount() {
+    const viewer=this.user?.id;
+    if(!viewer)throw new CloudError(tr('Vuelve a entrar en tu cuenta.'),'session',401);
+    let result;
+    try{result=await this.rpc('divzplit_delete_account',{});}
+    catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado desde la cuenta todavía no está activado. Ejecuta la actualización de Supabase o escribe a soporte.'));throw error;}
+    if(this.user?.id!==viewer||result?.deleted!==true)throw new CloudError(tr('No se ha podido confirmar el borrado. Vuelve a intentarlo.'),'session',401);
+    this.persistSession(null);this.user=null;
     return result;
   }
   async notificationSettings() {

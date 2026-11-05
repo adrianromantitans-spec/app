@@ -37,3 +37,13 @@ test('privacy export rejects cross-account responses and fails clearly when migr
  c=authed(async()=>new Response(JSON.stringify({code:'PGRST202'}),{status:404}));await assert.rejects(()=>c.personalExport(),/soporte/);
  c=authed(async()=>response({account:{id:user.id},groups:[]}));assert.equal((await c.personalExport()).account.id,user.id);
 });
+test('account deletion calls the rpc and drops the local session',async()=>{
+ let called;const c=authed(async(url,o)=>{called={url,body:o.body};return response({deleted:true,shared_groups:1,removed_groups:0});});
+ const result=await c.deleteAccount();
+ assert.equal(called.url,'https://fixture.supabase.co/rest/v1/rpc/divzplit_delete_account');
+ assert.equal(called.body,'{}');assert.equal(result.deleted,true);assert.equal(c.session,null);assert.equal(c.user,null);
+ const missing=authed(async()=>new Response(JSON.stringify({code:'PGRST202'}),{status:404}));
+ await assert.rejects(()=>missing.deleteAccount(),/activad/);
+ const rejected=authed(async()=>response({deleted:false}));
+ await assert.rejects(()=>rejected.deleteAccount(),/confirmar/);
+});

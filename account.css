@@ -2,3 +2,4 @@
 @media(max-width:760px){.account-page{padding-top:6px;padding-bottom:24px}.account-heading{padding-bottom:18px}.account-heading h1{font-size:27px}.account-summary{padding:18px 16px;margin-bottom:28px;border-radius:20px}.account-summary>.avatar{width:50px;height:50px;font-size:18px}.account-summary h2{font-size:16px}.account-row{padding:16px 10px;min-height:70px}.account-section>h2{padding-left:10px}.account-row-label{font-size:14px}.account-section{margin-bottom:28px}}
 @media(prefers-reduced-motion:reduce){.account-row{transition:none}}
 .account-section>.account-row+.account-row{border-top:0}
+.account-row.danger{color:#9a3b4a}.account-row.danger .account-row-icon{background:#f8e8ea;color:#9a3b4a}.account-row.danger>.icon{color:#c47b86}

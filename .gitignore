@@ -6,3 +6,6 @@ coverage/
 !.env.example
 __pycache__/
 .push-setup/
+android/*.jks
+android/*.keystore
+android/*-signing.txt

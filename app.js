@@ -1,15 +1,15 @@
 import {startIntroTransition} from './intro-transition.js?v=start-57';
-import {helpCentreView,filterHelp} from './help.js?v=landing-51';
+import {helpCentreView,filterHelp} from './help.js?v=play-58';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=landing-51';
 import {settlementPlan} from './settlement-plan.js?v=landing-51';
 import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=visual-53';
 import {convertedAmount,validConversion} from './fx.js?v=landing-51';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=landing-51';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=landing-51';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=landing-51';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=play-58';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=landing-51';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed} from './model.js?v=landing-51';
-import {Cloud} from './cloud.js?v=landing-51';
+import {Cloud} from './cloud.js?v=play-58';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
 import {NotificationCentre} from './notifications.js?v=logo-52';
 import {cloudConfig} from './config.js';
@@ -619,7 +619,7 @@ function expenseDetails(id) {
 }
 function profileContent() {
  const profile=currentProfile();
- return ui`<div class="account-settings"><div class="account-summary">${avatar(profile)}<div><h2>${esc(profile.name)}</h2><p>${accountUser?esc(accountUser.email):tr('Tu perfil de demo')}</p></div></div><section class="account-section" aria-label="Ayuda y asistencia"><h2>Ayuda y asistencia</h2><button class="account-row" data-route="help"><span class="account-row-icon">${icon('help')}</span><span class="account-row-label">Centro de ayuda</span>${icon('chevron')}</button><a class="account-row" href="mailto:support@divzplit.com"><span class="account-row-icon">${icon('mail')}</span><span class="account-row-label">Contacto</span>${icon('chevron')}</a></section><section class="account-section" aria-label="Tus datos"><h2>Tus datos</h2><button class="account-row" data-action="${accountUser?'privacy-export-full':'export'}"><span class="account-row-icon">${icon('download')}</span><span class="account-row-label">${accountUser?tr('Descargar datos de mi cuenta'):tr('Exportar mis grupos (JSON)')}</span>${icon('chevron')}</button></section><div class="account-session">${accountUser?ui`<button class="account-signout" data-action="signout">${icon('logout')} Cerrar sesión</button>`:ui`<button class="account-signout" data-action="account">Entrar o crear una cuenta ${icon('chevron')}</button><button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`}</div><p class="account-brand-note">DivZplit.</p></div>`;
+ return ui`<div class="account-settings"><div class="account-summary">${avatar(profile)}<div><h2>${esc(profile.name)}</h2><p>${accountUser?esc(accountUser.email):tr('Tu perfil de demo')}</p></div></div><section class="account-section" aria-label="Ayuda y asistencia"><h2>Ayuda y asistencia</h2><button class="account-row" data-route="help"><span class="account-row-icon">${icon('help')}</span><span class="account-row-label">Centro de ayuda</span>${icon('chevron')}</button><a class="account-row" href="mailto:support@divzplit.com"><span class="account-row-icon">${icon('mail')}</span><span class="account-row-label">Contacto</span>${icon('chevron')}</a></section><section class="account-section" aria-label="Tus datos"><h2>Tus datos</h2><button class="account-row" data-action="${accountUser?'privacy-export-full':'export'}"><span class="account-row-icon">${icon('download')}</span><span class="account-row-label">${accountUser?tr('Descargar datos de mi cuenta'):tr('Exportar mis grupos (JSON)')}</span>${icon('chevron')}</button>${accountUser?ui`<button class="account-row danger" data-action="delete-account"><span class="account-row-icon">${icon('close')}</span><span class="account-row-label">Eliminar cuenta</span>${icon('chevron')}</button>`:''}</section><div class="account-session">${accountUser?ui`<button class="account-signout" data-action="signout">${icon('logout')} Cerrar sesión</button>`:ui`<button class="account-signout" data-action="account">Entrar o crear una cuenta ${icon('chevron')}</button><button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`}</div><p class="account-brand-note">DivZplit.</p></div>`;
 }
 
 function oauthConsentModal(provider){
@@ -628,6 +628,14 @@ function oauthConsentModal(provider){
 }
 function minimumAgeModal(){
  openModal(tr('Registro a partir de 16 años'),ui`<p>Debes tener al menos 16 años para registrarte.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>${legalLinks()}`);
+}
+function deleteAccountModal(){
+ if(!accountUser?.email){toast(tr('Esta cuenta no tiene un correo que puedas confirmar. Escribe a support@divzplit.com.'));return;}
+ openModal(tr('Eliminar cuenta'),ui`<form id="delete-account-form"><p class="dialog-copy">Se cerrará la sesión en todos tus dispositivos y no podrás volver a entrar con este correo. En los grupos compartidos tu nombre pasará a ser «Cuenta eliminada»; los gastos y saldos de las demás personas se conservan. Los grupos en los que estás solo se eliminan. Si administras un grupo con más gente, otro miembro pasa a administrarlo. Se borran tus avisos y datos de perfil. Las fotos de tickets compartidos se conservan.</p><label class="field">Escribe ${esc(accountUser.email)} para confirmar<input name="confirmEmail" type="email" autocomplete="off" required></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button secondary" type="button" data-action="close-modal">Cancelar</button><button class="button danger" type="submit">Eliminar mi cuenta</button></div></form>`);
+}
+async function finishDeletedAccount(){
+ try{await notifications.disconnect();}catch{/* Local logout still proceeds. */}
+ activityCache.clear();paymentArchives.clear();accountUser=null;demoMode=false;authStage='login';authMode='login';history.replaceState(null,'',location.pathname+location.search);remoteBaseline.clear();state=structuredClone(demoState);page='home';tab='summary';closeModal();render();
 }
 
 async function exportAccountData(){
@@ -641,6 +649,17 @@ async function exportAccountData(){
  }finally{remoteBusy=false;}
 }
 async function handlePrivacyForm(form,data){
+ if(form.id==='delete-account-form'){
+  const expected=String(accountUser?.email||'').trim().toLowerCase();
+  const typed=String(data.get('confirmEmail')||'').trim().toLowerCase();
+  const alert=form.querySelector('.form-error');
+  if(!accountUser||!expected||typed!==expected){if(alert)alert.textContent=tr(expected?'Escribe el correo de esta cuenta para confirmar.':'Esta cuenta no tiene un correo que puedas confirmar. Escribe a support@divzplit.com.');return true;}
+  remoteBusy=true;
+  try{await cloud.deleteAccount();await finishDeletedAccount();toast(tr('Cuenta eliminada. Ya no puedes entrar con ese correo.'),'success');}
+  catch(error){if(alert?.isConnected)alert.textContent=error.message;else toast(error.message);}
+  finally{remoteBusy=false;}
+  return true;
+ }
  if(form.id==='oauth-consent-form'){
   if(data.get('ageBand')==='under_16'){minimumAgeModal();return true;}
   try{const acknowledgement={accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')};legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,form.dataset.provider);await beginOAuth(form.dataset.provider,acknowledgement);}
@@ -777,6 +796,7 @@ async function onAppClick(event) {
     case 'settings':settingsModal();break;
     case 'help-clear':helpQuery='';{const input=root.querySelector('[data-help-search]');if(input){input.value='';filterHelp(root,'');input.focus();}}break;
     case 'privacy-export-full':await exportAccountData();break;
+    case 'delete-account':deleteAccountModal();break;
     case 'account':accountModal();break;
     case 'demo':demoMode=true;page='home';await processRecurrences();closeModal();render();break;
     case 'welcome':demoMode=false;authStage='login';history.pushState(null,'',location.pathname+location.search);closeModal();render();break;
@@ -784,7 +804,7 @@ async function onAppClick(event) {
     case 'oauth-apple':oauthConsentModal('apple');break;
     case 'retry-providers':await refreshProviders();break;
     case 'signup':authMode='signup';authStage='signup';if(!demoMode)history.pushState(null,'','#registro');accountModal();break;
-    case 'login':authMode='login';authStage='login';if(!demoMode)history.pushState(null,'','#acceso');accountModal();break;
+    case 'login':authMode='login';authStage='login';if(!demoMode&&location.hash!=='#eliminar-cuenta')history.pushState(null,'','#acceso');accountModal();break;
     case 'signout':await signOutAccount();break;
     case 'invite':inviteModal();break;
     case 'generate-invite':await generateInvite();break;
@@ -1082,7 +1102,9 @@ async function handleAccountForm(form,data) {
         return true;
       }
     } else await cloud.signIn(email,password);
-    await connectAccount();closeModal();render();toast(tr('¡Ya estás dentro! Tus planes tienen su propio espacio.'));
+    await connectAccount();closeModal();render();
+    if(location.hash==='#eliminar-cuenta'){deleteAccountModal();return true;}
+    toast(tr('¡Ya estás dentro! Tus planes tienen su propio espacio.'));
   } catch(error) {
     if (accountUser) {setSync(tr('Sin conexión · Reintentar'));render();}
     const alert=form.querySelector('.form-error');if (alert?.isConnected) alert.textContent=error.message;
@@ -1194,6 +1216,7 @@ async function startAccount() {
     storageWarning=error.message;
   } finally {
     authLoading=false;render();markIntroSessionReady();
+    if(location.hash==='#eliminar-cuenta'){if(accountUser)deleteAccountModal();else toast(tr('Entra en tu cuenta para eliminarla.'));}
     if(returnedFromEmail&&!accountUser){authMode='login';authStage='login';accountModal();toast(tr('Has vuelto del enlace de correo. Entra para comprobar tu cuenta.'));}
     else if(storageWarning)toast(storageWarning);
   }
