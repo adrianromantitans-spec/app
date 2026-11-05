@@ -2486,6 +2486,10 @@ export const translations = {
     "en": "Add",
     "ro": "Adaugă"
   },
+  "Hola!": {
+    "en": "Hello!",
+    "ro": "Salut!"
+  },
   "Hola, {0}": {
     "en": "Hi, {0}",
     "ro": "Salut, {0}"
