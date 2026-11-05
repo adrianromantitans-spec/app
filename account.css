@@ -3,3 +3,13 @@
 @media(prefers-reduced-motion:reduce){.account-row{transition:none}}
 .account-section>.account-row+.account-row{border-top:0}
 .account-row.danger{color:#9a3b4a}.account-row.danger .account-row-icon{background:#f8e8ea;color:#9a3b4a}.account-row.danger>.icon{color:#c47b86}
+
+.account-row-value{min-width:0;max-width:48%;font-size:12px;line-height:1.5;text-align:right;color:#6e5b7d;overflow-wrap:anywhere}
+.language-options{display:grid;gap:8px}
+.language-option{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:14px 16px;min-height:54px;border:1px solid #e9e2ef;border-radius:14px;text-align:left;color:#30243d;background:#fff;font-size:15px}
+.language-option>span:first-child{min-width:0}
+.language-option small{display:block;font-size:11px;color:#6e5b7d;line-height:1.6;margin-top:3px}
+.language-option.is-selected{background:#f3edfb;border-color:#b99cdd;font-weight:700}
+.language-choice-mark{display:grid;place-items:center;width:22px;min-width:22px;color:#68428e}
+.language-option:focus-visible{outline:2px solid #8550d3;outline-offset:3px}
+.personal-app .modal .language-note{margin:14px 0 0;font-size:11px;line-height:1.6;color:#6e5b7d}

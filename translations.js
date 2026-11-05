@@ -1,5 +1,12 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Preferencias": {"en": "Preferences", "ro": "Preferințe"},
+  "Idioma": {"en": "Language", "ro": "Limbă"},
+  "Automático": {"en": "Automatic", "ro": "Automat"},
+  "Según el dispositivo": {"en": "Based on your device", "ro": "Conform dispozitivului"},
+  "Se guarda en este dispositivo.": {"en": "Saved on this device.", "ro": "Se salvează pe acest dispozitiv."},
+  "Idioma actualizado.": {"en": "Language updated.", "ro": "Limba a fost actualizată."},
+  "Idioma cambiado para esta sesión.": {"en": "Language changed for this session.", "ro": "Limba a fost schimbată pentru această sesiune."},
   "Las fechas son opcionales. Puedes añadirlas más adelante.": {"en": "Dates are optional. You can add them later.", "ro": "Datele sunt opționale. Le poți adăuga mai târziu."},
   "Ver cambio de moneda": {"en": "View currency conversion", "ro": "Vezi conversia valutară"},
   "Centro de ayuda":{"en":"Help centre","ro":"Centrul de ajutor"},

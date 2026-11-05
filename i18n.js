@@ -1,14 +1,23 @@
-import {translations} from './translations.js?v=usability-76';
+import {translations} from './translations.js?v=language-78';
 
-export {detectLanguage} from './language.js?v=landing-51';
-import {detectLanguage,languagePreferences} from './language.js?v=landing-51';
+export {detectLanguage} from './language.js?v=language-78';
+import {detectLanguage,languagePreferences,rememberLanguage,supportedLanguages} from './language.js?v=language-78';
+function resolveLocale(preferences,language){
+ for(const preference of preferences){if(typeof preference!=='string'||preference.toLowerCase().split(/[-_]/)[0]!==language)continue;try{if(Intl.DateTimeFormat.supportedLocalesOf([preference]).length)return preference;}catch{/* use a valid locale below */}}
+ return {es:'es-ES',en:'en-GB',ro:'ro-RO'}[language];
+}
 const preferences=languagePreferences();
-export const language=detectLanguage(preferences);
-export const locale=(()=>{
-  for(const preference of preferences){if(typeof preference!=='string'||preference.toLowerCase().split(/[-_]/)[0]!==language)continue;try{if(Intl.DateTimeFormat.supportedLocalesOf([preference]).length)return preference;}catch{/* use a valid locale below */}}
-  return {es:'es-ES',en:'en-GB',ro:'ro-RO'}[language];
-})();
-export const languageName={es:'español',en:'English',ro:'română'}[language];
+export let language=detectLanguage(preferences);
+export let locale=resolveLocale(preferences,language);
+export function setLanguage(selection){
+ if(selection!=='auto'&&!supportedLanguages.includes(selection))throw new Error('Invalid language');
+ const saved=rememberLanguage(selection);
+ const preferences=selection==='auto'?(navigator.languages?.length?[...navigator.languages]:[navigator.language]):[selection,...languagePreferences()];
+ language=detectLanguage(preferences);locale=resolveLocale(preferences,language);
+ languageName={es:'español',en:'English',ro:'română'}[language];
+ return saved;
+}
+export let languageName={es:'español',en:'English',ro:'română'}[language];
 const slot=/__DZ_SLOT_\d+__/g;
 function translateText(input) {
   if(language==='es')return input;

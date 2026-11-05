@@ -10,7 +10,10 @@ export function languagePreferences(){
  let requested=null;try{requested=new URL(globalThis.location?.href||'https://divzplit.invalid/').searchParams.get('lang');}catch{/* ignore malformed embedding URLs */}if(supportedLanguages.includes(requested))preferences.unshift(requested);
  return preferences;
 }
+export function languageSelection(){
+ try{const stored=localStorage.getItem('divzplit-language');return supportedLanguages.includes(stored)?stored:'auto';}catch{return 'auto';}
+}
 export function rememberLanguage(language){
- if(!supportedLanguages.includes(language))return false;
- try{localStorage.setItem('divzplit-language',language);return true;}catch{return false;}
+ if(language!=='auto'&&!supportedLanguages.includes(language))return false;
+ try{if(language==='auto')localStorage.removeItem('divzplit-language');else localStorage.setItem('divzplit-language',language);return true;}catch{return false;}
 }

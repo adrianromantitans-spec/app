@@ -1,7 +1,7 @@
 export const expenseCategories=[['Comida','🍽️'],['Supermercado','🛒'],['Transporte','🚌'],['Gasolina','⛽'],['Alojamiento','🏨'],['Viaje','✈️'],['Actividades','🎟️'],['Compras','🛍️'],['Salud','💊'],['Facturas','💡'],['Ocio','🎬'],['Otros','📌']];
 export const expenseCategoryIds=expenseCategories.map(([id])=>id);
 export const categoryEmoji=category=>expenseCategories.find(([id])=>id===category)?.[1]||'📌';
-import {locale,tr} from './i18n.js?v=landing-51';
+import {locale,tr} from './i18n.js?v=language-78';
 import {currencies,currencyDigits,currencyScale,currencyStep} from './currencies.js?v=landing-51';
 export {currencies,currencyDigits,currencyScale,currencyStep};
 export function currencyOf(group) {

@@ -1,20 +1,23 @@
 import {startIntroTransition} from './intro-transition.js?v=start-64';
-import {helpCentreView,filterHelp} from './help.js?v=play-58';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=play-61';
-import {settlementPlan} from './settlement-plan.js?v=landing-51';
-import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=visual-53';
-import {convertedAmount,validConversion} from './fx.js?v=landing-51';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=landing-51';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=landing-51';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=usability-76';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=landing-51';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji} from './model.js?v=groceries-72';
-import {Cloud} from './cloud.js?v=play-58';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=landing-51';
-import {NotificationCentre} from './notifications.js?v=logo-52';
+import {helpCentreView,filterHelp} from './help.js?v=language-78';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=language-78';
+import {settlementPlan} from './settlement-plan.js?v=language-78';
+import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=language-78';
+import {convertedAmount,validConversion} from './fx.js?v=language-78';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=language-78';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=language-78';
+import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=language-78';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-78';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji} from './model.js?v=language-78';
+import {Cloud} from './cloud.js?v=language-78';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=language-78';
+import {NotificationCentre} from './notifications.js?v=language-78';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=play-65';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-78';
 
+import {languageSelection} from './language.js?v=language-78';
+const languageLabels={es:'Español',en:'English',ro:'Română'};
+let selectedLanguage=languageSelection();
 initializeLanguage();
 // Keep Supabase's existing allowed root callback; landing-route forwards it to /app/.
 const authReturnURL=new URL('./',import.meta.url).href;
@@ -64,6 +67,7 @@ const paymentArchives=new Map();
 const archiveRequests=new Map();
 
 const icons = {
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a18 18 0 0 1 0 18 18 18 0 0 1 0-18Z"/>',
   edit:'<path d="m16 3 5 5-12 12-6 1 1-6L16 3Zm-2 2 5 5"/>',
   refresh:'<path d="M20 7V3m0 4h-4M4 17v4m0-4h4M20 7a9 9 0 0 0-15-2M4 17a9 9 0 0 0 15 2"/>',
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>',
@@ -688,9 +692,21 @@ function expenseDetails(id) {
 }
 function profileContent() {
  const profile=currentProfile();
- return ui`<div class="account-settings"><div class="account-summary">${avatar(profile)}<div><h2>${esc(profile.name)}</h2><p>${accountUser?esc(accountUser.email):tr('Tu perfil de demo')}</p></div></div><section class="account-section" aria-label="Ayuda y asistencia"><h2>Ayuda y asistencia</h2><button class="account-row" data-route="help"><span class="account-row-icon">${icon('help')}</span><span class="account-row-label">Centro de ayuda</span>${icon('chevron')}</button><a class="account-row" href="mailto:support@divzplit.com"><span class="account-row-icon">${icon('mail')}</span><span class="account-row-label">Contacto</span>${icon('chevron')}</a></section><section class="account-section" aria-label="Tus datos"><h2>Tus datos</h2><button class="account-row" data-action="${accountUser?'privacy-export-full':'export'}"><span class="account-row-icon">${icon('download')}</span><span class="account-row-label">${accountUser?tr('Descargar datos de mi cuenta'):tr('Exportar mis grupos (JSON)')}</span>${icon('chevron')}</button>${accountUser?ui`<button class="account-row danger" data-action="delete-account"><span class="account-row-icon">${icon('close')}</span><span class="account-row-label">Eliminar cuenta</span>${icon('chevron')}</button>`:''}</section><div class="account-session">${accountUser?ui`<button class="account-signout" data-action="signout">${icon('logout')} Cerrar sesión</button>`:ui`<button class="account-signout" data-action="account">Entrar o crear una cuenta ${icon('chevron')}</button><button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`}</div><p class="account-brand-note">DivZplit.</p></div>`;
+ return ui`<div class="account-settings"><div class="account-summary">${avatar(profile)}<div><h2>${esc(profile.name)}</h2><p>${accountUser?esc(accountUser.email):tr('Tu perfil de demo')}</p></div></div><section class="account-section" aria-label="Preferencias"><h2>Preferencias</h2><button class="account-row" data-action="language-settings"><span class="account-row-icon">${icon('globe')}</span><span class="account-row-label">Idioma</span><span class="account-row-value">${esc(selectedLanguage==='auto'?tr('Automático')+' · '+languageLabels[language]:languageLabels[selectedLanguage])}</span>${icon('chevron')}</button></section><section class="account-section" aria-label="Ayuda y asistencia"><h2>Ayuda y asistencia</h2><button class="account-row" data-route="help"><span class="account-row-icon">${icon('help')}</span><span class="account-row-label">Centro de ayuda</span>${icon('chevron')}</button><a class="account-row" href="mailto:support@divzplit.com"><span class="account-row-icon">${icon('mail')}</span><span class="account-row-label">Contacto</span>${icon('chevron')}</a></section><section class="account-section" aria-label="Tus datos"><h2>Tus datos</h2><button class="account-row" data-action="${accountUser?'privacy-export-full':'export'}"><span class="account-row-icon">${icon('download')}</span><span class="account-row-label">${accountUser?tr('Descargar datos de mi cuenta'):tr('Exportar mis grupos (JSON)')}</span>${icon('chevron')}</button>${accountUser?ui`<button class="account-row danger" data-action="delete-account"><span class="account-row-icon">${icon('close')}</span><span class="account-row-label">Eliminar cuenta</span>${icon('chevron')}</button>`:''}</section><div class="account-session">${accountUser?ui`<button class="account-signout" data-action="signout">${icon('logout')} Cerrar sesión</button>`:ui`<button class="account-signout" data-action="account">Entrar o crear una cuenta ${icon('chevron')}</button><button class="text-button danger-text reset-button" data-action="reset">Restablecer los datos de ejemplo</button>`}</div><p class="account-brand-note">DivZplit.</p></div>`;
 }
 
+function languageModal(){
+ openModal(tr('Idioma'),ui`<div class="language-options">${['auto','es','en','ro'].map(code=>`<button type="button" class="language-option ${selectedLanguage===code?'is-selected':''}" data-language-choice="${code}" aria-pressed="${selectedLanguage===code}"><span>${code==='auto'?tr('Automático'):languageLabels[code]}${code==='auto'?`<small>${tr('Según el dispositivo')}</small>`:''}</span><span class="language-choice-mark" aria-hidden="true">${selectedLanguage===code?icon('check'):''}</span></button>`).join('')}</div><p class="language-note">Se guarda en este dispositivo.</p>`);
+}
+function applyLanguage(selection){
+ if(!['auto','es','en','ro'].includes(selection))return;
+ // A language link must not override a later choice from Account.
+ const url=new URL(location.href);url.searchParams.delete('lang');history.replaceState(null,'',url.pathname+url.search+url.hash);
+ const saved=setLanguage(selection);selectedLanguage=selection;
+ initializeLanguage();closeModal();render();
+ root.querySelector('[data-action="language-settings"]')?.focus();
+ toast(tr(saved?'Idioma actualizado.':'Idioma cambiado para esta sesión.'),'success');
+}
 function oauthConsentModal(provider){
  if(!['google','apple'].includes(provider))return;
  openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`);
@@ -773,6 +789,7 @@ async function onAppClick(event) {
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.route){await navigateWorkspace(el.dataset.route);return;}
   if(el.dataset.shoppingAction){await shoppingAction(el);return;}
+  if(el.dataset.languageChoice){applyLanguage(el.dataset.languageChoice);return;}
   if(el.dataset.notificationAction){await notifications.handle(el);return;}
   if(el.dataset.receiptAction){await handleReceiptAction(el,currencyOf(group()),updateSplitTotal);return;}
   if(el.dataset.page){page=el.dataset.page; render();if(page==='activity'||page==='home'){await loadActivity();render();}document.querySelector('#main')?.focus({preventScroll:true}); window.scrollTo({top:0});return;}
@@ -879,6 +896,7 @@ async function onAppClick(event) {
     case 'new-task':planningModal('tasks');break;
     case 'new-poll':planningModal('polls');break;
     case 'settings':settingsModal();break;
+    case 'language-settings':languageModal();break;
     case 'help-clear':helpQuery='';{const input=root.querySelector('[data-help-search]');if(input){input.value='';filterHelp(root,'');input.focus();}}break;
     case 'privacy-export-full':await exportAccountData();break;
     case 'delete-account':deleteAccountModal();break;

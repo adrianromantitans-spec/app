@@ -1,5 +1,5 @@
 import {landingCopy} from './landing-copy.js?v=visual-53';
-import {detectLanguage,languagePreferences,rememberLanguage} from './language.js?v=landing-51';
+import {detectLanguage,languagePreferences,rememberLanguage} from './language.js?v=language-78';
 let currentLanguage=detectLanguage(languagePreferences());
 const languageSelect=document.querySelector('#landing-language');
 const header=document.querySelector('#site-header');

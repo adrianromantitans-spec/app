@@ -1,4 +1,4 @@
-import {tr,ui,language,locale} from './i18n.js?v=landing-51';
+import {tr,ui,language,locale} from './i18n.js?v=language-78';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const idPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const titles={'shopping.added':'Productos nuevos en la lista','shopping.reminder':'Recordatorio de compra','tasks.reminder':'Recordatorio de tarea','polls.reminder':'Recordatorio de votación','expenses.added':'Nuevo gasto','expenses.updated':'Gasto modificado','expenses.deleted':'Gasto eliminado','polls.added':'Nueva votación','tasks.added':'Nueva tarea asignada','tasks.updated':'Tarea asignada','payment.requested':'Pago pendiente de confirmar','payments.added':'Pago confirmado','payment.rejected':'Pago no recibido','payment.cancelled':'Solicitud de pago cancelada'};
