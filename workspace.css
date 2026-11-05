@@ -126,3 +126,34 @@ button.expense-row{width:100%;font:inherit;color:inherit;text-align:left}
 @media(max-width:760px){.shopping-page .shopping-footer>.button{position:static;width:100%;margin-top:0;min-height:46px}.personal-app #toast{bottom:calc(108px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.personal-shell .mobile-quick-add,.personal-shell .mobile-quick-add .nav-add{transition:none}.personal-shell .mobile-quick-add .nav-add:active{scale:1}}
 @media(prefers-reduced-transparency:reduce){.personal-shell .mobile-quick-add .nav-add{background:#f7f1fe;backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* Readable secondary copy against the app's white and pale lilac surfaces. */
+body.personal-app,.personal-shell{--muted:#6e5b7d}
+.personal-shell :is(.home-group-copy small,.home-group-context,.home-greeting p,.expense-description small,.expense-value small,.section-heading p,.welcome-row p,.group-card p,.group-card-footer,.group-card-total>span,.progress-labels,.budget-remaining,.category-row,.drawer-group small,.drawer-profile small,.drawer-section-label,.shopping-intro,.shopping-note,.shopping-product small),
+.personal-app :is(.modal-heading p,.field,.form-note,.planning-meta,.poll-title p,.poll-footer,.option-count,.fx-detail,.settlement-note,.detail-payer,.split-total,.expense-more-options>summary>span){color:var(--muted)}
+.personal-app .field input::placeholder{color:#7a6889}
+.personal-shell :is(.expense-description small,.home-group-copy small,.home-group-context,.section-heading p,.progress-labels),.personal-app :is(.planning-meta,.poll-footer,.option-count,.compact-expense-form .split-total,.expense-more-options>summary>span,.modal .form-note){font-size:11px;line-height:1.7}
+/* Give the list and its right-hand controls real space inside each card. */
+.planning-page-list .history-modal-controls{margin:0 0 12px;justify-content:flex-end}
+.planning-items{display:grid;gap:16px;min-width:0}
+.planning-items>.poll-card{margin:0;padding:20px;min-width:0}
+.planning-items>.task-list{min-width:0}
+.personal-app .planning-task{gap:12px;padding:14px 12px}
+.personal-app .planning-task>label{flex:0 0 32px!important;min-width:32px;min-height:40px;justify-content:center}
+.personal-app .planning-task>label input{width:32px;height:40px}
+.personal-app .planning-task .custom-check{width:22px;height:22px;border-color:#9076a5}
+.personal-app .planning-task>.avatar{flex-shrink:0;margin-left:4px;width:28px;height:28px;font-size:9px}
+.personal-app .planning-task .task-detail-button{font-size:14px;min-height:40px}
+.personal-app .poll-option{padding:12px 16px;gap:12px;min-height:48px;color:#644a7b}
+.personal-app .poll-option .option-text{flex:1;min-width:0;gap:9px;line-height:1.6}
+.personal-app .poll-option .option-text>span{flex-shrink:0}
+.personal-app .poll-option .option-count{flex:0 0 auto;gap:8px;padding-left:0;min-width:34px;justify-content:flex-end}
+.personal-app .radio-dot{width:16px;height:16px;flex-shrink:0;border-color:#9076a5}
+.personal-app .poll-footer{flex-wrap:wrap;line-height:1.7}
+.personal-app .fx-disclosure{margin-top:20px;border-top:1px solid var(--border);padding-top:8px}
+.fx-disclosure>summary{padding:12px 4px;font-size:13px;font-weight:700;color:#68428e;cursor:pointer;min-height:44px}
+.fx-disclosure .fx-panel{margin:8px 0 0}
+@media(max-width:760px){.planning-items>.poll-card{padding:16px}.personal-app .planning-task{padding:12px 8px}.planning-items .section-heading{flex-wrap:wrap}.personal-app .poll-option{padding:12px 14px}}
+
+.personal-app .planning-task .task-detail-button{color:var(--text)}
+.personal-shell .text-button:not(.danger-text),.personal-app .modal .text-button:not(.danger-text){color:#68428e}

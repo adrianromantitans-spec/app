@@ -6,7 +6,7 @@ import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=vis
 import {convertedAmount,validConversion} from './fx.js?v=landing-51';
 import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=landing-51';
 import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=landing-51';
-import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=groceries-72';
+import {tr,ui,locale,languageName,initializeLanguage} from './i18n.js?v=usability-76';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=landing-51';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji} from './model.js?v=groceries-72';
 import {Cloud} from './cloud.js?v=play-58';
@@ -132,7 +132,7 @@ const avatars = members => `<div class="avatars">${members.slice(0,4).map(m=>ava
 const today = () => {const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 const dateLabel = date => date ? new Intl.DateTimeFormat(locale,{day:'numeric',month:'short'}).format(new Date(`${date}T12:00:00`)) : tr('Sin fecha');
 function tripDetail(start,end){
- if(!start&&!end)return tr('La vuelta no puede ser anterior a la ida.');
+ if(!start&&!end)return tr('Las fechas son opcionales. Puedes añadirlas más adelante.');
  if(start&&!end)return ui`Desde el ${dateLabel(start)}. Añade la vuelta si ya la sabes.`;
  if(!start)return tr('Indica también la fecha de inicio.');
  const days=Math.round((Date.UTC(...end.split('-').map((n,i)=>i===1?Number(n)-1:Number(n)))-Date.UTC(...start.split('-').map((n,i)=>i===1?Number(n)-1:Number(n))))/86400000)+1;
@@ -190,6 +190,7 @@ function openWorkspaceMenu(){
 async function navigateWorkspace(route){
  if(!['home','expenses','tasks','polls','shopping','budget','groups','profile','help','activity'].includes(route))return;
  closeModal();
+ if(currentSection()!==route)planningLimit=30;
  if(route==='shopping'){await showShopping();return;}
  page=['expenses','tasks','polls'].includes(route)?'home':route;
  tab=route==='expenses'?'expenses':route==='tasks'?'tasks':route==='polls'?'plans':'summary';
@@ -358,12 +359,12 @@ function pollCard(poll) {
   const entries=Object.values(poll.votes); const own=poll.votes.you;const closed=planClosed(poll);
   return ui`<article class="poll-card" data-plan-card="${esc(poll.id)}">${planningMeta(poll,'polls')}<div class="poll-title"><span class="poll-symbol">💭</span><div><h3>${esc(poll.title)}</h3><p>${esc(poll.description || tr('Tu opinión también cuenta.'))}</p></div></div><div class="poll-options">${poll.options.map(option=>{const count=entries.filter(v=>v===option.id).length;return `<button class="poll-option ${own===option.id?'chosen':''}" data-poll="${esc(poll.id)}" ${closed?'disabled':''} data-option="${esc(option.id)}" aria-pressed="${own===option.id}"><span class="poll-fill" style="width:${entries.length?count/entries.length*100:0}%"></span><span class="option-text"><span>${esc(option.emoji || '✦')}</span>${esc(option.label)}</span><span class="option-count">${count}${own===option.id?icon('check'):'<span class="radio-dot"></span>'}</span></button>`;}).join('')}</div><div class="poll-footer">${avatars(group().members.filter(m=>poll.votes[m.id]))}<span>${entries.length} de ${group().members.length} han votado</span><span class="vote-status">${closed?tr('Votación cerrada'):own?tr('Tu voto está guardado'): tr('¡Solo faltas tú!')}</span></div>${planningControls(poll,'polls')}</article>`;
 }
-function plansView() {return `<section class="panel">${sectionTitle(tr('Los planes se hacen juntos'),tr('Propón, vota y encontrad vuestro próximo sí.'),ui`<button class="button primary small-button" data-action="new-poll">${icon('plus')} Nueva votación</button>`)}${ui`<button class="button secondary" data-show-planning="polls">Ver votaciones ${icon('arrow')}<span class="payment-list-count">${group().polls.length}</span></button>`}</section>`;}
+function plansView() {return `<section class="panel">${sectionTitle(tr('Los planes se hacen juntos'),tr('Propón, vota y encontrad vuestro próximo sí.'),ui`<button class="button primary small-button" data-action="new-poll">${icon('plus')} Nueva votación</button>`)}${planningListContent('polls')}</section>`;}
 function taskList(items) {
   if(!items.length)return empty(tr('Por ahora, todo hecho'),tr('Añade una tarea para repartir la organización.'),'new-task',tr('Añadir tarea'));
   return `<div class="task-list">${items.map(t=>`<div class="task-row planning-task ${t.done?'done':''}"><label><input type="checkbox" data-task="${esc(t.id)}" ${t.done?'checked':''} aria-label="${esc(t.title)}"><span class="custom-check">${icon('check')}</span></label><div class="planning-task-body"><button class="text-button task-detail-button" data-plan-detail="${esc(t.id)}" data-kind="tasks">${esc(t.title)}</button>${planningMeta(t,'tasks')}</div>${avatar(member(t.assignee),true)}</div>`).join('')}</div>`;
 }
-function tasksView() {const done=group().tasks.filter(t=>t.done).length;return `<section class="panel">${sectionTitle(tr('Un equipo para todo'),ui`${done} de ${group().tasks.length} tareas completadas.`,ui`<button class="button primary small-button" data-action="new-task">${icon('plus')} Añadir tarea</button>`)}${ui`<button class="button secondary" data-show-planning="tasks">Ver tareas ${icon('arrow')}<span class="payment-list-count">${group().tasks.length}</span></button>`}</section>`;}
+function tasksView() {const done=group().tasks.filter(t=>t.done).length;return `<section class="panel">${sectionTitle(tr('Un equipo para todo'),ui`${done} de ${group().tasks.length} tareas completadas.`,ui`<button class="button primary small-button" data-action="new-task">${icon('plus')} Añadir tarea</button>`)}${planningListContent('tasks')}</section>`;}
 function canEditPlan(item) {return !!item&&(!accountUser||canManage()||item.createdBy===accountUser.id);}
 function planningMeta(item,kind) {
  const date=item.dueAt?new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(new Date(item.dueAt)):'';
@@ -373,15 +374,19 @@ function planningControls(item,kind) {
  if(!canEditPlan(item))return '';
  return ui`<div class="planning-controls"><button class="text-button" data-plan-edit="${esc(item.id)}" data-kind="${kind}">Editar</button>${!item.done&&!(kind==='polls'&&planClosed(item))?ui`<button class="text-button" data-plan-remind="${esc(item.id)}" data-kind="${kind}">Enviar recordatorio</button>`:''}<button class="text-button danger-text" data-plan-delete="${esc(item.id)}" data-kind="${kind}">Borrar</button></div>`;
 }
+function planningListContent(kind) {
+ const items=group()[kind];
+ return `<div class="planning-page-list" data-kind="${kind}">${canManage()&&items.length?ui`<div class="history-modal-controls"><button class="text-button danger-text" data-plan-clear="${kind}">Borrar todo</button></div>`:''}<div class="planning-items">${kind==='tasks'?taskList(items.slice(0,planningLimit)):items.length?items.slice(0,planningLimit).map(pollCard).join(''):empty(tr('Hay un plan por descubrir'),tr('Crea una votación con al menos dos opciones.'),'new-poll',tr('Crear votación'))}${items.length>planningLimit?ui`<button class="button secondary" data-action="more-planning">Ver más</button>`:''}</div></div>`;
+}
 function renderPlanningList() {
- const container=modalRoot.querySelector('.planning-list-dialog'),g=group();if(!container||container.dataset.group!==g?.id)return;
- const kind=container.dataset.kind,items=g[kind];
- container.innerHTML=`${canManage()&&items.length?ui`<div class="history-modal-controls"><button class="button secondary danger-text" data-plan-clear="${kind}">Borrar todo</button></div>`:''}<div class="planning-list-scroll">${kind==='tasks'?taskList(items.slice(0,planningLimit)):items.length?items.slice(0,planningLimit).map(pollCard).join(''):empty(tr('Hay un plan por descubrir'),tr('Crea una votación con al menos dos opciones.'),'new-poll',tr('Crear votación'))}${items.length>planningLimit?ui`<button class="button secondary" data-action="more-planning">Ver más</button>`:''}</div>`;
+ const kind=currentSection();if(!['tasks','polls'].includes(kind))return;
+ const container=root.querySelector('.planning-page-list');
+ if(container?.dataset.kind===kind)container.outerHTML=planningListContent(kind);
 }
 async function showPlanningList(kind) {
  if(!['tasks','polls'].includes(kind)||!group())return;
- planningLimit=30;openModal(tr(kind==='tasks'?'Tareas':'Votaciones'),`<div class="planning-list-dialog" data-kind="${kind}" data-group="${esc(group().id)}"><p role="status">${tr('Cargando…')}</p></div>`,esc(group().name));
- if(accountUser)await loadSharedGroups();renderPlanningList();
+ planningLimit=30;
+ await navigateWorkspace(kind);
 }
 function planDetails(id,kind) {
  const item=group()?.[kind]?.find(x=>x.id===id);if(!item)return;
@@ -642,7 +647,8 @@ function fxPanel(){
 function renderSettlements() {
  const box=modalRoot.querySelector('.settlements-dialog');if(!box||box.dataset.settlementGroup!==group()?.id)return;
  const g=group(),items=paymentSuggestions(),data=activityData(),converted=fxSession.mode&&conversionReady();
- box.innerHTML=ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${settlementOptions()}${fxPanel()}${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(g)):''}<div class="settlement-list">${items.length?items.map((p,i)=>{const eur=converted?conversionSnapshot(p.amount).amount:null;return `<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div class="settlement-amount"><strong>${money(eur??p.amount,converted?fxSession.target:currencyOf(g))}</strong>${converted?`<small>${money(p.amount)}</small>`:''}${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}" ${fxSession.mode&&(!converted||!eur)?'disabled':''}>Marcar como pagado</button>`:''}${converted&&!eur?ui`<small>Importe inferior a la unidad mínima. Usa la moneda original.</small>`:''}</div></div>`;}).join(''):data.requests.length?ui`<p class="pending-summary">Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}<p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p></div>`;
+ const fxOpen=fxSession.mode||fxSession.loading||!!fxSession.error||!!box.querySelector('.fx-disclosure')?.open;
+ box.innerHTML=ui`<p class="settlement-note">Marca tu pago cuando lo hayas enviado. La otra persona debe confirmar que lo ha recibido.</p>${settlementOptions()}${activityNotice(data)}${data.ready===true?paymentRequestsView(data.requests,accountUser?.id,activityMemberName,currencyOf(g)):''}<div class="settlement-list">${items.length?items.map((p,i)=>{const eur=converted?conversionSnapshot(p.amount).amount:null;return `<div class="settlement-row"><div>${avatar(member(p.from),true)}<strong>${esc(member(p.from).name)}</strong>${icon('arrow')}<strong>${esc(member(p.to).name)}</strong></div><div class="settlement-amount"><strong>${money(eur??p.amount,converted?fxSession.target:currencyOf(g))}</strong>${converted?`<small>${money(p.amount)}</small>`:''}${accountUser&&data.ready===true&&p.from==='you'?ui`<button class="button secondary small-button" data-settle="${i}" ${fxSession.mode&&(!converted||!eur)?'disabled':''}>Marcar como pagado</button>`:''}${converted&&!eur?ui`<small>Importe inferior a la unidad mínima. Usa la moneda original.</small>`:''}</div></div>`;}).join(''):data.requests.length?ui`<p class="pending-summary">Quedan pagos pendientes de confirmar. Los saldos todavía no han cambiado.</p>`:empty(tr('¡Todo saldado!'),tr('El grupo está en equilibrio. A por el siguiente plan.'))}</div><details class="fx-disclosure" ${fxOpen?'open':''}><summary>${tr('Ver cambio de moneda')}</summary>${fxPanel()}</details><p class="form-note">${icon('wallet')} DivZplit registra devoluciones; no envía dinero ni realiza transferencias.</p>`;
 }
 async function loadFxQuote() {
  const g=group(),viewer=accountUser?.id;if(!g||fxSession.target===currencyOf(g))return;

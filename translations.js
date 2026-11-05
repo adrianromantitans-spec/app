@@ -1,5 +1,7 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Las fechas son opcionales. Puedes añadirlas más adelante.": {"en": "Dates are optional. You can add them later.", "ro": "Datele sunt opționale. Le poți adăuga mai târziu."},
+  "Ver cambio de moneda": {"en": "View currency conversion", "ro": "Vezi conversia valutară"},
   "Centro de ayuda":{"en":"Help centre","ro":"Centrul de ajutor"},
   "Cuenta":{"en": "Account", "ro": "Cont"},
   "Ayuda y asistencia":{"en": "Help and support", "ro": "Ajutor și asistență"},
