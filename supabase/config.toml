@@ -4,5 +4,5 @@ project_id = "divzplit"
 verify_jwt = false
 
 [auth.email.template.recovery]
-subject = "DivZplit — Código / Code / Cod"
+subject = '''{{ if eq .Data.language "ro" }}DivZplit — Cod de recuperare{{ else if eq .Data.language "es" }}DivZplit — Código de recuperación{{ else }}DivZplit — Recovery code{{ end }}'''
 content_path = "./supabase/templates/reset-password.html"
