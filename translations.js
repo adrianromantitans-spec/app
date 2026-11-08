@@ -1,5 +1,7 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Planes": {"en": "Plans", "ro": "Planuri"},
+  "Votar": {"en": "Vote", "ro": "Votează"},
   "Elegir foto del ticket": {"en": "Choose receipt photo", "ro": "Alege fotografia bonului"},
   "Elegir foto": {"en": "Choose photo", "ro": "Alege o fotografie"},
   "Ninguna foto seleccionada": {"en": "No photo selected", "ro": "Nicio fotografie selectată"},

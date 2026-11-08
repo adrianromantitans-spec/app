@@ -9,11 +9,21 @@ for name in files:
  if name.endswith(('.js','.mjs','.css','.webmanifest')):
   current=Path(name).read_bytes();before=original(name)
   if name=='server.mjs':current=current.replace(b" 'refined.css',",b'')
-  if name in ['landing.js','scripts/build-landing.mjs']:current=current.replace(b'?v=images-85',b'?v=visual-53')
-  assert current==before,'Unexpected functional, animation, style or copy change: '+name
+  if name in ['landing.js','scripts/build-landing.mjs']:current=current.replace(b'?v=images-86',b'?v=visual-53')
+  if name=='app.js':
+   current=re.sub(rb'// Presentation only: every button uses the existing delegated route handler.\nfunction referenceDock\(\)\{.*?\n\}\n',b'',current,flags=re.S)
+   current=current.replace(b'${quickAddButton()}${referenceDock()}',b'${quickAddButton()}')
+   current=re.sub(rb'<nav class="home-reference-actions".*?</nav>',b'',current,flags=re.S)
+   current=re.sub(rb'<span class="home-group-context"><span class="reference-members">.*?</span><span>\$\{g.members.length\} \xc2\xb7 \$\{esc\(tr\(g.type\)\)\}</span></span>',b'<span class="home-group-context">${g.members.length} \xc2\xb7 ${esc(tr(g.type))}</span>',current,flags=re.S)
+   current=re.sub(rb'\$\{icon\(\(\{Comida:.*?\x27reference-category\x27\)\}',b'',current)
+   current=re.sub(rb'  (?:cart|pulse|bars):.*?\n',b'',current)
+   current=current.replace(b"from './i18n.js?v=visual-86'",b"from './i18n.js?v=recovery-84'")
+  if name=='i18n.js':current=current.replace(b"'./translations.js?v=visual-86'",b"'./translations.js?v=recovery-84'")
+  if name=='translations.js':current=re.sub(rb'  "(?:Planes|Votar)":.*?\n',b'',current)
+  assert current==before,'Unexpected change beyond the exact presentation-only template additions: '+name
   count+=1
-entry=Path('app/index.html').read_bytes().replace(b'    <link rel="stylesheet" href="../refined.css?v=visual-85" />\n',b'')
-assert entry==original('app/index.html'),'App entry changed beyond adding the visual stylesheet'
+entry=Path('app/index.html').read_bytes().replace(b'    <link rel="stylesheet" href="../refined.css?v=visual-86" />\n',b'')
+assert entry.replace(b'app.js?v=visual-86',b'app.js?v=recovery-84')==original('app/index.html'),'App entry changed beyond adding the visual stylesheet'
 css=Path('refined.css').read_text()
 assert not re.search(r'(?:^|[;{])\s*(?:-webkit-)?(?:animation|transition|transform|translate|scale)[\w-]*\s*:',css,re.M),'Visual layer must not override animation properties'
 assert 'intro-host' not in css and 'auth-header' not in css and 'welcome-' not in css
@@ -24,7 +34,7 @@ for name,dim in manifest['images'].items():
   from PIL import Image
   image=Image.open('assets/landing/'+name+suffix+'.webp');assert image.size==(dim['width']*factor,dim['height']*factor),(name,image.size,dim)
  if name.endswith('-home'):assert dim==old['images'][name],'Phone proportions must remain identical'
-print('PASS:',count,'original JS/CSS/manifest files preserve logic, startup effects, landing styles and copy; only stylesheet inclusion and image revision strings differ. All real captures and phone dimensions are present.')
+print('PASS:',count,'original JS/CSS/manifest files preserve logic, startup effects, landing styles and copy; only the audited visual templates, two translated labels, stylesheet inclusion and resource revision strings differ. All real captures and phone dimensions are present.')
 # Landing structure, words, links, frames and behavior remain unchanged.
 from html.parser import HTMLParser
 class LandingStructure(HTMLParser):
@@ -35,7 +45,7 @@ class LandingStructure(HTMLParser):
   for key,value in attrs:
    if crop and key in ['width','height']:continue
    if value:
-    value=value.replace('?v=images-85','?v=visual-53')
+    value=value.replace('?v=images-86','?v=visual-53')
     if tag=='script' and key=='src' and value.split('?')[0]=='./landing.js':value='./landing.js?v=REVISION'
     value=re.sub(r"sha256-[A-Za-z0-9+/=]+",'sha256-HASH',value)
     if crop and key=='srcset':value=re.sub(r' \d+w',' WIDTHw',value)
@@ -43,7 +53,7 @@ class LandingStructure(HTMLParser):
   self.events.append(('start',tag,tuple(normalized)))
  def handle_endtag(self,tag):self.events.append(('end',tag))
  def handle_data(self,data):
-  if data.strip():self.events.append(('text',data.replace('?v=images-85','?v=visual-53')))
+  if data.strip():self.events.append(('text',data.replace('?v=images-86','?v=visual-53')))
 oldpage=LandingStructure();oldpage.feed(original('index.html').decode());newpage=LandingStructure();newpage.feed(Path('index.html').read_text())
 assert oldpage.events==newpage.events,'Landing changed beyond real image revisions and crop dimensions'
 print('PASS: landing sections, text, links, phone frames, image roles and script structure are identical after normalizing only updated image resources.')

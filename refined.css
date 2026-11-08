@@ -139,30 +139,16 @@
  .personal-app #modal-root .modal:not(.navigation-drawer){border-radius:27px;padding:23px 21px}
  .personal-app #modal-root .modal-heading h2{font-size:23px}
  .personal-app #modal-root .expense-amount-field input{font-size:42px}
- /* Present the existing routes as a dock; the full original drawer remains available. */
- .personal-shell .workspace-sidebar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:64px;align-items:center;position:fixed;inset:auto 14px calc(14px + env(safe-area-inset-bottom)) 14px;width:auto;height:76px;min-height:76px;max-height:76px;margin:0;padding:5px;border:1px solid #e4dceb;border-radius:24px;background:#ffffffed;box-shadow:0 8px 30px #3620480d;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:visible;z-index:45}
- .personal-shell .workspace-sidebar>.brand,.personal-shell .workspace-sidebar>.drawer-group,.personal-shell .workspace-sidebar>.drawer-section-label,.personal-shell .workspace-sidebar>.drawer-divider{display:none}
- .personal-shell .workspace-sidebar .workspace-links,.personal-shell .workspace-sidebar .workspace-menu-footer{display:contents}
- .personal-shell .workspace-sidebar .workspace-links>.workspace-link:not([data-route=home]):not([data-route=expenses]){display:none}
- .personal-shell .workspace-sidebar .workspace-link,.personal-shell .workspace-sidebar .drawer-profile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;height:64px;min-height:64px;min-width:0;padding:3px 1px;margin:0;border:0;border-radius:15px;background:transparent;color:#796a87;text-align:center;font-size:9px;font-weight:650;line-height:1.2}
- .personal-shell .workspace-sidebar .workspace-links>[data-route=home]{grid-column:1;grid-row:1}
- .personal-shell .workspace-sidebar .workspace-links>[data-route=expenses]{grid-column:2;grid-row:1}
- .personal-shell .workspace-sidebar>[data-route=groups]{grid-column:4;grid-row:1}
- .personal-shell .workspace-sidebar .drawer-profile{grid-column:5;grid-row:1}
- .personal-shell .workspace-sidebar .workspace-link>span{flex:none;max-width:100%;overflow-wrap:anywhere}
- .personal-shell .workspace-sidebar .workspace-link>.icon{width:21px;height:21px;margin:0}
- .personal-shell .workspace-sidebar .workspace-link.active{color:#8552db}
- .personal-shell .workspace-sidebar .workspace-link.active>.icon{background:#eee5fb;box-shadow:0 0 0 5px #eee5fb;border-radius:5px}
- .personal-shell .workspace-sidebar .workspace-link>small{position:absolute;right:6px;top:2px;font-size:8px;margin:0;color:#9d82b3}
- .personal-shell .workspace-sidebar .drawer-profile>.avatar{width:23px;height:23px;font-size:8px;margin:0}
- .personal-shell .workspace-sidebar .drawer-profile>span:nth-child(2){display:block;flex:none;max-width:100%}
- .personal-shell .workspace-sidebar .drawer-profile strong{font-size:9px;font-weight:650;overflow-wrap:anywhere}
- .personal-shell .workspace-sidebar .drawer-profile small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
- .personal-shell .workspace-sidebar .drawer-profile>.icon{display:none}
- .personal-shell:has(.account-page) .workspace-sidebar .drawer-profile{color:#8552db}
- .personal-shell .mobile-quick-add{left:calc(50% - 27px);right:auto;bottom:calc(25px + env(safe-area-inset-bottom));width:54px;height:54px;z-index:50}
- .personal-shell .mobile-quick-add .nav-add{width:54px;height:54px;border-radius:18px;color:#fff;border:1px solid #8e60dc;background:#8552db;box-shadow:0 4px 14px #8552db22;backdrop-filter:none;-webkit-backdrop-filter:none}
- .personal-shell .mobile-quick-add .nav-add .icon{width:25px;height:25px}
+ /* Four destinations, matching the reference. The original complete menu remains available. */
+ .personal-shell .workspace-sidebar{display:none}
+ .personal-shell .reference-dock{display:flex;position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));height:66px;z-index:45;align-items:center;justify-content:space-around;padding:4px 5px;background:#ffffffed;border:1px solid #e6dfed;border-radius:23px;box-shadow:0 8px 30px #3620480c;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+ .personal-shell .reference-dock-item{display:flex;flex:1;min-width:0;height:54px;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:650;color:#908099;position:relative;border-radius:16px}
+ .personal-shell .reference-dock-item>.icon{width:22px;height:22px}
+ .personal-shell .reference-dock-item.active{color:#8552db}
+ .personal-shell .reference-dock-item.active>.icon{background:#f0e8fc;box-shadow:0 0 0 6px #f0e8fc;border-radius:5px}
+ .personal-shell .mobile-quick-add{right:20px;left:auto;bottom:calc(96px + env(safe-area-inset-bottom));width:44px;height:44px;z-index:44}
+ .personal-shell .mobile-quick-add .nav-add{width:44px;height:44px;border-radius:15px;color:#fff;border:1px solid #8e60dc;background:#8552db;box-shadow:0 4px 14px #8552db22}
+ .personal-shell .main-shell:has(.personal-home)>.mobile-quick-add{position:static;margin:0 20px 8px auto}
  .personal-app #toast{bottom:calc(105px + env(safe-area-inset-bottom))}
 }
 @media(max-width:360px){
@@ -177,3 +163,89 @@
  .personal-shell .workspace-sidebar .workspace-link,.personal-shell .workspace-sidebar .drawer-profile strong{font-size:8px}
  .personal-shell .workspace-sidebar .workspace-link>.icon{width:19px;height:19px}
 }
+
+/* Reference geometry. Existing copy remains available below the primary content. */
+.personal-shell .reference-dock{display:none}
+.personal-shell .personal-home{display:flex;flex-direction:column;gap:0}
+.personal-shell .personal-home>.home-group-header{order:0;margin-bottom:17px}
+.personal-shell .personal-home>.home-balance{order:1}
+.personal-shell .personal-home>.home-reference-actions{order:2}
+.personal-shell .personal-home>.home-attention{order:3}
+.personal-shell .personal-home>.home-recent{order:4;margin-top:0}
+.personal-shell .personal-home>.home-greeting{order:5;margin:25px 3px 0}
+.personal-shell .personal-home>.home-greeting p{font-size:10px;margin-bottom:3px}
+.personal-shell .personal-home>.home-greeting h1{font-size:15px;letter-spacing:-.3px;line-height:1.5}
+.personal-shell .personal-home .home-group-symbol{width:27px;height:30px;background:transparent;border-radius:0}
+.personal-shell .personal-home .home-group-symbol>.icon{width:22px;height:22px}
+.personal-shell .personal-home .home-group-copy strong{font-size:28px;line-height:1.35;letter-spacing:-1.1px}
+.personal-shell .personal-home .home-group-copy small{font-size:10px;line-height:1.6;color:#786b83}
+.personal-shell .personal-home .home-balance{padding:16px 18px;border-radius:23px}
+.personal-shell .personal-home .balance-status{background:transparent;color:inherit;padding:0;border-radius:0;font-size:11px}
+.personal-shell .personal-home .stat-copy .stat-amount{margin:3px 0 0}
+.personal-shell .personal-home .stat-copy .stat-amount,.personal-shell .personal-home .stat-copy .stat-number{font-size:41px;letter-spacing:-1.5px;line-height:1.35}
+.personal-shell .personal-home .stat-copy .stat-currency{font-size:16px;color:#eee4ff;letter-spacing:0}
+.personal-shell .personal-home .home-balance-bottom{margin-top:1px}
+.personal-shell .personal-home .home-balance-bottom small{font-size:10px}
+.personal-shell .personal-home .home-balance-bottom .text-button{background:transparent;border:0;padding:3px 0;min-height:28px;font-size:11px;font-weight:800}
+.personal-shell .home-reference-actions{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px;margin:14px 0 18px}
+.personal-shell .home-reference-action{min-height:63px;background:#fff;border:1px solid #eae6ef;border-radius:17px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;font-size:10px;font-weight:750;padding:6px}
+.personal-shell .home-reference-action>.icon{width:21px;height:21px;color:#8a60be}
+.personal-shell .home-reference-action.primary{background:#eee6fb;border-color:#eee6fb;color:#7440bd}
+.personal-shell .home-section-heading{margin-bottom:5px}
+.personal-shell .personal-home .home-recent .expense-row{min-height:60px;padding:11px 0;gap:9px}
+.personal-shell .personal-home .home-recent .expense-description strong,.personal-shell .personal-home .home-recent .expense-value strong{font-size:13px;letter-spacing:-.1px}
+.personal-shell .personal-home .home-recent .expense-description small{font-size:10px}
+.personal-shell .personal-home .home-recent .expense-detail-button{width:16px;min-width:16px}
+.personal-shell .account-section{background:transparent;border:0;box-shadow:none;padding-top:0;border-radius:0;overflow:visible}
+.personal-shell .account-section>h2{padding:0 3px 8px;font-size:10px}
+.personal-shell .account-section>.account-row{border-left:1px solid #ebe5f1;border-right:1px solid #ebe5f1}
+.personal-shell .account-section>h2+.account-row{border-top:1px solid #ebe5f1;border-radius:18px 18px 0 0}
+.personal-shell .account-section>.account-row:last-child{border-bottom:1px solid #ebe5f1;border-radius:0 0 18px 18px}
+.personal-shell .account-section>h2+.account-row:last-child{border-radius:18px}
+.personal-shell .account-row-icon{background:transparent;width:23px}
+.personal-app #modal-root .modal-overlay:has(#expense-form){align-items:flex-end;padding:0}
+.personal-app #modal-root .modal:has(#expense-form){border-radius:29px 29px 0 0;width:min(100%,600px);max-height:calc(100dvh - 32px);padding:25px 22px calc(20px + env(safe-area-inset-bottom));margin:0 auto}
+.personal-app #modal-root .modal:has(#expense-form):before{content:'';display:block;width:33px;height:4px;border-radius:5px;background:#ddd7e5;position:absolute;top:8px;left:calc(50% - 16px)}
+@media(max-width:760px){.personal-shell .reference-dock{display:flex}.personal-shell .main-shell{padding-bottom:calc(100px + env(safe-area-inset-bottom))}}
+@media(max-width:360px){.personal-shell .personal-home .home-group-copy strong{font-size:25px}.personal-shell .personal-home .stat-copy .stat-amount,.personal-shell .personal-home .stat-copy .stat-number{font-size:37px}.personal-shell .personal-home .home-recent .expense-description strong,.personal-shell .personal-home .home-recent .expense-value strong{font-size:11px}}
+
+.personal-shell .personal-home .home-group-symbol{display:none}
+.personal-shell .personal-home .home-group-picker{min-width:0;flex:1}
+.personal-shell .personal-home .home-group-copy{min-width:0}
+.personal-shell .personal-home .home-group-context{display:flex;flex-direction:column;gap:3px;max-width:43%;font-size:9px}
+.personal-shell .reference-members{display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10px;min-width:0}
+.personal-shell .reference-members>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px}
+.personal-shell .reference-avatars{display:flex;flex-shrink:0;padding-left:5px}
+.personal-shell .reference-avatars .avatar{width:22px;height:22px;font-size:7px;margin-left:-5px;border:2px solid #f5f4f8}
+
+.personal-shell .personal-home .home-group-copy strong{white-space:normal;overflow-wrap:anywhere;overflow:visible}
+.personal-app #modal-root .modal:has(#expense-form){position:relative}
+.personal-app #modal-root .compact-expense-modal .modal-heading{margin-bottom:12px}
+.personal-app #modal-root .compact-expense-modal .modal-heading h2{font-size:22px}
+.personal-app #modal-root .compact-expense-form .expense-amount-field{margin:10px 0 13px}
+.personal-app #modal-root .compact-expense-form .expense-amount-field>span{font-size:10px}
+.personal-app #modal-root .compact-expense-form .expense-amount-field>div{justify-content:flex-start;gap:8px}
+.personal-app #modal-root .compact-expense-form .expense-amount-field input{width:150px;flex:none;font-size:47px;padding:0;min-height:60px}
+.personal-app #modal-root .compact-expense-form .expense-concept{background:transparent;border:0;border-bottom:1px solid #ede7f2;border-radius:0;padding:10px 0;margin-bottom:0;gap:4px;font-size:10px}
+.personal-app #modal-root .compact-expense-form .expense-concept input{border:0;background:transparent;border-radius:0;min-height:30px;padding:0;font-size:16px;font-weight:750;box-shadow:none}
+.personal-app #modal-root .compact-expense-form .expense-payer-field{display:flex;flex-direction:row;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #ede7f2;margin-bottom:12px;font-size:10px}
+.personal-app #modal-root .compact-expense-form .expense-payer-select{max-width:70%;min-height:36px;border-radius:12px;padding:2px 7px;background:#f9f6fd}
+.personal-app #modal-root .compact-expense-form .expense-payer-select select{min-height:36px;padding:5px 27px 5px 8px;font-size:13px;background-color:transparent}
+.personal-app #modal-root .compact-expense-form .expense-participants-heading{font-size:11px;margin:12px 0 10px}
+.personal-app #modal-root .compact-expense-form .compact-participants{margin-bottom:9px;gap:8px}
+.personal-app #modal-root .compact-expense-form .person-chip{border-radius:15px;padding:10px;min-height:44px}
+.personal-app #modal-root .compact-expense-form .split-total{font-size:10px;margin:8px 0}
+.personal-app #modal-root .compact-expense-form .expense-more-options{margin:9px 0}
+.personal-app #modal-root .compact-expense-form .expense-more-options>summary{padding:10px 0;min-height:40px;font-size:11px}
+.personal-app #modal-root .compact-expense-form .expense-more-options>summary>span{font-size:10px}
+.personal-app #modal-root .compact-expense-form .expense-actions{margin-top:14px}
+.personal-app #modal-root .compact-expense-form .expense-actions .button{min-height:45px;font-size:12px}
+
+.personal-app #modal-root .compact-expense-form .expense-payer-select select{padding-left:43px;min-width:145px}
+.personal-app #modal-root .compact-expense-form .expense-payer-avatar{left:7px}
+.personal-app #modal-root .compact-expense-form .expense-payer-avatar .avatar{width:25px;height:25px;font-size:9px}
+.personal-shell .main-shell:has(.personal-home)>.mobile-quick-add .nav-add{background:#eee6fb;color:#8552db;border-color:#e8ddf6;box-shadow:none;width:36px;height:36px;border-radius:12px}
+
+.personal-shell .expense-icon>.reference-category{display:none}
+.personal-shell .home-recent .expense-icon>.reference-category{display:block;width:18px;height:18px}
+.personal-shell .home-recent .expense-icon>.category-emoji{display:none}
