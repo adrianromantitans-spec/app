@@ -65,7 +65,8 @@ def capture(browser,lang):
  page=c.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(BASE)
  expect(page.locator('.home-balance')).to_be_visible();page.evaluate('document.fonts.ready');page.locator('.home-balance').scroll_into_view_if_needed();page.evaluate('scrollTo(0,0)')
  save(page.screenshot(),lang+'-home')
- page.set_viewport_size({'width':402,'height':874});page.screenshot(path=str(ROOT/'assets'/('welcome-'+lang+'.png')))
+ page.set_viewport_size({'width':402,'height':874})
+ if os.environ.get('CAPTURE_WELCOME','1')!='0':page.screenshot(path=str(ROOT/'assets'/('welcome-'+lang+'.png')))
  page.set_viewport_size({'width':393,'height':852})
  save(page.locator('.home-balance').screenshot(),lang+'-balance')
  save(page.locator('.home-recent .expense-row').first.screenshot(),lang+'-recent')
@@ -80,7 +81,12 @@ def capture(browser,lang):
  page.locator('[data-action=close-modal]').first.click()
  def navigate(route):
   if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
-  page.locator('.nav-add').click();page.locator('.quick-add-modal [data-action=workspace-menu]').click();page.locator('.navigation-drawer [data-route='+route+']').click();page.evaluate('scrollTo(0,0)')
+  # The current mobile app opens its existing drawer with an edge swipe.
+  page.mouse.move(4,300);page.mouse.down();page.mouse.move(150,300,steps=10);page.mouse.up()
+  expect(page.locator('.navigation-drawer')).to_be_visible()
+  # Consume the swipe's click guard on a non-action heading before selecting a route.
+  page.locator('.navigation-drawer #modal-title').click()
+  page.locator('.navigation-drawer [data-route='+route+']').click();expect(page.locator('.navigation-drawer')).to_have_count(0);page.evaluate('scrollTo(0,0)')
  navigate('expenses');expect(page.locator('.expense-list')).to_be_visible();save(page.screenshot(),lang+'-expenses')
  navigate('shopping');expect(page.locator('.shopping-row')).to_have_count(4);save(page.screenshot(),lang+'-shopping')
  for route in ['polls','tasks']:
