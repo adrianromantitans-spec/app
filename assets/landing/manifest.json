@@ -6,12 +6,12 @@
       "height": 852
     },
     "es-balance": {
-      "width": 349,
-      "height": 191
+      "width": 353,
+      "height": 165
     },
     "es-recent": {
-      "width": 349,
-      "height": 80
+      "width": 325,
+      "height": 68
     },
     "es-group": {
       "width": 393,
@@ -66,12 +66,12 @@
       "height": 852
     },
     "en-balance": {
-      "width": 349,
-      "height": 191
+      "width": 353,
+      "height": 165
     },
     "en-recent": {
-      "width": 349,
-      "height": 80
+      "width": 325,
+      "height": 68
     },
     "en-group": {
       "width": 393,
@@ -126,12 +126,12 @@
       "height": 852
     },
     "ro-balance": {
-      "width": 349,
-      "height": 191
+      "width": 353,
+      "height": 165
     },
     "ro-recent": {
-      "width": 349,
-      "height": 80
+      "width": 325,
+      "height": 68
     },
     "ro-group": {
       "width": 393,

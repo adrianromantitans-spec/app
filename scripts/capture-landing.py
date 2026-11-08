@@ -75,7 +75,8 @@ def capture(browser,lang):
  page.locator('[data-action=close-modal]').first.click();page.locator('.nav-add').click();page.locator('.quick-add-modal [data-action=new-expense]').click()
  page.locator('#expense-form input[name=amount]').fill('86');page.locator('#expense-form input[name=title]').fill(COPY[lang]['expense']);page.locator('#expense-form input[name=title]').blur();save(page.screenshot(),lang+'-expense')
  page.locator('[data-action=close-modal]').first.click();page.locator('[data-action=settlements]').click();expect(page.locator('.settlements-dialog')).to_be_visible();save(page.screenshot(),lang+'-settlements')
- page.locator('[data-fx-target]').select_option('USD');expect(page.locator('.fx-detail')).to_be_visible();expect(page.locator('.fx-panel [role=alert]')).to_have_count(0);save(page.screenshot(),lang+'-currency')
+ if not page.locator('[data-fx-target]').is_visible():page.locator('.fx-disclosure>summary').click()
+ page.locator('[data-fx-target]').select_option('USD');expect(page.locator('.fx-detail')).to_be_visible();expect(page.locator('.fx-panel [role=alert]')).to_have_count(0);page.locator('.fx-panel').scroll_into_view_if_needed();save(page.screenshot(),lang+'-currency')
  page.locator('[data-action=close-modal]').first.click()
  def navigate(route):
   if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
@@ -83,7 +84,10 @@ def capture(browser,lang):
  navigate('expenses');expect(page.locator('.expense-list')).to_be_visible();save(page.screenshot(),lang+'-expenses')
  navigate('shopping');expect(page.locator('.shopping-row')).to_have_count(4);save(page.screenshot(),lang+'-shopping')
  for route in ['polls','tasks']:
-  navigate(route);page.locator('[data-show-planning='+route+']').click();expect(page.locator('.planning-list-dialog [data-plan-card]' if route=='polls' else '.planning-list-dialog .task-row')).to_have_count(1 if route=='polls' else 3);save(page.screenshot(),lang+'-'+route);page.locator('[data-action=close-modal]').first.click()
+  navigate(route)
+  # Current app displays the actual planning cards inline.
+  expect(page.locator('.poll-card' if route=='polls' else '.task-row')).to_have_count(1 if route=='polls' else 3)
+  save(page.screenshot(),lang+'-'+route)
  navigate('budget');expect(page.locator('.budget-card')).to_be_visible();save(page.screenshot(),lang+'-budget')
  # The real group selector fits the phone and shows both household and travel groups.
  navigate('home');page.locator('.home-group-picker').click();expect(page.locator('.home-group-option')).to_have_count(3);assert page.locator('.home-modes').count()==0;save(page.screenshot(),lang+'-groups');page.locator('[data-action=close-modal]').first.click()

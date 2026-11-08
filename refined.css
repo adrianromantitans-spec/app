@@ -1,0 +1,179 @@
+/* Visual layer only. Startup/auth styles and all animation declarations stay in their original files. */
+.personal-shell{--bg:#f5f4f8;--text:#272133;--muted:#786a83;--border:#e9e3ee;--surface:#fff;background:var(--bg)}
+.personal-shell .main-shell{background:var(--bg)}
+.personal-shell #main{padding-top:18px;padding-bottom:32px}
+.personal-shell .personal-home,.personal-shell .shopping-page,.personal-shell .account-page{max-width:680px}
+.personal-shell .home-group-header{margin-bottom:18px;gap:14px}
+.personal-shell .home-group-picker{gap:10px;min-height:44px}
+.personal-shell .home-group-symbol{width:36px;height:36px;border-radius:12px;background:#ece5f6;color:#8661b0}
+.personal-shell .home-group-copy strong{font-size:19px;letter-spacing:-.6px;font-weight:800;line-height:1.35}
+.personal-shell .home-group-context{font-size:11px;line-height:1.5;color:#786b83}
+.personal-shell .home-greeting{margin-bottom:17px}
+.personal-shell .home-greeting p{font-size:11px;color:#766881;letter-spacing:.5px;margin-bottom:5px}
+.personal-shell .home-greeting h1{font-size:29px;line-height:1.2;letter-spacing:-1.05px;font-weight:800}
+/* The approved purple identity is retained, with the video's more compact proportions. */
+.personal-shell .home-balance{border-radius:24px;padding:19px 21px;background:linear-gradient(125deg,#6536a3,#8752d7);border:1px solid #ffffff24;box-shadow:0 8px 24px #5b348516;color:#fff}
+.personal-shell .home-balance:before,.personal-shell .home-balance:after{opacity:.35}
+.personal-shell .home-balance .balance-status{padding:5px 9px;gap:5px;border-radius:9px;font-size:11px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.personal-shell .home-balance .balance-status-sign{font-size:14px}
+.personal-shell .home-balance .stat-copy .stat-amount{margin:5px 0 10px;gap:7px;line-height:1.25;letter-spacing:-1.4px}
+.personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:40px;line-height:1.25;font-weight:800;color:#fff}
+.personal-shell .home-balance .stat-copy .stat-amount .stat-currency{font-size:18px;font-weight:600;letter-spacing:-.3px;color:#fff}
+.personal-shell .home-balance-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.personal-shell .home-balance-bottom small{font-size:11px;color:#f8f4ff!important;line-height:1.5}
+.personal-shell .home-balance-bottom .text-button{border:1px solid #ffffff35;border-radius:12px;background:#ffffff15;padding:9px 12px;font-size:12px;min-height:40px;flex:none;color:#fff!important}
+.personal-shell .home-attention{padding:13px 15px;border-radius:17px;background:#fff;border:1px solid #ebe2f1;box-shadow:0 3px 12px #3f205405;margin-top:14px}
+.personal-shell .home-attention strong{font-size:12px;line-height:1.6}
+.personal-shell .home-recent{margin-top:22px}
+.personal-shell .home-section-heading{margin-bottom:10px;align-items:center;gap:12px}
+.personal-shell .home-section-heading h2{font-size:16px;font-weight:800;letter-spacing:-.4px}
+.personal-shell .home-section-heading .text-button{font-size:11px;min-height:36px}
+.personal-shell .home-recent .expense-list{background:#fff;border:1px solid #ebe5f0;border-radius:22px;padding:0 13px;overflow:hidden;box-shadow:0 3px 14px #3f205403}
+.personal-shell .home-recent .expense-row{padding:13px 0;min-height:68px;gap:10px;border-bottom:1px solid #f0ecf4;align-items:center}
+.personal-shell .home-recent .expense-row:last-child{border-bottom:0}
+.personal-shell .home-recent .expense-icon{width:33px;height:34px;border-radius:11px;flex:none;background:#f2edf8;color:#9375ae}
+.personal-shell .home-recent .expense-description{min-width:0;flex:1}
+.personal-shell .home-recent .expense-description strong{font-size:13px;font-weight:750;line-height:1.45;overflow-wrap:anywhere}
+.personal-shell .home-recent .expense-description small{font-size:10px;line-height:1.5;color:#796b85;margin-top:3px}
+.personal-shell .home-recent .expense-value{flex:none;max-width:43%;text-align:right}
+.personal-shell .home-recent .expense-value strong{font-size:13px;line-height:1.5;font-weight:800;font-variant-numeric:tabular-nums}
+.personal-shell .home-recent .expense-detail-button{width:25px;min-width:25px;min-height:44px;color:#9b88ad;border-radius:10px;background:none}
+.personal-shell .home-shopping-entry{background:#fff;border:1px solid #ebe4f2;border-radius:18px;padding:15px;margin-top:14px;box-shadow:0 3px 14px #3f205403}
+.personal-shell .panel,.personal-shell .group-card,.personal-shell .new-group-card{border-color:#eae4f0;border-radius:22px;background:#fff;box-shadow:0 4px 18px #41225604}
+.personal-shell .panel{padding:21px}
+.personal-shell .section-heading h2{font-size:18px;line-height:1.45;letter-spacing:-.5px;font-weight:800}
+.personal-shell .section-heading p{font-size:12px;line-height:1.7;color:#776782}
+.personal-shell .button.primary{border-radius:14px;background:#8552db;border:1px solid #8552db;box-shadow:0 4px 12px #8552db14;font-weight:750}
+.personal-shell .button.secondary{border-radius:14px;background:#fff;border:1px solid #e8dff1;box-shadow:none}
+.personal-shell .finance-sections{border-color:#e8e0ef;gap:12px}
+.personal-shell .finance-sections button{padding:12px 6px;font-size:12px;color:#8b7b99}
+.personal-shell .finance-sections .active{color:#8552db;border-color:#8552db}
+.personal-shell .expense-list:not(.home-recent .expense-list) .expense-row{border-color:#f0ebf4}
+.personal-shell .workspace-sidebar{background:#fff;border-color:#e9e3ee;box-shadow:2px 0 20px #3b214703}
+.personal-shell .drawer-group{border-radius:18px;background:#f5f0fc;border:1px solid #eae1f4}
+.personal-shell .workspace-link{border-radius:13px;font-size:12px}
+.personal-shell .workspace-link.active{background:#eee5fb;color:#8050c9}
+/* Shared lists and account retain every row, action, native picker and translation. */
+.personal-shell .shopping-page h1,.personal-shell .account-heading h1{font-size:29px;letter-spacing:-1px;line-height:1.3;font-weight:800}
+.personal-shell .shopping-intro{font-size:12px;line-height:1.75;color:#8b7b97;margin-bottom:20px}
+.personal-shell .shopping-page .shopping-items>section{border:1px solid #eae3f0;background:#fff;border-radius:22px;padding:4px 15px;box-shadow:0 3px 14px #3f205403}
+.personal-shell .shopping-items h3{font-size:11px;letter-spacing:.3px;font-weight:750;color:#796985;padding:12px 0 8px}
+.personal-shell .shopping-row{padding:13px 0;min-height:66px;gap:11px;border-color:#f0eaf4}
+.personal-shell .shopping-product strong{font-size:14px;font-weight:750;line-height:1.5}
+.personal-shell .shopping-product small{font-size:11px;line-height:1.55;color:#7a6888}
+.personal-shell .shopping-check>span{border-radius:8px;border-color:#d8cbe7}
+.personal-shell .shopping-row.is-bought .shopping-check>span{background:#9669dd;border-color:#9669dd}
+.personal-shell .shopping-row-actions .icon-button{border-radius:10px;color:#ad9bbd;min-height:40px;min-width:32px}
+.personal-shell .shopping-toolbar .button{font-size:12px;border-radius:14px;min-height:44px}
+.personal-shell .shopping-page .shopping-footer>.button{position:static;width:100%;max-width:none;border-radius:15px;min-height:46px;box-shadow:0 4px 14px #8552db12}
+.personal-shell .shopping-footer .shopping-note{font-size:11px;line-height:1.75;color:#796687}
+.personal-shell .account-summary{border-radius:22px;padding:19px;background:#fff;border:1px solid #eae3f1;box-shadow:0 3px 14px #3f205403;margin-bottom:26px;gap:13px}
+.personal-shell .account-summary>.avatar{width:48px;height:48px;font-size:17px}
+.personal-shell .account-summary h2{font-size:18px;letter-spacing:-.4px;font-weight:800}
+.personal-shell .account-summary p{font-size:12px;color:#796a85;line-height:1.6}
+.personal-shell .account-section{margin-bottom:24px;border:1px solid #eae3f0;border-radius:19px;background:#fff;box-shadow:0 3px 14px #3f205403;overflow:hidden;padding-top:14px}
+.personal-shell .account-section>h2{font-size:11px;letter-spacing:.4px;font-weight:750;color:#786783;padding:0 16px 10px}
+.personal-shell .account-row{min-height:61px;padding:12px 16px;gap:11px;border-color:#eee7f3;background:#fff}
+.personal-shell .account-row-icon{width:29px;height:31px;border-radius:10px;background:#f5f0fc;color:#9678b3}
+.personal-shell .account-row-icon .icon{width:18px;height:18px}
+.personal-shell .account-row-label{font-size:13px;line-height:1.6;font-weight:650}
+.personal-shell .account-row>.icon{width:14px;height:14px;color:#b5a3c3}
+.personal-shell .account-signout{font-size:13px;color:#80618f;min-height:48px}
+.personal-shell .account-brand-note{font-size:11px;color:#7c6b88;margin-top:19px}
+/* Restrict modal styling to authenticated app content; startup/auth are excluded. */
+.personal-app #modal-root .modal:not(.navigation-drawer){border-radius:27px;background:#fdfcff;border:1px solid #eee6f5;box-shadow:0 18px 70px #35213d21;padding:24px}
+.personal-app #modal-root .modal-heading h2{font-size:24px;line-height:1.3;letter-spacing:-.7px;font-weight:800}
+.personal-app #modal-root .modal-heading>p{font-size:12px;color:#796b85;line-height:1.7}
+.personal-app #modal-root .modal-heading .icon-button{border-radius:50%;color:#a291b0}
+.personal-app #modal-root .button.primary{border-radius:14px;background:#8552db;box-shadow:0 4px 12px #8552db14}
+.personal-app #modal-root .button.secondary{border-radius:14px;border-color:#e8dcf2;background:#fff}
+.personal-app #modal-root .field{font-size:12px;line-height:1.5;color:#786486}
+.personal-app #modal-root .field input:not([type=date]):not([type=file]),.personal-app #modal-root .field textarea{border-color:#e7dff0;border-radius:13px;background:#fbf9fe;min-height:46px;box-shadow:none}
+.personal-app #modal-root .field select{border-color:#e7dff0;border-radius:13px;background-color:#fbf9fe;min-height:46px}
+.personal-app #modal-root .expense-amount-field{margin-bottom:18px}
+.personal-app #modal-root .expense-amount-field input{font-size:43px;letter-spacing:-1.4px;line-height:1.3;font-weight:800}
+.personal-app #modal-root .expense-amount-field strong{font-size:22px;color:#a58fb7}
+.personal-app #modal-root .expense-payer-select{border-radius:14px;background:#f7f2fc;border-color:#e6dcf2}
+.personal-app #modal-root .person-chip{border-radius:13px;background:#f4eefb;border-color:#e5d8f4;padding:9px 11px;min-height:42px}
+.personal-app #modal-root .poll-card{border:1px solid #e8dff1;border-radius:22px;padding:18px;background:#fff}
+.personal-app #modal-root .poll-title h3{font-size:18px;line-height:1.45;letter-spacing:-.4px}
+.personal-app #modal-root .poll-options{gap:9px}
+.personal-app #modal-root .poll-option{border:1px solid #e9e0f3;border-radius:14px;min-height:48px;font-size:12px}
+.personal-app #modal-root .poll-option.chosen{border-color:#b79ad8;color:#7643bc}
+.personal-app #modal-root .poll-fill{background:#f0e7fb}
+.personal-app #modal-root .poll-option.chosen .poll-fill{background:#e9dcfa}
+.personal-app #modal-root .poll-footer{font-size:10px;line-height:1.6;color:#796785}
+.personal-app #modal-root .task-row{background:#fff;border:1px solid #ece3f3;border-radius:15px;margin-bottom:9px;padding:13px}
+.personal-app #modal-root .home-group-option{border-radius:18px;border-color:#e9e0f2;background:#fff;padding:13px;min-height:71px}
+.personal-app #modal-root .home-group-option strong{font-size:14px;line-height:1.5}
+.personal-app #modal-root .home-group-option small{font-size:11px;line-height:1.6;color:#796785}
+.personal-app #modal-root .settlement-row,.personal-app #modal-root .payment-request{border-color:#ebe1f3;border-radius:16px;background:#fff;padding:14px}
+.personal-app #modal-root .fx-panel{border-radius:17px;border-color:#e8ddf1;background:#f8f4fd;padding:13px}
+.personal-app #modal-root .navigation-drawer{background:#fbf9fe;border-right:1px solid #e9e1f1;box-shadow:8px 0 38px #35213d16}
+.personal-app #modal-root .navigation-drawer .workspace-link{border-radius:13px}
+.personal-app #modal-root .navigation-drawer .workspace-link.active{background:#ede3fa;color:#7c48c4}
+@media(max-width:760px){
+ .personal-shell #main{padding:12px 20px 26px}
+ .personal-shell .main-shell{padding-bottom:calc(116px + env(safe-area-inset-bottom))}
+ .personal-shell .home-group-header{margin-bottom:16px}
+ .personal-shell .home-group-copy strong{font-size:18px}
+ .personal-shell .home-group-context{font-size:10px;max-width:43%}
+ .personal-shell .home-greeting{margin-bottom:15px}
+ .personal-shell .home-greeting h1{font-size:26px;letter-spacing:-.9px;line-height:1.2}
+ .personal-shell .home-greeting p{font-size:10px}
+ .personal-shell .home-balance{padding:17px 19px;border-radius:23px}
+ .personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:37px;line-height:1.25}
+ .personal-shell .home-balance .stat-copy .stat-amount .stat-currency{font-size:17px}
+ .personal-shell .home-balance .stat-copy .stat-amount{margin-bottom:9px}
+ .personal-shell .home-balance-bottom .text-button{min-height:38px;padding:8px 11px;font-size:11px}
+ .personal-shell .home-balance-bottom small{font-size:10px}
+ .personal-shell .home-recent{margin-top:21px}
+ .personal-shell .home-section-heading h2{font-size:15px}
+ .personal-shell .home-recent .expense-row{min-height:65px;padding:11px 0;gap:8px}
+ .personal-shell .home-recent .expense-description strong,.personal-shell .home-recent .expense-value strong{font-size:12px}
+ .personal-shell .home-recent .expense-description small{font-size:10px}
+ .personal-shell .home-recent .expense-detail-button{width:20px;min-width:20px}
+ .personal-shell .home-recent .expense-value{max-width:43%}
+ .personal-shell .home-recent .expense-icon{width:31px;height:33px}
+ .personal-shell .home-section-heading .text-button{font-size:11px}
+ .personal-app #modal-root .modal:not(.navigation-drawer){border-radius:27px;padding:23px 21px}
+ .personal-app #modal-root .modal-heading h2{font-size:23px}
+ .personal-app #modal-root .expense-amount-field input{font-size:42px}
+ /* Present the existing routes as a dock; the full original drawer remains available. */
+ .personal-shell .workspace-sidebar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:64px;align-items:center;position:fixed;inset:auto 14px calc(14px + env(safe-area-inset-bottom)) 14px;width:auto;height:76px;min-height:76px;max-height:76px;margin:0;padding:5px;border:1px solid #e4dceb;border-radius:24px;background:#ffffffed;box-shadow:0 8px 30px #3620480d;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:visible;z-index:45}
+ .personal-shell .workspace-sidebar>.brand,.personal-shell .workspace-sidebar>.drawer-group,.personal-shell .workspace-sidebar>.drawer-section-label,.personal-shell .workspace-sidebar>.drawer-divider{display:none}
+ .personal-shell .workspace-sidebar .workspace-links,.personal-shell .workspace-sidebar .workspace-menu-footer{display:contents}
+ .personal-shell .workspace-sidebar .workspace-links>.workspace-link:not([data-route=home]):not([data-route=expenses]){display:none}
+ .personal-shell .workspace-sidebar .workspace-link,.personal-shell .workspace-sidebar .drawer-profile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;height:64px;min-height:64px;min-width:0;padding:3px 1px;margin:0;border:0;border-radius:15px;background:transparent;color:#796a87;text-align:center;font-size:9px;font-weight:650;line-height:1.2}
+ .personal-shell .workspace-sidebar .workspace-links>[data-route=home]{grid-column:1;grid-row:1}
+ .personal-shell .workspace-sidebar .workspace-links>[data-route=expenses]{grid-column:2;grid-row:1}
+ .personal-shell .workspace-sidebar>[data-route=groups]{grid-column:4;grid-row:1}
+ .personal-shell .workspace-sidebar .drawer-profile{grid-column:5;grid-row:1}
+ .personal-shell .workspace-sidebar .workspace-link>span{flex:none;max-width:100%;overflow-wrap:anywhere}
+ .personal-shell .workspace-sidebar .workspace-link>.icon{width:21px;height:21px;margin:0}
+ .personal-shell .workspace-sidebar .workspace-link.active{color:#8552db}
+ .personal-shell .workspace-sidebar .workspace-link.active>.icon{background:#eee5fb;box-shadow:0 0 0 5px #eee5fb;border-radius:5px}
+ .personal-shell .workspace-sidebar .workspace-link>small{position:absolute;right:6px;top:2px;font-size:8px;margin:0;color:#9d82b3}
+ .personal-shell .workspace-sidebar .drawer-profile>.avatar{width:23px;height:23px;font-size:8px;margin:0}
+ .personal-shell .workspace-sidebar .drawer-profile>span:nth-child(2){display:block;flex:none;max-width:100%}
+ .personal-shell .workspace-sidebar .drawer-profile strong{font-size:9px;font-weight:650;overflow-wrap:anywhere}
+ .personal-shell .workspace-sidebar .drawer-profile small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .personal-shell .workspace-sidebar .drawer-profile>.icon{display:none}
+ .personal-shell:has(.account-page) .workspace-sidebar .drawer-profile{color:#8552db}
+ .personal-shell .mobile-quick-add{left:calc(50% - 27px);right:auto;bottom:calc(25px + env(safe-area-inset-bottom));width:54px;height:54px;z-index:50}
+ .personal-shell .mobile-quick-add .nav-add{width:54px;height:54px;border-radius:18px;color:#fff;border:1px solid #8e60dc;background:#8552db;box-shadow:0 4px 14px #8552db22;backdrop-filter:none;-webkit-backdrop-filter:none}
+ .personal-shell .mobile-quick-add .nav-add .icon{width:25px;height:25px}
+ .personal-app #toast{bottom:calc(105px + env(safe-area-inset-bottom))}
+}
+@media(max-width:360px){
+ .personal-shell #main{padding-left:16px;padding-right:16px}
+ .personal-shell .home-balance{padding:16px 17px}
+ .personal-shell .home-balance .stat-copy .stat-amount,.personal-shell .home-balance .stat-copy .stat-amount .stat-number{font-size:34px}
+ .personal-shell .home-recent .expense-description strong,.personal-shell .home-recent .expense-value strong{font-size:11px}
+ .personal-shell .home-recent .expense-row{gap:6px}
+ .personal-shell .home-recent .expense-icon{width:27px;height:30px}
+ .personal-shell .home-recent .expense-detail-button{width:17px;min-width:17px}
+ .personal-shell .workspace-sidebar{left:10px;right:10px;border-radius:22px}
+ .personal-shell .workspace-sidebar .workspace-link,.personal-shell .workspace-sidebar .drawer-profile strong{font-size:8px}
+ .personal-shell .workspace-sidebar .workspace-link>.icon{width:19px;height:19px}
+}
