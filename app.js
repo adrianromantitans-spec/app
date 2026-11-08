@@ -1,19 +1,19 @@
 import {startIntroTransition} from './intro-transition.js?v=start-64';
-import {helpCentreView,filterHelp} from './help.js?v=recovery-84';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=recovery-84';
-import {settlementPlan} from './settlement-plan.js?v=recovery-84';
-import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=recovery-84';
-import {convertedAmount,validConversion} from './fx.js?v=recovery-84';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=recovery-84';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=recovery-84';
-import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=recovery-84';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=recovery-84';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=recovery-84';
-import {Cloud} from './cloud.js?v=recovery-84';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=recovery-84';
-import {NotificationCentre} from './notifications.js?v=recovery-84';
+import {helpCentreView,filterHelp} from './help.js?v=language-90';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=language-90';
+import {settlementPlan} from './settlement-plan.js?v=language-90';
+import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=language-90';
+import {convertedAmount,validConversion} from './fx.js?v=language-90';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=language-90';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=language-90';
+import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=language-90';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-90';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=language-90';
+import {Cloud} from './cloud.js?v=language-90';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=language-90';
+import {NotificationCentre} from './notifications.js?v=language-90';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=recovery-84';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-90';
 
 import {languageSelection} from './language.js?v=language-78';
 const languageLabels={es:'Español',en:'English',ro:'Română'};
@@ -236,7 +236,7 @@ function balanceCaption(group){
 }
 function homeGroupHeader(g){
  const travel=groupMode(g)==='travel';
- return `<div class="home-group-header"><button class="home-group-picker" data-action="choose-group" aria-label="${tr('Seleccionar grupo')}"><span class="home-group-symbol">${icon(travel?'plane':'home')}</span><span class="home-group-copy"><strong>${esc(g.name)} <span aria-hidden="true">⌄</span></strong>${g.date?`<small>${esc(tripDetail(g.date,g.endDate))}</small>`:''}</span></button><span class="home-group-context"><span class="reference-members"><span class="reference-avatars">${g.members.slice(0,2).map(person=>avatar(person,true)).join('')}</span><span>${g.members.slice(0,2).map(person=>esc(person.name)).join(' · ')}</span></span><span>${g.members.length} · ${esc(tr(g.type))}</span></span></div>`;
+ return `<div class="home-group-header"><button class="home-group-picker" data-action="choose-group" aria-label="${tr('Seleccionar grupo')}"><span class="home-group-symbol">${icon(travel?'plane':'home')}</span><span class="home-group-copy"><strong>${esc(g.name)} <span aria-hidden="true">⌄</span></strong>${g.date?`<small>${esc(tripDetail(g.date,g.endDate))}</small>`:''}</span></button><span class="home-group-context"><span class="reference-members"><span class="reference-avatars">${g.members.slice(0,2).map(person=>avatar(person,true)).join('')}</span><span>${g.members.slice(0,2).map(person=>esc(memberName(person))).join(' · ')}</span></span><span>${g.members.length} · ${esc(tr(g.type))}</span></span></div>`;
 }
 function homeView(){
  const g=group();homeClock=Math.floor(Date.now()/60000);

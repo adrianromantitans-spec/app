@@ -6,8 +6,9 @@ group['document']['currency']='EUR';group['document']['expenses'][0]['amount']=1
 def route(page,section):
     expect(page.locator('.personal-shell .topbar')).to_be_visible()
     if page.locator('.nav-add').is_visible():
-        page.locator('.nav-add').click()
-        page.locator('.quick-add-modal [data-action="workspace-menu"]').click()
+        page.mouse.move(4,300);page.mouse.down();page.mouse.move(150,300,steps=10);page.mouse.up()
+        expect(page.locator('.navigation-drawer')).to_be_visible()
+        page.locator('.navigation-drawer #modal-title').click()
         if section=='profile':page.locator('.navigation-drawer .drawer-profile').click()
         else:page.locator('.navigation-drawer [data-route="'+section+'"]').click()
     else:page.locator('.workspace-sidebar [data-route="'+section+'"]').click()
@@ -29,6 +30,8 @@ with sync_playwright() as p:
         choose(page,code)
         expect(page.locator('html')).to_have_attribute('lang',code)
         expect(page.locator('.account-heading h1')).to_have_text(heading)
+        expected_plans={'es':'Planes','en':'Plans','ro':'Planuri'}[code]
+        expect(page.locator('.reference-dock [data-route=groups]')).to_have_text(expected_plans)
         assert page.evaluate('window.languageChangeSentinel')==123,'language change reloaded the page'
         assert page.evaluate('localStorage.getItem("nexo-session-v1:nexo-test.supabase.co")')==session
         assert page.evaluate('localStorage.getItem("divzplit-language")')==code

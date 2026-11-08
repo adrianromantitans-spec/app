@@ -10,7 +10,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 function setShot(image,language){
  const name=image.dataset.appShot,base=new URL('./assets/landing/'+language+'-'+name,import.meta.url).href;
  const width=Number(image.getAttribute('width'))||393;
- image.src=base+'.webp?v=images-89';image.srcset=base+'.webp?v=images-89 '+width+'w, '+base+'-2x.webp?v=images-89 '+width*2+'w';
+ image.src=base+'.webp?v=images-90';image.srcset=base+'.webp?v=images-90 '+width+'w, '+base+'-2x.webp?v=images-90 '+width*2+'w';
  if(image.dataset.alt)image.alt=landingCopy[language][image.dataset.alt];
 }
 export function applyLanguage(language){
