@@ -248,4 +248,27 @@
 
 .personal-shell .expense-icon>.reference-category{display:none}
 .personal-shell .home-recent .expense-icon>.reference-category{display:block;width:18px;height:18px}
-.personal-shell .home-recent .expense-icon>.category-emoji{display:none}
+.personal-shell .home-recent .expense-icon>.category-emoji{display:inline}
+
+/* Requested glass dock. Keep the brand target geometry unchanged during startup. */
+.personal-shell .mobile-menu-trigger[data-action=workspace-menu]{visibility:hidden;pointer-events:none}
+.personal-shell .personal-home>.home-greeting{display:none}
+.personal-shell .personal-home .home-balance.is-credit .balance-status{background:#c7f3dc;color:#12553c;padding:5px 9px;border-radius:10px}
+.personal-shell .personal-home .home-balance.is-owed .balance-status{background:#ffe1e6;color:#a2213c;padding:5px 9px;border-radius:10px}
+.personal-shell .personal-home .home-balance.is-owed .balance-status-sign{font-size:0}
+.personal-shell .personal-home .home-balance.is-owed .balance-status-sign:after{content:'↓';font-size:17px;font-weight:800}
+@media(max-width:760px){
+ .personal-shell .reference-dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));left:18px;right:18px;bottom:calc(26px + env(safe-area-inset-bottom));height:72px;padding:5px 4px;border-radius:29px;background:linear-gradient(135deg,#ffffffb8,#ffffff78 55%,#f2e9ff9c);border:1px solid #ffffffdb;box-shadow:0 12px 32px #39234d1a,inset 0 1px 0 #ffffffed,inset 0 -1px 0 #ffffff80;backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%)}
+ .personal-shell .reference-dock-item{height:58px;font-size:9px;gap:5px;color:#6c5c7c}
+ .personal-shell .reference-dock-item:nth-child(1){grid-column:1}
+ .personal-shell .reference-dock-item:nth-child(2){grid-column:2}
+ .personal-shell .reference-dock-item:nth-child(3){grid-column:4}
+ .personal-shell .reference-dock-item:nth-child(4){grid-column:5}
+ .personal-shell .reference-dock-item.active>.icon{background:#e9ddfa99;box-shadow:0 0 0 6px #e9ddfa99}
+ .personal-shell .main-shell>.mobile-quick-add,.personal-shell .main-shell:has(.personal-home)>.mobile-quick-add{position:fixed;left:calc(50% - 26px);right:auto;bottom:calc(36px + env(safe-area-inset-bottom));margin:0;width:52px;height:52px;z-index:46}
+ .personal-shell .main-shell>.mobile-quick-add .nav-add,.personal-shell .main-shell:has(.personal-home)>.mobile-quick-add .nav-add{width:52px;height:52px;border-radius:21px;background:linear-gradient(145deg,#a570edb8,#8552dbe0);border:1px solid #ffffff80;color:#fff;box-shadow:0 4px 12px #7040a62b,inset 0 1px 0 #ffffff70;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+ .personal-shell .main-shell>.mobile-quick-add .nav-add>.icon{width:26px;height:26px}
+ .personal-shell .main-shell{padding-bottom:calc(126px + env(safe-area-inset-bottom))}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.personal-shell .reference-dock{background:#fbf8ff}}
+@media(prefers-reduced-transparency:reduce){.personal-shell .reference-dock{background:#fbf8ff;backdrop-filter:none;-webkit-backdrop-filter:none}}

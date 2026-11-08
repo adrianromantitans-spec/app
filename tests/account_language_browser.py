@@ -5,8 +5,9 @@ group['document']['currency']='EUR';group['document']['expenses'][0]['amount']=1
 
 def route(page,section):
     expect(page.locator('.personal-shell .topbar')).to_be_visible()
-    if page.locator('[data-action="workspace-menu"]').is_visible():
-        page.locator('[data-action="workspace-menu"]').click()
+    if page.locator('.nav-add').is_visible():
+        page.locator('.nav-add').click()
+        page.locator('.quick-add-modal [data-action="workspace-menu"]').click()
         if section=='profile':page.locator('.navigation-drawer .drawer-profile').click()
         else:page.locator('.navigation-drawer [data-route="'+section+'"]').click()
     else:page.locator('.workspace-sidebar [data-route="'+section+'"]').click()

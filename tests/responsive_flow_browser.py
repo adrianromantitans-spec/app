@@ -21,8 +21,9 @@ def route(page,target):
     if target=='help':
         route(page,'profile');page.locator('.account-page [data-route="help"]').click();return
     if page.locator('.back-to-home').is_visible():page.locator('.back-to-home').click()
-    if page.locator('[data-action="workspace-menu"]').is_visible():
-        page.locator('[data-action="workspace-menu"]').click()
+    if page.locator('.nav-add').is_visible():
+        page.locator('.nav-add').click()
+        page.locator('.quick-add-modal [data-action="workspace-menu"]').click()
         page.locator('.navigation-drawer [data-route="'+target+'"]').click()
     else:page.locator('.workspace-sidebar button[data-route="'+target+'"]').click()
 

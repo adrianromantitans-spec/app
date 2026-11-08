@@ -80,7 +80,7 @@ def capture(browser,lang):
  page.locator('[data-action=close-modal]').first.click()
  def navigate(route):
   if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
-  page.locator('[data-action=workspace-menu]').click();page.locator('.navigation-drawer [data-route='+route+']').click();page.evaluate('scrollTo(0,0)')
+  page.locator('.nav-add').click();page.locator('.quick-add-modal [data-action=workspace-menu]').click();page.locator('.navigation-drawer [data-route='+route+']').click();page.evaluate('scrollTo(0,0)')
  navigate('expenses');expect(page.locator('.expense-list')).to_be_visible();save(page.screenshot(),lang+'-expenses')
  navigate('shopping');expect(page.locator('.shopping-row')).to_have_count(4);save(page.screenshot(),lang+'-shopping')
  for route in ['polls','tasks']:
