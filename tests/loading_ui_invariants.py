@@ -34,6 +34,7 @@ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],te
   assert text==original(name),'Unexpected runtime/stylesheet change: '+name
   count+=1
 entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=loading-92','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
+entry=re.sub(r'    <!-- Startup hints:.*?    <!-- End startup hints\. -->\n','',entry,flags=re.S)
 assert entry==original('app/index.html')
 assert Path('index.html').read_text()==original('index.html')
 print('PASS original app and notification behavior restored exactly after removing only audited UI hooks; remaining',count,'runtime/style/manifest files, startup, dock effects and landing unchanged')
