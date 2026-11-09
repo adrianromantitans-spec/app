@@ -10,7 +10,7 @@ for name in files:
   if name=='server.mjs':after=after.replace(b" 'dock-effects.css', 'dock-effects.js',",b'')
   assert before==after,'Unexpected change to existing app/website logic or styling: '+name
   count+=1
-entry=Path('app/index.html').read_bytes().replace(b'    <link rel="stylesheet" href="../dock-effects.css?v=dock-91" />\n',b'').replace(b'    <script type="module" src="../dock-effects.js?v=dock-91"></script>\n',b'')
+entry=Path('app/index.html').read_bytes().replace(b'    <link rel="stylesheet" href="../dock-effects.css?v=dock-91.1" />\n',b'').replace(b'    <script type="module" src="../dock-effects.js?v=dock-91.1"></script>\n',b'')
 assert entry==original('app/index.html')
 assert Path('index.html').read_bytes()==original('index.html'),'Landing must remain unchanged'
 print('PASS',count,'existing runtime JS/CSS/manifest files, startup, app entry and landing preserved; only two dock resources and their static allowlist entries added')
