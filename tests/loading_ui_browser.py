@@ -41,6 +41,13 @@ with sync_playwright() as p:
   expect(page.locator('.shopping-row')).to_have_count(0)
   if lang=='es':page.screenshot(path=str(OUT/'shopping-skeleton.png'))
   held.pop().fallback();expect(page.locator('.shopping-row')).to_have_count(4);expect(page.locator('.shopping-items .content-skeleton')).to_have_count(0)
+  # The checkout label/icon must stay white against the purple action, and still open the original form.
+  checkout=page.locator('[data-shopping-action=checkout]');expect(checkout).to_be_enabled()
+  assert checkout.evaluate('(el)=>getComputedStyle(el).color')=='rgb(255, 255, 255)'
+  assert checkout.inner_text().strip() and checkout.locator('.icon').count()==1
+  checkout.scroll_into_view_if_needed()
+  if lang=='en':page.screenshot(path=str(OUT/'shopping-checkout.png'))
+  checkout.click();expect(page.locator('#expense-form')).to_be_visible();expect(page.locator('.shopping-checkout-note')).to_be_visible();page.keyboard.press('Escape')
   # Refresh preserves existing rows instead of replacing them with a skeleton.
   page.locator('[data-shopping-action=refresh]').click();wait_held(page,held);expect(page.locator('.content-refresh')).to_be_visible();expect(page.locator('.shopping-row')).to_have_count(4);expect(page.locator('.content-skeleton')).to_have_count(0)
   held.pop().fallback();expect(page.locator('.content-refresh')).to_have_count(0)

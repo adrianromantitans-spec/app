@@ -2,7 +2,7 @@
 
 This change replaces initial content-loading paragraphs with accessible skeletons in shopping, activity, notifications, exchange quotes and receipt previews. Background refreshes retain existing content and display a small header indicator. Selected existing submit and action buttons display a spinner while their original handler runs. Existing errors and confirmations remain available.
 
-`loading-ui.js` and `loading-ui.css` contain the presentation helpers. The hooks in `app.js` and `notifications.js` preserve the existing handlers, request guards, payloads, validation, navigation and state. Buttons are not newly disabled. Short timers control visual feedback only. Reduced-motion preferences are respected. No startup or dock animation files, existing styles, translations, landing assets, backend or database files changed.
+`loading-ui.js` and `loading-ui.css` contain the presentation helpers. The hooks in `app.js` and `notifications.js` preserve the existing handlers, request guards, payloads, validation, navigation and state. Buttons are not newly disabled. Short timers control visual feedback only. Reduced-motion preferences are respected. No startup or dock animation files, translations, landing assets, backend or database files changed. A single scoped rule in `refined.css` restores white text/icons on the shopping checkout's purple background; the old workspace rule had made the label purple. The enabled action and original expense form are checked in all three languages.
 
 ## Validation
 
