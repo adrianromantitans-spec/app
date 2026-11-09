@@ -1,3 +1,4 @@
+import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';
 import {startIntroTransition} from './intro-transition.js?v=start-64';
 import {helpCentreView,filterHelp} from './help.js?v=language-90';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=language-90';
@@ -11,7 +12,7 @@ import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=language-90';
 import {Cloud} from './cloud.js?v=language-90';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=language-90';
-import {NotificationCentre} from './notifications.js?v=language-90';
+import {NotificationCentre} from './notifications.js?v=loading-92';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-90';
 
@@ -160,6 +161,7 @@ async function save(checkout=null) {
     return;
   }
   remoteBusy=true;setSync(tr('Guardando…'));
+  const finishSaving=beginContentRefresh(root,tr('Guardando…'),{preferButton:true});
   try {
     for (let i=0;i<state.groups.length;i++) {
       const g=state.groups[i];
@@ -178,7 +180,7 @@ async function save(checkout=null) {
       try {await loadSharedGroups();} catch { /* Keep only the last server-confirmed state. */ }
     }
     setSync(tr('Cambio no confirmado'));render();throw error;
-  } finally {remoteBusy=false;}
+  } finally {remoteBusy=false;finishSaving();}
 }
 function empty(title, description, action, label) { return `<div class="empty-state">${icon('spark')}<h3>${title}</h3><p>${description}</p>${action?`<button class="button primary" data-action="${action}">${icon('plus')}${label}</button>`:''}</div>`; }
 function sectionTitle(title, subtitle, extra='') {return `<div class="section-heading"><div><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra}</div>`;}
@@ -269,13 +271,14 @@ function shoppingCurrent(){return shoppingState.groupId===group()?.id&&shoppingS
 function demoShoppingKey(){return 'divzplit-demo-shopping:'+group().id;}
 async function loadShopping(){
  const g=group(),viewer=shoppingViewer(),request=++shoppingRequest;if(!g)return;
+ const finishLoading=shoppingState.loading?()=>{}:beginContentRefresh(root,tr('Cargando lista…'));
  try {
   let items=[];
   if(accountUser)items=await cloud.shoppingList(g.id);
   else {try{items=JSON.parse(localStorage.getItem(demoShoppingKey())||'[]');}catch{}if(!Array.isArray(items))items=[];}
   if(request!==shoppingRequest||g.id!==group()?.id||viewer!==shoppingViewer())return;
   shoppingState={groupId:g.id,viewer,items,error:'',loading:false};renderShoppingList();
- }catch(error){if(request===shoppingRequest&&g.id===group()?.id&&viewer===shoppingViewer()){shoppingState={groupId:g.id,viewer,items:[],error:error.message,loading:false};renderShoppingList();}}
+ }catch(error){if(request===shoppingRequest&&g.id===group()?.id&&viewer===shoppingViewer()){shoppingState={groupId:g.id,viewer,items:[],error:error.message,loading:false};renderShoppingList();}}finally{finishLoading();}
 }
 function shoppingPageView(){
  return `<section class="shopping-page"><div class="eyebrow">${esc(group().name)} / ${tr('Organización')}</div><h1>${tr('Lista de la compra')}</h1><p class="shopping-intro">${tr('Todo lo que falta, sin mensajes perdidos.')}</p><div class="shopping-list" data-shopping-group="${esc(group().id)}"><div class="shopping-toolbar"><button class="button primary" data-shopping-action="add">${icon('plus')}${tr('Añadir producto')}</button><button class="text-button" data-shopping-action="refresh" aria-label="${tr('Actualizar lista')}">${icon('refresh')}</button></div><div class="shopping-items" aria-live="polite"></div><div class="shopping-footer"></div><p class="form-error" role="alert"></p></div></section>`;
@@ -291,7 +294,7 @@ function renderShoppingList(){
  const focusedProduct=document.activeElement?.dataset.shoppingCheck;
  const items=shoppingState.items,pending=items.filter(i=>!i.bought),bought=items.filter(i=>i.bought),unlinked=bought.filter(i=>!i.expense_id);
  const row=i=>{const manage=canManage()||i.created_by===shoppingViewer();return `<article class="shopping-row ${i.bought?'is-bought':''}"><label class="shopping-check"><input type="checkbox" data-shopping-check="${esc(i.id)}" ${i.bought?'checked':''} ${i.expense_id?'disabled':''} aria-label="${esc(i.title)}"><span>${icon('check')}</span></label><div class="shopping-product"><strong>${esc(i.title)}</strong>${i.quantity?`<small>${esc(i.quantity)}</small>`:''}${i.expense_id?`<button class="text-button" data-shopping-action="expense" data-shopping-id="${esc(i.id)}">${tr('Gasto registrado')}${icon('chevron')}</button>`:''}</div>${manage?`<div class="shopping-row-actions">${!i.expense_id?`<button class="icon-button" data-shopping-action="edit" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Editar ${i.title}`)}">${icon('edit')}</button>`:''}<button class="icon-button" data-shopping-action="delete" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Borrar ${i.title}`)}">${icon('close')}</button></div>`:''}</article>`;};
- root.querySelector('.shopping-items').innerHTML=shoppingState.loading?`<p role="status">${tr('Cargando lista…')}</p>`:shoppingState.error?`<p role="alert" class="form-error">${esc(shoppingState.error)}</p>`:`<section><h3>${tr('Por comprar')}<span>${pending.length}</span></h3>${pending.length?pending.map(row).join(''):`<div class="shopping-empty">${icon('check')}<p>${tr(items.length?'Todo comprado.':'Añade lo que hace falta para la próxima compra.')}</p></div>`}</section>${bought.length?`<section class="shopping-bought"><h3>${tr('Comprados')}<span>${bought.length}</span></h3>${bought.map(row).join('')}</section>`:''}`;
+ root.querySelector('.shopping-items').innerHTML=shoppingState.loading?loadingSkeleton('list',tr('Cargando lista…')):shoppingState.error?`<p role="alert" class="form-error">${esc(shoppingState.error)}</p>`:`<section><h3>${tr('Por comprar')}<span>${pending.length}</span></h3>${pending.length?pending.map(row).join(''):`<div class="shopping-empty">${icon('check')}<p>${tr(items.length?'Todo comprado.':'Añade lo que hace falta para la próxima compra.')}</p></div>`}</section>${bought.length?`<section class="shopping-bought"><h3>${tr('Comprados')}<span>${bought.length}</span></h3>${bought.map(row).join('')}</section>`:''}`;
  root.querySelector('.shopping-footer').innerHTML=!shoppingState.error&&!shoppingState.loading?`<button class="button primary full-width" data-shopping-action="checkout" ${unlinked.length?'':'disabled'}>${icon('receipt')}${tr('Crear gasto de la compra')}${unlinked.length?`<span>${unlinked.length}</span>`:''}</button><p class="shopping-note">${tr('Revisa el importe, el pagador y el reparto antes de guardar.')}</p>${pending.length&&accountUser?`<button class="button secondary full-width shopping-remind" data-shopping-action="remind">${icon('bell')}${tr('Recordar al grupo')}</button>`:''}${canManage()&&bought.length?`<button class="text-button danger-text full-width" data-shopping-action="clear">${tr('Limpiar comprados')}</button>`:''}`:'';
  root.querySelector('[data-shopping-action="add"]').disabled=shoppingState.loading||!!shoppingState.error;
  if(focusedProduct)root.querySelector('[data-shopping-check="'+CSS.escape(focusedProduct)+'"]')?.focus({preventScroll:true});
@@ -303,6 +306,7 @@ function shoppingItemForm(item=null){
 async function shoppingMutation(action,item={}){
  if(!shoppingCurrent())throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
  const gid=group().id,viewer=shoppingViewer();++shoppingRequest;remoteBusy=true;
+ const finishSaving=beginContentRefresh(root,tr('Guardando…'),{preferButton:true});
  try {
   let items;
   if(accountUser)items=await cloud.shoppingAction(gid,action,item);
@@ -315,7 +319,7 @@ async function shoppingMutation(action,item={}){
    localStorage.setItem(demoShoppingKey(),JSON.stringify(items));
   }
   if(gid===group()?.id&&viewer===shoppingViewer()){shoppingState.items=items;renderShoppingList();}
- }finally{remoteBusy=false;}
+ }finally{remoteBusy=false;finishSaving();}
 }
 async function shoppingAction(el){
  const action=el.dataset.shoppingAction;
@@ -432,12 +436,13 @@ function activityNotice(data) {
   if(!accountUser)return `<p class="muted">${tr('Entra con tu cuenta para confirmar pagos compartidos.')}</p>`;
   if(data.error)return `<p class="activity-error" role="alert">${esc(data.error)}<button class="text-button" data-action="reload-activity">${tr('Volver a intentar')}</button></p>`;
   if(data.ready===false)return `<p class="muted">${tr('Los pagos con confirmación y el historial todavía no están activados.')}</p>`;
-  if(data.ready===null)return `<p class="muted" role="status">${tr('Cargando actividad…')}</p>`;
+  if(data.ready===null)return loadingSkeleton('button',tr('Cargando actividad…'));
   return '';
 }
 async function loadActivity(more=false,preservePages=false) {
   const g=group(),viewer=accountUser?.id;if(!viewer||!g)return;
   const previous=activityCache.get(g.id),request=(activityRequests.get(g.id)||0)+1;activityRequests.set(g.id,request);
+  const finishLoading=previous?.ready===true?beginContentRefresh(root,tr('Cargando actividad…')):()=>{};
   try{
     const ready=await cloud.collaborationAvailable();
     if(activityRequests.get(g.id)!==request||accountUser?.id!==viewer)return;
@@ -447,14 +452,14 @@ async function loadActivity(more=false,preservePages=false) {
     if(accountUser?.id!==viewer||activityRequests.get(g.id)!==request)return;
     const keepPages=preservePages&&previous?.events?.length>50&&JSON.stringify(previous.events.slice(0,50))===JSON.stringify(result.events);
     activityCache.set(g.id,{ready:true,...result,events:more?[...new Map([...(previous?.events||[]),...result.events].map(event=>[event.id,event])).values()]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
-  }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}
+  }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}finally{finishLoading();}
 }
 function pendingPaymentsPanel(data) {
   return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||ui`<button class="button secondary" data-action="show-pending-payments">Ver pagos pendientes ${icon('arrow')}<span class="payment-list-count">${data.requests.length}</span></button>`}</section>`;
 }
 function activityView() {
   const g=group(),data=activityData();
-  return ui`<div class="finance-sections"><button data-route="expenses">Gastos</button><button class="active" data-route="activity">Pagos y actividad</button></div><div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${ui`<button class="button secondary" data-action="show-recorded-payments">Ver devoluciones ${icon('arrow')}<span class="payment-list-count">${visibleRepayments(g).length}</span></button>`}</section>`;
+  return ui`<div class="finance-sections"><button data-route="expenses">Gastos</button><button class="active" data-route="activity">Pagos y actividad</button></div><div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${data.ready===null&&!data.error?loadingSkeleton('button',tr('Cargando actividad…')):ui`<button class="button secondary" data-action="show-recorded-payments">Ver devoluciones ${icon('arrow')}<span class="payment-list-count">${visibleRepayments(g).length}</span></button>`}</section>`;
 }
 
 async function loadPaymentArchives(g=group()) {
@@ -484,7 +489,7 @@ function renderPaymentList() {
 async function showPaymentList(kind) {
   const g=group();if(!g||!['pending','recorded'].includes(kind))return;
   recordedPaymentLimit=50;showArchivedRepayments=false;
-  openModal(tr(kind==='pending'?'Pagos pendientes de confirmar':'Devoluciones registradas'),`<div class="payment-list-dialog" data-kind="${kind}" data-payment-group="${esc(g.id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,esc(g.name));
+  openModal(tr(kind==='pending'?'Pagos pendientes de confirmar':'Devoluciones registradas'),`<div class="payment-list-dialog" data-kind="${kind}" data-payment-group="${esc(g.id)}">${loadingSkeleton('list',tr('Cargando actividad…'))}</div>`,esc(g.name));
   if(kind==='pending')await loadActivity();else if(accountUser){await loadSharedGroups();await loadPaymentArchives(g);}
   renderPaymentList();
 }
@@ -497,7 +502,7 @@ function renderHistoryModal() {
 }
 async function showHistory() {
   const g=group();if(!g)return;
-  openModal(tr('Historial de cambios'),`<div class="history-dialog" data-history-group="${esc(g.id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,esc(g.name));
+  openModal(tr('Historial de cambios'),`<div class="history-dialog" data-history-group="${esc(g.id)}">${loadingSkeleton('list',tr('Cargando actividad…'))}</div>`,esc(g.name));
   await loadActivity();renderHistoryModal();
 }
 
@@ -618,7 +623,7 @@ function fxDetails(snapshot,baseCurrency){
 }
 function fxPanel(){
  const fx=fxSession,base=currencyOf(group()),ready=fx.mode&&conversionReady();
- return ui`<section class="fx-panel"><div class="fx-controls"><button class="button ${fx.mode?'secondary':'primary'} small-button" data-action="fx-original">${esc(base)}</button><label class="fx-target-field"><span>${tr('Convertir a')}</span><select data-fx-target aria-label="${tr('Moneda de destino')}"><option value="" ${!fx.mode?'selected':''}>${tr('Elegir moneda')}</option>${currencies.filter(code=>code!==base).map(code=>'<option value="'+code+'" '+(fx.mode&&fx.target===code?'selected':'')+'>'+code+' · '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))+'</option>').join('')}</select></label></div>${fx.loading?ui`<p role="status">Consultando el cambio más reciente…</p>`:fx.error?'<p class="activity-error" role="alert">'+esc(fx.error)+'</p><button class="text-button" data-action="fx-refresh">'+tr('Volver a intentar')+'</button>':ready?fxDetails(conversionSnapshot(1),base)+'<button class="text-button" data-action="fx-refresh">'+tr('Actualizar cambio')+'</button>':''}<p class="form-note">Cambio de referencia: el banco puede aplicar otro cambio o comisiones. Los gastos y saldos se mantienen en la moneda original.</p></section>`;
+ return ui`<section class="fx-panel"><div class="fx-controls"><button class="button ${fx.mode?'secondary':'primary'} small-button" data-action="fx-original">${esc(base)}</button><label class="fx-target-field"><span>${tr('Convertir a')}</span><select data-fx-target aria-label="${tr('Moneda de destino')}"><option value="" ${!fx.mode?'selected':''}>${tr('Elegir moneda')}</option>${currencies.filter(code=>code!==base).map(code=>'<option value="'+code+'" '+(fx.mode&&fx.target===code?'selected':'')+'>'+code+' · '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))+'</option>').join('')}</select></label></div>${fx.loading?loadingSkeleton('text',tr('Consultando el cambio más reciente…')):fx.error?'<p class="activity-error" role="alert">'+esc(fx.error)+'</p><button class="text-button" data-action="fx-refresh">'+tr('Volver a intentar')+'</button>':ready?fxDetails(conversionSnapshot(1),base)+'<button class="text-button" data-action="fx-refresh">'+tr('Actualizar cambio')+'</button>':''}<p class="form-note">Cambio de referencia: el banco puede aplicar otro cambio o comisiones. Los gastos y saldos se mantienen en la moneda original.</p></section>`;
 }
 function renderSettlements() {
  const box=modalRoot.querySelector('.settlements-dialog');if(!box||box.dataset.settlementGroup!==group()?.id)return;
@@ -641,7 +646,7 @@ async function loadFxQuote() {
 async function settlementsModal() {
  const id=group()?.id;if(!id)return;
  fxSession={groupId:id,mode:false,target:currencyOf(group())==='EUR'?'USD':'EUR',quote:null,targetQuote:null,error:'',loading:false,request:fxSession.request+1};
- openModal(tr('Las cuentas claras'),`<div class="settlements-dialog" data-settlement-group="${esc(id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,tr('Menos transferencias para equilibrar los saldos.'));
+ openModal(tr('Las cuentas claras'),`<div class="settlements-dialog" data-settlement-group="${esc(id)}">${loadingSkeleton('list',tr('Cargando actividad…'))}</div>`,tr('Menos transferencias para equilibrar los saldos.'));
  await loadActivity();renderSettlements();
 }
 async function respondToPayment(requestId,action,returnToPending=false) {
@@ -736,7 +741,7 @@ function quickAddModal() {
   root.querySelector('.nav-add')?.setAttribute('aria-expanded','true');
 }
 
-document.addEventListener('click', event => {onAppClick(event).catch(handleActionError);});
+document.addEventListener('click', event => {withClickFeedback(onAppClick,()=>remoteBusy||authLoading)(event).catch(handleActionError);});
 let edgeSwipe=null,edgeSwipeUsed=false;
 document.addEventListener('pointerdown',event=>{
  if(!document.body.classList.contains('personal-app')||innerWidth>760||event.isPrimary===false)return;
@@ -757,7 +762,7 @@ async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
-  if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
+  if(remoteBusy || authLoading){event.preventDefault();showBusyInPlace(root,tr('Espera un momento; estamos conectando con tus grupos.'),()=>remoteBusy||authLoading);return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.route){await navigateWorkspace(el.dataset.route);return;}
   if(el.dataset.shoppingAction){await shoppingAction(el);return;}
@@ -917,7 +922,7 @@ async function onAppChange(event) {
   if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();renderPlanningList();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'||page==='home'){await loadActivity();render();}}
 }
-document.addEventListener('submit',async event=>{
+document.addEventListener('submit',withSubmitFeedback(async event=>{
   const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','recovery-code-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);if(event.submitter?.name==='recoveryAction')data.set('recoveryAction',event.submitter.value);
   if(await handleDeleteGroupForm(form,data))return;
   if(await handleRecoveryForm(form,data))return;
@@ -1001,7 +1006,7 @@ document.addEventListener('submit',async event=>{
     else if(form.isConnected) form.querySelector('.form-error').textContent=error.message;
     else toast(error.message);
   }
-});
+},()=>remoteBusy||authLoading));
 modalRoot.addEventListener('click',event=>{if(event.target.classList.contains('modal-overlay'))closeModal();});
 document.addEventListener('keydown',event=>{
   const modal=modalRoot.querySelector('.modal');if(!modal)return;
@@ -1077,7 +1082,7 @@ async function receiptChanged(input) {
 }
 async function viewReceipt(id) {
   const g=group();const e=g.expenses.find(e=>e.id===id);if(!e?.receipt)return;
-  openModal(tr('Foto del ticket'),tr('<p class="receipt-loading" role="status">Abriendo ticket…</p>'));const container=modalRoot.querySelector('.modal');
+  openModal(tr('Foto del ticket'),'<div class="receipt-loading" role="status">'+loadingSkeleton('media',tr('Abriendo ticket…'),{status:false})+'</div>');const container=modalRoot.querySelector('.modal');
   try {
     let url;
     if(accountUser)url=await cloud.receiptURL(g.id,e.receipt.path);
@@ -1222,6 +1227,7 @@ async function refreshShared() {
   if(!accountUser&&demoMode&&!remoteBusy&&!modalRoot.firstElementChild&&!document.hidden){const before=JSON.stringify(state.groups);await processRecurrences();if(before!==JSON.stringify(state.groups))render();return;}
   if (!accountUser||remoteBusy||authLoading||modalRoot.firstElementChild||document.hidden) return;
   remoteBusy=true;
+  const finishRefreshing=beginContentRefresh(root,tr('Cargando actividad…'));
   const before=JSON.stringify(state.groups),beforeActivity=JSON.stringify(activityData());
   try {
     await loadSharedGroups();await processRecurrences();await notifications.poll();if(page==='activity'||page==='home')await loadActivity(false,true);setSync(tr('Actualizado'));
@@ -1229,7 +1235,7 @@ async function refreshShared() {
   } catch(error) {
     setSync(tr('Sin conexión · Reintentar'));
     if (!cloud.session) {notifications.disconnect().catch(()=>{});accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();render();toast(tr('Tu sesión ha caducado. Vuelve a entrar.'));}
-  } finally {remoteBusy=false;}
+  } finally {remoteBusy=false;finishRefreshing();}
 }
 async function signOutAccount() {
   remoteBusy=true;
