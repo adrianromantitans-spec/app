@@ -1,0 +1,20 @@
+/* Only the existing mobile dock is animated. Startup, pages and desktop keep their styles. */
+.dock-glass-lens[hidden]{display:none}
+@media(max-width:760px){
+ .personal-shell.dock-effects-enabled .reference-dock{left:var(--dock-left,18px);right:auto;width:var(--dock-width,calc(100% - 36px));height:var(--dock-height,72px);overflow:var(--dock-clip,visible);touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+ .personal-shell.dock-effects-enabled .reference-dock>.reference-dock-item{opacity:var(--dock-fade,1)}
+ .personal-shell.dock-effects-enabled .main-shell>.mobile-quick-add,.personal-shell.dock-effects-enabled .main-shell:has(.personal-home)>.mobile-quick-add{bottom:calc(36px + env(safe-area-inset-bottom) - var(--dock-plus-down,0px));touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+ .personal-shell.dock-effects-enabled .reference-dock.dock-pressed .reference-dock-item.active>.icon{background:transparent;box-shadow:none}
+ .personal-shell.dock-effects-enabled .reference-dock .dock-drag-target{color:#8552db}
+ .personal-shell .dock-glass-lens{position:fixed;z-index:47;pointer-events:none;border:1px solid #ffffffdc;border-radius:38px;overflow:hidden;background:linear-gradient(135deg,#ffffff70,#f0e8ff35);box-shadow:0 10px 20px #5d3c9626,inset 0 1px 0 #fff;backdrop-filter:blur(8px) saturate(145%);-webkit-backdrop-filter:blur(8px) saturate(145%);contain:layout paint;box-sizing:border-box}
+ .personal-shell .dock-glass-lens:before{content:'';position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,#ffffff3d,transparent 38%,#ddccff12 64%,#ffffff4a);box-shadow:inset 1px 1px 1px #fffffff0,inset -1px -1px 1px #bca6e666}
+ .personal-shell .dock-glass-lens:after{content:'';position:absolute;left:-2px;bottom:4px;width:13px;height:19px;border-radius:60% 50%;background:conic-gradient(from 40deg,#fff,#a890ff,#75d9ef,#fff1bb,#fff,#be9eff);opacity:.7;filter:blur(.7px);rotate:-22deg;z-index:3}
+ .personal-shell .dock-lens-copy{position:absolute;background:linear-gradient(145deg,#ffffffcf,#f0e8fbab);border-radius:29px;pointer-events:none}
+ .personal-shell .dock-lens-item{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:9px;font-weight:650;line-height:1.2;color:#6c5c7c;text-align:center;box-sizing:border-box;pointer-events:none;white-space:nowrap}
+ .personal-shell .dock-lens-item>.icon{width:22px;height:22px;flex-shrink:0}
+ .personal-shell .dock-lens-item.is-focus{color:#8552db}
+ .personal-shell .dock-lens-plus{display:grid;place-items:center;gap:0;padding:0}
+ .personal-shell .dock-lens-plus>.icon{width:26px;height:26px}
+}
+@media(prefers-reduced-motion:reduce){.personal-shell .dock-glass-lens{display:none!important}}
+@media(prefers-reduced-transparency:reduce){.personal-shell .dock-glass-lens,.personal-shell .dock-lens-copy{background:#fbf8ff;backdrop-filter:none;-webkit-backdrop-filter:none}.personal-shell .dock-glass-lens:after{display:none}}
