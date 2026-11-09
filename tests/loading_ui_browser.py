@@ -6,7 +6,10 @@ BASE=os.environ.get('NEXO_URL','http://127.0.0.1:3063/app/')
 OUT=Path(os.environ.get('LOADING_PREVIEW_OUT','work/loading-ui'));OUT.mkdir(parents=True,exist_ok=True)
 spec=importlib.util.spec_from_file_location('shots','scripts/capture-landing.py');shots=importlib.util.module_from_spec(spec);spec.loader.exec_module(shots)
 REV='75753eedf31102a6b2cacf548a98b062dd861bcd'
-def old(name):return subprocess.check_output(['git','show',REV+':'+name]).decode()
+def old(name):
+ source=subprocess.check_output(['git','show',REV+':'+name]).decode()
+ if name=='app.js':source=source.replace('data-action="new-expense">${icon(\'plus\')}<span>${tr(\'Añadir gasto\')}</span></button><button class="home-reference-action"','data-route="tasks">${icon(\'task\')}<span>${tr(\'Tareas\')}</span></button><button class="home-reference-action"')
+ return source
 def wait_held(page,items,count=1):
  expect(page.locator('html')).to_be_visible()
  for _ in range(40):
@@ -20,7 +23,7 @@ def route(page,name):
 intervals="window.__loadingIntervals=[];window.setInterval=(fn,ms)=>{window.__loadingIntervals.push({fn,ms});return 0}"
 with sync_playwright() as p:
  browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
- # Completed views remain identical to the actual previous application, not a mockup.
+ # Completed views remain identical after accounting for the approved shortcut replacement.
  images=[]
  for previous in [True,False]:
   c,_=shots.context(browser,'es');c.add_init_script(intervals)

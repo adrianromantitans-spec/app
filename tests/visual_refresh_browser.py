@@ -28,7 +28,10 @@ with sync_playwright() as p:
     expect(page.locator('.home-reference-action')).to_have_count(3)
    page.locator('[data-action=choose-group]:visible').first.click();expect(page.locator('.home-group-option')).to_have_count(3);page.keyboard.press('Escape')
   page.set_viewport_size({'width':393,'height':852})
-  page.locator('.home-reference-action[data-action=new-expense]').click();expect(page.locator('#expense-form')).to_be_visible();page.keyboard.press('Escape')
+  expect(page.locator('.home-reference-action[data-action=new-expense]')).to_have_count(0)
+  page.locator('.home-reference-action[data-route=tasks]').click();expect(page.locator('.task-row')).to_have_count(3)
+  page.locator('.reference-dock button[data-route=home]').click()
+  page.locator('.nav-add').click();page.locator('.quick-add-modal [data-action=new-expense]').click();expect(page.locator('#expense-form')).to_be_visible();page.keyboard.press('Escape')
   page.locator('.home-reference-action[data-route=shopping]').click();expect(page.locator('.shopping-row')).to_have_count(4)
   page.locator('.reference-dock button[data-route=home]').click()
   page.locator('.home-reference-action[data-route=polls]').click();expect(page.locator('.poll-card')).to_have_count(1)
@@ -42,7 +45,8 @@ with sync_playwright() as p:
   page.locator('.reference-dock button[data-route=home]').click();expect(page.locator('.home-balance')).to_be_visible()
   for route in ['tasks','polls','shopping','budget']:
    if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
-   page.locator('.nav-add').click();page.locator('.quick-add-modal [data-action=workspace-menu]').click()
+   page.mouse.move(4,300);page.mouse.down();page.mouse.move(150,300,steps=10);page.mouse.up()
+   page.locator('.navigation-drawer #modal-title').click()
    expect(page.locator('.navigation-drawer [data-route='+route+']')).to_be_visible()
    page.locator('.navigation-drawer [data-route='+route+']').click()
    if route in ['tasks','polls']:

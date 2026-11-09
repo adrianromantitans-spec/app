@@ -4,6 +4,8 @@ import subprocess,re,difflib
 BASE='75753eedf31102a6b2cacf548a98b062dd861bcd'
 def original(name):return subprocess.check_output(['git','show',BASE+':'+name]).decode()
 def normalize_app(s):
+ s=s.replace('data-route="tasks">${icon(\'task\')}<span>${tr(\'Tareas\')}</span></button><button class="home-reference-action"','data-action="new-expense">${icon(\'plus\')}<span>${tr(\'Añadir gasto\')}</span></button><button class="home-reference-action"')
+ s=s.replace('<nav class="home-reference-actions" aria-label="${tr(\'Organización\')}">','<nav class="home-reference-actions" aria-label="${tr(\'Añadir\')}">')
  s=s.replace("import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';\n",'')
  s=s.replace("from './notifications.js?v=loading-92'","from './notifications.js?v=language-90'")
  s=re.sub(r'^[ \t]*const finish(?:Saving|Loading|Refreshing)=.*\n','',s,flags=re.M)
@@ -29,12 +31,16 @@ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],te
  if name in ['app.js','notifications.js']:continue
  if name.endswith(('.js','.mjs','.css','.webmanifest')):
   text=Path(name).read_text()
+  if name in ['landing.js','scripts/build-landing.mjs']:text=text.replace('images-95','images-90')
   if name=='server.mjs':text=text.replace(" 'loading-ui.js', 'loading-ui.css',",'')
   if name=='refined.css':text=text.replace('.personal-shell .shopping-page .shopping-footer>.button.primary:not(:disabled){color:#fff}\n','')
   assert text==original(name),'Unexpected runtime/stylesheet change: '+name
   count+=1
-entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=loading-92','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
+entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=tasks-95','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
 entry=re.sub(r'    <!-- Startup hints:.*?    <!-- End startup hints\. -->\n','',entry,flags=re.S)
 assert entry==original('app/index.html')
-assert Path('index.html').read_text()==original('index.html')
-print('PASS original app and notification behavior restored exactly after removing only audited UI hooks; remaining',count,'runtime/style/manifest files, startup, dock effects and landing unchanged')
+landing=Path('index.html').read_text().replace('images-95','images-90')
+old_hash=re.search(r"'sha256-[^']+'",original('index.html')).group()
+landing=re.sub(r"'sha256-[^']+'",old_hash,landing)
+assert landing==original('index.html')
+print('PASS audited presentation hooks and task shortcut only;',count,'other runtime/style/manifest files, startup and dock unchanged; landing only refreshes image URLs')
