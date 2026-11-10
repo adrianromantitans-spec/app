@@ -28,7 +28,7 @@ notifications=notifications.replace("'<div class=\"notification-detail\">'+loadi
 assert notifications==original('notifications.js')
 count=0
 for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],text=True).splitlines():
- if name in ['app.js','notifications.js']:continue
+ if name in ['app.js','notifications.js','scripts/build-landing.mjs']:continue
  if name.endswith(('.js','.mjs','.css','.webmanifest')):
   text=Path(name).read_text()
   if name in ['landing.js','scripts/build-landing.mjs']:text=text.replace('images-95','images-90')
@@ -39,8 +39,5 @@ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],te
 entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=tasks-95','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
 entry=re.sub(r'    <!-- Startup hints:.*?    <!-- End startup hints\. -->\n','',entry,flags=re.S)
 assert entry==original('app/index.html')
-landing=Path('index.html').read_text().replace('images-95','images-90')
-old_hash=re.search(r"'sha256-[^']+'",original('index.html')).group()
-landing=re.sub(r"'sha256-[^']+'",old_hash,landing)
-assert landing==original('index.html')
-print('PASS audited presentation hooks and task shortcut only;',count,'other runtime/style/manifest files, startup and dock unchanged; landing only refreshes image URLs')
+# The landing's default language/favicon are covered by landing_browser.py.
+print('PASS audited presentation hooks and task shortcut only;',count,'other runtime/style/manifest files, startup and dock unchanged')

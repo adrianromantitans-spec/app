@@ -38,7 +38,7 @@ with sync_playwright() as p:
  page.locator('.hero-actions [data-app-link=signup]').click();assert '/app/' in page.url and page.url.endswith('#registro');expect(page.locator('html')).to_have_attribute('lang','ro');expect(page.locator('input[name=email]')).to_be_visible();assert page.locator('#account-form a[href*="/privacy/"]').get_attribute('href').endswith('/privacy/')
  assert page.locator('img').evaluate_all('(images)=>images.every(i=>i.complete&&i.naturalWidth>0)')
  c.close();print('PASS explicit language and registration route are shared with app; app assets and legal URLs remain valid')
- c=browser.new_context(java_script_enabled=False,viewport={'width':393,'height':852});page=c.new_page();page.goto(BASE);expect(page.locator('h1')).to_contain_text('Divide gastos.');page.locator('.faq-item').first.locator('summary').click();expect(page.locator('.faq-item').first.locator('p')).to_be_visible();assert page.locator('.hero-actions [data-app-link=signup]').get_attribute('href')=='./app/#registro';c.close()
- print('PASS Spanish marketing content, calls to action and FAQ work without JavaScript')
+ c=browser.new_context(java_script_enabled=False,viewport={'width':393,'height':852});page=c.new_page();page.goto(BASE);expect(page.locator('html')).to_have_attribute('lang','en');expect(page.locator('h1')).to_contain_text('Split expenses.');expect(page).to_have_title('DivZplit — Split expenses. Share plans.');assert page.locator('link[rel=icon]').get_attribute('href')=='./assets/app-icon-192.png';assert page.locator('link[rel=icon]').get_attribute('sizes')=='192x192';page.locator('.faq-item').first.locator('summary').click();expect(page.locator('.faq-item').first.locator('p')).to_be_visible();assert page.locator('.hero-actions [data-app-link=signup]').get_attribute('href')=='./app/#registro';c.close()
+ print('PASS English marketing content and PNG favicon, calls to action and FAQ work without JavaScript')
  assert not errors,errors
  browser.close()
