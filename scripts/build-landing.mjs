@@ -39,7 +39,7 @@ const html=`<!doctype html>
  <link rel="preload" href="./assets/Manrope.ttf" as="font" type="font/ttf" crossorigin>
  <link rel="stylesheet" href="./landing.css?v=visual-53">
  <script type="application/ld+json">${ld}</script>
- <script type="module" src="./landing.js?v=images-95"></script>
+ <script type="module" src="./landing.js?v=search-97"></script>
 </head>
 <body>
  <a class="skip-link" href="#main" data-copy="skip">${c.skip}</a>

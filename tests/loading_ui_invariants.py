@@ -28,7 +28,7 @@ notifications=notifications.replace("'<div class=\"notification-detail\">'+loadi
 assert notifications==original('notifications.js')
 count=0
 for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],text=True).splitlines():
- if name in ['app.js','notifications.js','scripts/build-landing.mjs']:continue
+ if name in ['app.js','notifications.js','scripts/build-landing.mjs','landing.js','landing-copy.js']:continue
  if name.endswith(('.js','.mjs','.css','.webmanifest')):
   text=Path(name).read_text()
   if name in ['landing.js','scripts/build-landing.mjs']:text=text.replace('images-95','images-90')
