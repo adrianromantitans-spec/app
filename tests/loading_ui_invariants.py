@@ -36,10 +36,11 @@ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],te
   text=Path(name).read_text()
   if name in ['landing.js','scripts/build-landing.mjs']:text=text.replace('images-95','images-90')
   if name=='server.mjs':text=text.replace(" 'loading-ui.js', 'loading-ui.css',",'')
+  if name=='glass.css':text=text.replace('/* The curtain owns the entire reveal; do not leave the auth glow above the app. */\n.brand-intro-host.modern-auth:before{display:none}\n','')
   if name=='refined.css':text=text.replace('.personal-shell .shopping-page .shopping-footer>.button.primary:not(:disabled){color:#fff}\n','')
   assert text==original(name),'Unexpected runtime/stylesheet change: '+name
   count+=1
-entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=drawer-98','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
+entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=drawer-98','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87').replace('glass.css?v=intro-99','glass.css?v=brand-81')
 entry=re.sub(r'    <!-- Startup hints:.*?    <!-- End startup hints\. -->\n','',entry,flags=re.S)
 assert entry==original('app/index.html')
 # The landing's default language/favicon are covered by landing_browser.py.
