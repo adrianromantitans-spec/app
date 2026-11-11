@@ -81,12 +81,15 @@ def capture(browser,lang):
  page.locator('[data-action=close-modal]').first.click()
  def navigate(route):
   if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
-  # The current mobile app opens its existing drawer with an edge swipe.
-  page.mouse.move(4,300);page.mouse.down();page.mouse.move(150,300,steps=10);page.mouse.up()
-  expect(page.locator('.navigation-drawer')).to_be_visible()
-  # Consume the swipe's click guard on a non-action heading before selecting a route.
-  page.locator('.navigation-drawer #modal-title').click()
-  page.locator('.navigation-drawer [data-route='+route+']').click();expect(page.locator('.navigation-drawer')).to_have_count(0);page.evaluate('scrollTo(0,0)')
+  # Use visible home shortcuts/dock; the mobile drawer gesture was removed.
+  page.locator('.reference-dock [data-route=home]').click()
+  if route in ['home','expenses','tasks','polls','shopping']:
+   if route=='expenses':page.locator('.home-recent [data-route=expenses]').click()
+   elif route!='home':page.locator('.home-reference-action[data-route='+route+']').click()
+  else:
+   viewport=page.viewport_size.copy();page.set_viewport_size({'width':1024,'height':viewport['height']})
+   page.locator('.workspace-sidebar [data-route='+route+']').click();page.set_viewport_size(viewport)
+  page.evaluate('scrollTo(0,0)')
  navigate('expenses');expect(page.locator('.expense-list')).to_be_visible();save(page.screenshot(),lang+'-expenses')
  navigate('shopping');expect(page.locator('.shopping-row')).to_have_count(4);save(page.screenshot(),lang+'-shopping')
  for route in ['polls','tasks']:

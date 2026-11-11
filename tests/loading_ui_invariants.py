@@ -4,6 +4,9 @@ import subprocess,re,difflib
 BASE='75753eedf31102a6b2cacf548a98b062dd861bcd'
 def original(name):return subprocess.check_output(['git','show',BASE+':'+name]).decode()
 def normalize_app(s):
+ old=original("app.js");gesture=old[old.index("let edgeSwipe=null,edgeSwipeUsed=false;"):old.index("async function onAppClick(event)")]
+ assert "let edgeSwipe=" not in s
+ s=s.replace("async function onAppClick(event)",gesture+"async function onAppClick(event)",1)
  s=s.replace('data-route="tasks">${icon(\'task\')}<span>${tr(\'Tareas\')}</span></button><button class="home-reference-action"','data-action="new-expense">${icon(\'plus\')}<span>${tr(\'Añadir gasto\')}</span></button><button class="home-reference-action"')
  s=s.replace('<nav class="home-reference-actions" aria-label="${tr(\'Organización\')}">','<nav class="home-reference-actions" aria-label="${tr(\'Añadir\')}">')
  s=s.replace("import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';\n",'')
@@ -36,7 +39,7 @@ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],te
   if name=='refined.css':text=text.replace('.personal-shell .shopping-page .shopping-footer>.button.primary:not(:disabled){color:#fff}\n','')
   assert text==original(name),'Unexpected runtime/stylesheet change: '+name
   count+=1
-entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=tasks-95','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
+entry=Path('app/index.html').read_text().replace('    <link rel="stylesheet" href="../loading-ui.css?v=loading-92" />\n','').replace('app.js?v=drawer-98','app.js?v=language-90').replace('refined.css?v=shopping-93','refined.css?v=visual-87')
 entry=re.sub(r'    <!-- Startup hints:.*?    <!-- End startup hints\. -->\n','',entry,flags=re.S)
 assert entry==original('app/index.html')
 # The landing's default language/favicon are covered by landing_browser.py.

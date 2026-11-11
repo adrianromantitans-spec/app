@@ -45,10 +45,10 @@ with sync_playwright() as p:
   page.locator('.reference-dock button[data-route=home]').click();expect(page.locator('.home-balance')).to_be_visible()
   for route in ['tasks','polls','shopping','budget']:
    if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
-   page.mouse.move(4,300);page.mouse.down();page.mouse.move(150,300,steps=10);page.mouse.up()
-   page.locator('.navigation-drawer #modal-title').click()
-   expect(page.locator('.navigation-drawer [data-route='+route+']')).to_be_visible()
-   page.locator('.navigation-drawer [data-route='+route+']').click()
+   page.locator('.reference-dock [data-route=home]').click()
+   if route in ['tasks','polls','shopping']:page.locator('.home-reference-action[data-route='+route+']').click()
+   else:
+    page.set_viewport_size({'width':1024,'height':852});page.locator('.workspace-sidebar [data-route='+route+']').click();page.set_viewport_size({'width':393,'height':852})
    if route in ['tasks','polls']:
     expect(page.locator('.poll-card' if route=='polls' else '.task-row')).to_have_count(1 if route=='polls' else 3)
    elif route=='shopping':expect(page.locator('.shopping-row')).to_have_count(4)

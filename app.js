@@ -742,22 +742,6 @@ function quickAddModal() {
 }
 
 document.addEventListener('click', event => {withClickFeedback(onAppClick,()=>remoteBusy||authLoading)(event).catch(handleActionError);});
-let edgeSwipe=null,edgeSwipeUsed=false;
-document.addEventListener('pointerdown',event=>{
- if(!document.body.classList.contains('personal-app')||innerWidth>760||event.isPrimary===false)return;
- const menuOpen=document.body.classList.contains('workspace-menu-open');
- if(!menuOpen&&(event.clientX>32||modalRoot.firstElementChild||event.target.closest('input,textarea,select')))return;
- edgeSwipe={x:event.clientX,y:event.clientY,open:menuOpen};
-},{passive:true});
-document.addEventListener('pointerup',event=>{
- if(!edgeSwipe)return;
- const dx=event.clientX-edgeSwipe.x,dy=event.clientY-edgeSwipe.y,sideways=Math.abs(dx)>56&&Math.abs(dx)>Math.abs(dy)*1.3;
- if(sideways&&!edgeSwipe.open&&dx>0){edgeSwipeUsed=true;openWorkspaceMenu();}
- else if(sideways&&edgeSwipe.open&&dx<0){edgeSwipeUsed=true;closeModal();}
- edgeSwipe=null;
-});
-document.addEventListener('pointercancel',()=>{edgeSwipe=null;});
-document.addEventListener('click',event=>{if(!edgeSwipeUsed)return;edgeSwipeUsed=false;event.preventDefault();event.stopPropagation();},true);
 async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
