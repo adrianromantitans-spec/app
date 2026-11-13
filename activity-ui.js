@@ -10,6 +10,7 @@ const labels={
  'members.added':'Miembro incorporado','members.updated':'Miembro actualizado','members.deleted':'Miembro eliminado',
  'payment.requested':'Pago marcado como enviado','payment.rejected':'Pago no recibido','payment.cancelled':'Solicitud de pago cancelada'
 };
+export const activityEventLabel=kind=>tr(labels[kind]||'Cambio en el grupo');
 const fields={fx:'Pago convertido',dueAt:'Fecha límite',remindAt:'Recordatorio',important:'Importante',title:'Concepto',amount:'Importe',payer:'Pagado por',participants:'Participantes',split:'Reparto',date:'Fecha',category:'Categoría',receipt:'Ticket',recurrence:'Repetición',done:'Completada',assignee:'Responsable',votes:'Votos',options:'Opciones',name:'Nombre',place:'Lugar',budget:'Presupuesto',currency:'Moneda',emoji:'Icono',type:'Tipo de grupo',endDate:'Fecha de vuelta',from:'De',to:'Para',from_id:'De',to_id:'Para',status:'Estado'};
 export function paymentRequestsView(requests,viewerId,name,currency) {
  if(!requests.length)return `<p class="muted">${tr('No hay pagos pendientes de confirmar.')}</p>`;

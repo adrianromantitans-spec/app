@@ -11,7 +11,8 @@ import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from 
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-90';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=language-90';
 import {Cloud} from './cloud.js?v=language-90';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=language-90';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=activity-102';
+import {activityText,activitySummary,activityChartView,activityTimelineView} from './activity-overview.js?v=activity-102';
 import {NotificationCentre} from './notifications.js?v=loading-92';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-90';
@@ -120,6 +121,7 @@ let page = 'home';
 const demoState=structuredClone(state);
 let tab = 'summary';
 let expenseFilter = 'all';
+let activityGraphMode='categories',activityGraphSelection=null;
 let modalOpener;
 const root = document.querySelector('#app');
 const modalRoot = document.querySelector('#modal-root');
@@ -460,12 +462,16 @@ async function loadActivity(more=false,preservePages=false) {
     activityCache.set(g.id,{ready:true,...result,events:more?[...new Map([...(previous?.events||[]),...result.events].map(event=>[event.id,event])).values()]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
   }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}finally{finishLoading();}
 }
-function pendingPaymentsPanel(data) {
-  return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||ui`<button class="button secondary" data-action="show-pending-payments">Ver pagos pendientes ${icon('arrow')}<span class="payment-list-count">${data.requests.length}</span></button>`}</section>`;
+function activityChart(){return activityChartView(group(),{mode:activityGraphMode,selection:activityGraphSelection?.groupId===group()?.id&&activityGraphSelection?.mode===activityGraphMode?activityGraphSelection.key:null});}
+function refreshActivityChart(){
+ const chart=root.querySelector('[data-activity-chart]');
+ if(chart)chart.innerHTML=activityChart();
 }
 function activityView() {
-  const g=group(),data=activityData();
-  return ui`<div class="finance-sections"><button data-route="expenses">Gastos</button><button class="active" data-route="activity">Pagos y actividad</button></div><div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${data.ready===null&&!data.error?loadingSkeleton('button',tr('Cargando actividad…')):ui`<button class="button secondary" data-action="show-recorded-payments">Ver devoluciones ${icon('arrow')}<span class="payment-list-count">${visibleRepayments(g).length}</span></button>`}</section>`;
+ const g=group(),data=activityData(),summary=activitySummary(g),known=data.ready===true,notice=activityNotice(data);
+ const pending=known?data.requests.length:null;
+ const pendingView=notice||`<button class="concept-ok ${pending?'is-pending':''}" data-action="show-pending-payments"><b>${icon(pending?'wallet':'check')}</b><span><strong>${esc(pending?tr('Pagos pendientes de confirmar'):activityText('Todo al día'))}</strong><small>${esc(pending?tr('Ver pagos pendientes'):activityText('No hay pagos pendientes de confirmar.'))}</small></span></button>`;
+ return `<div class="activity-overview"><div class="finance-sections"><button data-route="expenses">${tr('Gastos')}</button><button class="active" data-route="activity">${tr('Pagos y actividad')}</button></div><div class="concept-title"><div><h1>${tr('Actividad')}</h1><p class="concept-subtitle">${activityText('Todo lo que pasa, de un vistazo.')}</p></div><select class="concept-group-select" aria-label="${tr('Seleccionar grupo')}" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><div class="concept-stats"><article class="concept-stat"><small>${activityText('Gastos del grupo')}</small><strong>${statMoney(summary.total)}</strong><span>${summary.count} ${tr('Gastos')}</span></article><article class="concept-stat"><small>${activityText('Tu parte')}</small><strong>${statMoney(summary.ownShare)}</strong><span>${activityText('Del gasto total')}</span></article><article class="concept-stat"><small>${activityText('Pendientes')}</small><strong>${pending??'—'}</strong><span>${activityText('Por confirmar')}</span></article></div><section class="concept-card"><div class="concept-card-heading"><h2>${activityText('El gasto, en perspectiva')}</h2><span class="concept-period">${activityText(g.type==='Viaje'?'Todo el viaje':'Todo el periodo')}</span></div><div data-activity-chart>${activityChart()}</div></section><section class="activity-panel concept-pending-host">${pendingView}</section><section class="concept-card activity-panel">${notice||activityTimelineView(g,data.events,{name:id=>member(id).name,viewerId:accountUser?.id})}${notice?'':`<button class="concept-history" data-action="show-history">${activityText('Ver historial completo')}${icon('arrow')}</button>`}</section><section class="concept-card activity-panel">${data.ready===null&&!data.error?loadingSkeleton('button',tr('Cargando actividad…')):`<button class="concept-repayment" data-action="show-recorded-payments"><span><strong>${tr('Devoluciones registradas')}</strong><small>${tr('Pagos confirmados por quien recibe el dinero.')}</small></span><span class="payment-list-count">${visibleRepayments(g).length}</span>${icon('arrow')}</button>`}</section></div>`;
 }
 
 async function loadPaymentArchives(g=group()) {
@@ -754,6 +760,16 @@ async function onAppClick(event) {
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
   if(remoteBusy || authLoading){event.preventDefault();showBusyInPlace(root,tr('Espera un momento; estamos conectando con tus grupos.'),()=>remoteBusy||authLoading);return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
+  if(el.dataset.activityMode){
+   if(!['categories','people'].includes(el.dataset.activityMode))return;
+   activityGraphMode=el.dataset.activityMode;activityGraphSelection=null;refreshActivityChart();
+   root.querySelector('[data-activity-mode="'+activityGraphMode+'"]')?.focus({preventScroll:true});return;
+  }
+  if(el.hasAttribute('data-activity-segment')){
+   const key=el.dataset.activitySegment;
+   activityGraphSelection=activityGraphSelection?.groupId===group()?.id&&activityGraphSelection?.mode===activityGraphMode&&activityGraphSelection.key===key?null:{groupId:group()?.id,mode:activityGraphMode,key};
+   refreshActivityChart();[...root.querySelectorAll('[data-activity-segment]')].find(button=>button.dataset.activitySegment===key)?.focus({preventScroll:true});return;
+  }
   if(el.dataset.route){await navigateWorkspace(el.dataset.route);return;}
   if(el.dataset.shoppingAction){await shoppingAction(el);return;}
   if(el.dataset.languageChoice){applyLanguage(el.dataset.languageChoice);return;}
