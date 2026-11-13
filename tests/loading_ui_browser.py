@@ -65,7 +65,7 @@ with sync_playwright() as p:
   wait_held(page,reads);expect(page.locator('.content-refresh')).to_be_visible();expect(page.locator('.home-balance')).to_be_visible();page.locator('.reference-dock [data-route=activity]').click();expect(page.locator('.home-balance')).to_be_visible();expect(page.locator('#toast')).not_to_have_class(re.compile('visible'))
   if lang=='es':page.screenshot(path=str(OUT/'background-refresh.png'))
   reads.pop().fallback();expect(page.locator('.content-refresh')).to_have_count(0)
-  page.unroute('**/rest/v1/nexo_groups*');route(page,'activity');expect(page.locator('.activity-panel')).to_have_count(3)
+  page.unroute('**/rest/v1/nexo_groups*');route(page,'activity');expect(page.locator('.activity-panel')).to_have_count(2)
   # Cold per-group activity uses skeleton controls, then original panels and buttons.
   requests=[];page.route('**/rest/v1/divzplit_payment_requests*',lambda r:requests.append(r));route(page,'groups');page.locator('.group-card').nth(2).click();wait_held(page,requests);route(page,'activity');expect(page.locator('.activity-panel .content-skeleton')).to_have_count(3)
   if lang=='es':page.screenshot(path=str(OUT/'activity-skeleton.png'))

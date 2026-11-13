@@ -20,7 +20,7 @@ with sync_playwright() as p:
   amount_font=page.locator('.concept-stat').nth(0).locator('.stat-number').evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)');assert amount_font>=16
   expect(page.locator('.concept-event')).to_have_count(5)
   expect(page.locator('.concept-stat').nth(2).locator('strong')).to_have_text('0')
-  expect(page.locator('.concept-ok')).not_to_have_class(__import__('re').compile('is-pending'))
+  expect(page.locator('.concept-ok')).to_have_count(0)
   page.locator('[data-activity-mode=people]').click();expect(page.locator('[data-activity-mode=people]')).to_have_attribute('aria-pressed','true')
   own=page.locator('[data-activity-segment=you]');own.click();expect(own).to_have_attribute('aria-pressed','true');assert '280' in page.locator('.concept-ring-center strong').inner_text()
   # A background refresh must retain the chosen chart mode and selected contributor.

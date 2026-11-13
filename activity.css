@@ -49,7 +49,6 @@
 .activity-overview .concept-legend span,.activity-overview .concept-legend strong,.activity-overview .concept-event-copy>strong,.activity-overview .concept-event-copy>small{overflow-wrap:anywhere}
 .activity-overview .concept-legend strong{font-size:11px}
 .activity-overview .concept-legend button[aria-pressed=true] span{color:#7344b3}
-.activity-overview .concept-ring-center strong.is-long{font-size:12px;white-space:normal;overflow-wrap:anywhere}
 .activity-overview .concept-ring-center small{overflow-wrap:anywhere}
 .activity-overview .concept-ok{width:100%;text-align:left}
 .activity-overview .concept-ok.is-pending{color:#7850a6;background:#f3edf9;border-color:#e8ddf3}
@@ -63,3 +62,10 @@
 .activity-chart-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
 .activity-overview .concept-stat strong>span{font:inherit;color:inherit;line-height:inherit}
+
+/* Keep the currency and amount centered within the white hole, including RON totals. */
+.activity-overview .concept-ring-center{inset:20px;padding:13px 10px;min-width:0}
+.activity-overview .concept-ring-center .concept-ring-currency{font-size:9px;line-height:1.2;color:var(--soft);margin-bottom:3px}
+.activity-overview .concept-ring-center strong{display:block;max-width:100%;width:100%;min-width:0;font-size:19px;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
+.activity-overview .concept-ring-center small{max-width:100%;font-size:9px;line-height:1.3;margin-top:3px}
+@media(max-width:370px){.activity-overview .concept-ring-center{inset:17px;padding:10px 8px}.activity-overview .concept-ring-center strong{font-size:16px}.activity-overview .concept-ring-center .concept-ring-currency,.activity-overview .concept-ring-center small{font-size:8px}}

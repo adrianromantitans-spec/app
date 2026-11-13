@@ -1,4 +1,4 @@
-import {expenseShares,money,currencyOf} from './model.js?v=language-90';
+import {expenseShares,money,currencyOf,currencyDigits,currencyScale} from './model.js?v=language-90';
 import {language,locale,tr} from './i18n.js?v=language-90';
 import {activityEventLabel} from './activity-ui.js?v=activity-102';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -52,8 +52,9 @@ export function activityChartView(group,{mode='categories',selection=null}={}){
  const description=selected?(selected.self?activityText('Pagado por ti'):selected.label):activityText('Total del grupo');
  let accumulated=0;const gradient=summary.total?entries.map(e=>{const start=accumulated;accumulated+=e.amount/summary.total*100;return `${e.color} ${start}% ${accumulated}%`;}).join(','):'';
  const format=value=>money(value,currency),percent=value=>new Intl.NumberFormat(locale,{style:'percent',maximumFractionDigits:0}).format(value);
+ const number=new Intl.NumberFormat(locale,{style:'currency',currency,minimumFractionDigits:currencyDigits(currency),maximumFractionDigits:currencyDigits(currency)}).formatToParts(amount/currencyScale(currency)).filter(part=>part.type!=='currency').map(part=>part.value).join('').trim();
  const label=entries.length?entries.map(e=>e.label+': '+format(e.amount)).join('; '):activityText('Todavía no hay gastos para mostrar.');
- return `<div class="concept-tabs" role="group" aria-label="${esc(activityText('Distribución de gastos'))}">${[['categories','Por categoría'],['people','Quién pagó']].map(([value,text])=>`<button type="button" aria-pressed="${value===mode}" data-activity-mode="${value}">${esc(activityText(text))}</button>`).join('')}</div><div class="concept-chart"><div class="concept-ring" role="img" aria-label="${esc(label)}" style="background:${gradient?'conic-gradient(from -90deg,'+gradient+')':'#eee7f4'}"><div class="concept-ring-center"><strong class="${format(amount).length>12?'is-long':''}">${esc(format(amount))}</strong><small>${esc(description)}</small></div></div><div class="concept-legend">${entries.length?entries.map(e=>`<button type="button" aria-pressed="${e.key===selection}" data-activity-segment="${esc(e.key)}"><i style="background:${e.color}" aria-hidden="true"></i><span>${esc(e.label)}<strong>${esc(format(e.amount))}<em>${esc(percent(e.amount/summary.total))}</em></strong></span></button>`).join(''):`<p class="muted">${esc(activityText('Todavía no hay gastos para mostrar.'))}</p>`}</div></div><span class="activity-chart-status" role="status">${esc(description+': '+format(amount))}</span><p class="concept-chart-note">${esc(activityText('Importes pagados por el grupo. Las devoluciones se muestran por separado.'))}</p>`;
+ return `<div class="concept-tabs" role="group" aria-label="${esc(activityText('Distribución de gastos'))}">${[['categories','Por categoría'],['people','Quién pagó']].map(([value,text])=>`<button type="button" aria-pressed="${value===mode}" data-activity-mode="${value}">${esc(activityText(text))}</button>`).join('')}</div><div class="concept-chart"><div class="concept-ring" role="img" aria-label="${esc(label)}" style="background:${gradient?'conic-gradient(from -90deg,'+gradient+')':'#eee7f4'}"><div class="concept-ring-center"><span class="concept-ring-currency">${esc(currency)}</span><strong>${esc(number)}</strong><small>${esc(description)}</small></div></div><div class="concept-legend">${entries.length?entries.map(e=>`<button type="button" aria-pressed="${e.key===selection}" data-activity-segment="${esc(e.key)}"><i style="background:${e.color}" aria-hidden="true"></i><span>${esc(e.label)}<strong>${esc(format(e.amount))}<em>${esc(percent(e.amount/summary.total))}</em></strong></span></button>`).join(''):`<p class="muted">${esc(activityText('Todavía no hay gastos para mostrar.'))}</p>`}</div></div><span class="activity-chart-status" role="status">${esc(description+': '+format(amount))}</span><p class="concept-chart-note">${esc(activityText('Importes pagados por el grupo. Las devoluciones se muestran por separado.'))}</p>`;
 }
 export function activityTimelineView(group,events,{name,viewerId}={}){
  const history=events.length>0;
@@ -72,4 +73,12 @@ export function activityTimelineView(group,events,{name,viewerId}={}){
   const heading=day&&day!==previousDay?`<div class="concept-day">${esc(day)}</div>`:'';previousDay=day;
   return `${heading}<article class="concept-event"><span class="concept-avatar" aria-hidden="true">${esc(row.initials)}</span><div class="concept-event-copy"><strong>${esc(row.title)}</strong><small>${esc(row.by)}</small></div>${row.amount!==null?`<div class="concept-event-value ${row.self?'self':''}">${esc(money(row.amount,row.currency))}${valid&&history?`<small><time datetime="${esc(row.date)}">${esc(new Intl.DateTimeFormat(locale,{timeStyle:'short'}).format(date))}</time></small>`:''}</div>`:''}</article>`;
  }).join(''):`<p class="muted">${esc(tr('Los nuevos cambios del grupo aparecerán aquí.'))}</p>`}`;
+}
+
+// Fit the number to the hole after rendering and whenever the chart is resized.
+export function fitActivityAmount(container){
+ const value=container.querySelector('.concept-ring-center strong');if(!value||!value.clientWidth)return;
+ value.style.removeProperty('font-size');
+ let size=parseFloat(getComputedStyle(value).fontSize);
+ while(value.scrollWidth>value.clientWidth&&size>6){size-=.5;value.style.fontSize=size+'px';}
 }
