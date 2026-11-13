@@ -18,3 +18,9 @@
 }
 @media(prefers-reduced-motion:reduce){.personal-shell .dock-glass-lens{display:none!important}}
 @media(prefers-reduced-transparency:reduce){.personal-shell .dock-glass-lens,.personal-shell .dock-lens-copy{background:#fbf8ff;backdrop-filter:none;-webkit-backdrop-filter:none}.personal-shell .dock-glass-lens:after{display:none}}
+
+@media(max-width:760px){
+ .personal-shell .reference-dock-item.dock-transitioning{isolation:isolate}
+ .personal-shell .reference-dock-item.dock-transitioning>.icon{background:transparent;box-shadow:none}
+ .dock-navigation-indicator{position:absolute;z-index:-1;pointer-events:none}
+}

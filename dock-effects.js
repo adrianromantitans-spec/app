@@ -124,3 +124,38 @@ if(root){
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelPress();expand(true);blockedClick=null;}});
  mobile.addEventListener('change',sync);reducedMotion.addEventListener('change',()=>{cancelPress();expand(true);sync();});sync();
 }
+
+// Match inventory's shared navigation spring (420 / 36) and directional page entry.
+function captureDockNavigation(){
+ if(!mobile.matches||reducedMotion.matches)return null;
+ const selected=root?.querySelector('.reference-dock-item.active');
+ const icon=selected?.querySelector('.dock-navigation-indicator')||selected?.querySelector('.icon');
+ if(!icon)return null;
+ return {route:selected.dataset.route,rect:icon.getBoundingClientRect(),moving:icon.classList.contains('dock-navigation-indicator')};
+}
+function animateDockNavigation(previous){
+ if(!previous||!mobile.matches||reducedMotion.matches)return;
+ const selected=root.querySelector('.reference-dock-item.active');
+ if(!selected||(selected.dataset.route===previous.route&&!previous.moving))return;
+ const routes=['home','groups','activity','profile'];
+ const direction=Math.sign(routes.indexOf(selected.dataset.route)-routes.indexOf(previous.route));
+ const icon=selected.querySelector('.icon'),rect=icon.getBoundingClientRect(),button=selected.getBoundingClientRect();
+ const style=getComputedStyle(icon),indicator=document.createElement('span');
+ indicator.className='dock-navigation-indicator';indicator.setAttribute('aria-hidden','true');
+ Object.assign(indicator.style,{left:(rect.left-button.left)+'px',top:(rect.top-button.top)+'px',width:rect.width+'px',height:rect.height+'px',background:style.background,boxShadow:style.boxShadow,borderRadius:style.borderRadius});
+ selected.append(indicator);selected.classList.add('dock-transitioning');
+ const frames=[];
+ const damping=18,frequency=Math.sqrt(420-damping*damping);
+ for(let i=0;i<=36;i++){
+  const t=i/60,remaining=Math.exp(-damping*t)*(Math.cos(frequency*t)+damping/frequency*Math.sin(frequency*t));
+  frames.push({transform:`translateX(${i===36?0:(previous.rect.left-rect.left)*remaining}px)`,offset:i/36});
+ }
+ const spring=indicator.animate(frames,{duration:600,easing:'linear'});
+ const cleanup=()=>{indicator.remove();selected.classList.remove('dock-transitioning');};
+ spring.onfinish=cleanup;spring.oncancel=cleanup;
+ if(selected.dataset.route!==previous.route)root.querySelector('#main')?.animate([{opacity:0,transform:`translateX(${direction*24}px)`},{opacity:1,transform:'translateX(0)'}],{duration:180,easing:'cubic-bezier(.22,1,.36,1)'});
+}
+
+let pendingDockNavigation=null;
+root?.addEventListener('dock-before-render',()=>{pendingDockNavigation=captureDockNavigation();});
+root?.addEventListener('dock-after-render',()=>{animateDockNavigation(pendingDockNavigation);pendingDockNavigation=null;});
