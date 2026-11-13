@@ -273,3 +273,6 @@
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.personal-shell .reference-dock{background:#fbf8ff}}
 @media(prefers-reduced-transparency:reduce){.personal-shell .reference-dock{background:#fbf8ff;backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* The payer is relative to the signed-in member; other expense amounts keep their existing color. */
+.personal-shell .expense-row[data-paid-by-self="true"] .expense-value>strong{color:#187552}
