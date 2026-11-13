@@ -10,7 +10,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 function setShot(image,language){
  const name=image.dataset.appShot,base=new URL('./assets/landing/'+language+'-'+name,import.meta.url).href;
  const width=Number(image.getAttribute('width'))||393;
- const version=['home','expenses','house','friends'].includes(name)?'amount-100':'images-95';
+ const version=['expenses','group','groups','polls','tasks'].includes(name)?'covers-101':['home','house','friends'].includes(name)?'amount-100':'images-95';
  image.src=base+'.webp?v='+version;image.srcset=base+'.webp?v='+version+' '+width+'w, '+base+'-2x.webp?v='+version+' '+width*2+'w';
  if(image.dataset.alt)image.alt=landingCopy[language][image.dataset.alt];
 }

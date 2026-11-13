@@ -8,7 +8,7 @@ const paths={arrow:'M5 12h14m-5-5 5 5-5 5',down:'m7 10 5 5 5-5',receipt:'M5 3v18
 const icon=name=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
 const brand=`<img class="brand-logo" src="./assets/divzplit-logo.svg" alt="" width="40" height="40"><span class="wordmark">Div<span>Z</span>plit<span>.</span></span>`;
 const manifest=JSON.parse(await readFile(new URL('../assets/landing/manifest.json',import.meta.url),'utf8'));
-function image(shot,alt,cls='',eager=false){const version=['home','expenses','house','friends'].includes(shot)?'amount-100':'images-95';const size=manifest.images['en-'+shot]||{width:393,height:852};return `<img${cls?` class="${cls}"`:''} data-app-shot="${shot}" data-alt="${alt}" src="./assets/landing/en-${shot}.webp?v=${version}" srcset="./assets/landing/en-${shot}.webp?v=${version} ${size.width}w, ./assets/landing/en-${shot}-2x.webp?v=${version} ${size.width*2}w" sizes="${['balance','recent'].includes(shot)?'250px':'(max-width: 600px) 270px, 310px'}" width="${size.width}" height="${size.height}" alt="${esc(c[alt])}" ${eager?'fetchpriority="high" loading="eager"':'loading="lazy"'} decoding="async">`;}
+function image(shot,alt,cls='',eager=false){const version=['expenses','group','groups','polls','tasks'].includes(shot)?'covers-101':['home','house','friends'].includes(shot)?'amount-100':'images-95';const size=manifest.images['en-'+shot]||{width:393,height:852};return `<img${cls?` class="${cls}"`:''} data-app-shot="${shot}" data-alt="${alt}" src="./assets/landing/en-${shot}.webp?v=${version}" srcset="./assets/landing/en-${shot}.webp?v=${version} ${size.width}w, ./assets/landing/en-${shot}-2x.webp?v=${version} ${size.width*2}w" sizes="${['balance','recent'].includes(shot)?'250px':'(max-width: 600px) 270px, 310px'}" width="${size.width}" height="${size.height}" alt="${esc(c[alt])}" ${eager?'fetchpriority="high" loading="eager"':'loading="lazy"'} decoding="async">`;}
 const cta=(key='start',cls='button-primary')=>`<a class="button ${cls}" data-app-link="signup" href="./app/#registro">${text(key)}${icon('arrow')}</a>`;
 const featureCards=['receipt','group','budget','poll','task','balance'].map((name,i)=>`<article class="feature-card reveal"><div class="feature-icon">${icon(name)}</div>${text('f'+(i+1)+'Title','h3')}${text('f'+(i+1)+'Body','p')}</article>`).join('');
 const steps=['group','expense','settlements'].map((shot,i)=>`<button class="step" data-step="${shot}" aria-pressed="${i===0}"><span class="step-number">0${i+1}</span><span class="step-copy">${text('step'+(i+1)+'Title','strong')}${text('step'+(i+1)+'Body')}</span></button>`).join('');
@@ -39,7 +39,7 @@ const html=`<!doctype html>
  <link rel="preload" href="./assets/Manrope.ttf" as="font" type="font/ttf" crossorigin>
  <link rel="stylesheet" href="./landing.css?v=visual-53">
  <script type="application/ld+json">${ld}</script>
- <script type="module" src="./landing.js?v=amount-100"></script>
+ <script type="module" src="./landing.js?v=covers-101"></script>
 </head>
 <body>
  <a class="skip-link" href="#main" data-copy="skip">${c.skip}</a>

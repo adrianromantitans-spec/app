@@ -276,3 +276,17 @@
 
 /* The payer is relative to the signed-in member; other expense amounts keep their existing color. */
 .personal-shell .expense-row[data-paid-by-self="true"] .expense-value>strong{color:#187552}
+
+/* Group imagery follows its type in cards, selectors and the group form. */
+.personal-shell .group-card-cover.has-group-image:before,.personal-shell .group-card-cover.has-group-image:after{display:none}
+.group-card-cover.has-group-image>.group-cover-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 57%}
+.personal-shell .group-card-cover.has-group-image .tiny-pill{background:#fffffff0;color:#493057;box-shadow:0 2px 10px #30223f16}
+.home-group-symbol.group-photo-thumb{overflow:hidden;flex-shrink:0}
+.home-group-symbol.group-photo-thumb>img{display:block;width:100%;height:100%;object-fit:cover}
+.personal-app .group-form-cover{height:130px;overflow:hidden;border-radius:16px;margin-bottom:20px;background:#ece5f6}
+.group-form-cover>img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 57%}
+@media(max-width:760px){
+ .personal-shell .welcome-row>.group-create-button{display:flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;gap:0;line-height:1}
+ .personal-shell .welcome-row>.group-create-button>span{display:none}
+ .personal-shell .welcome-row>.group-create-button>.icon{display:block;width:20px;height:20px;margin:0}
+}
