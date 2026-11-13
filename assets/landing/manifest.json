@@ -33,6 +33,10 @@
       "width": 393,
       "height": 852
     },
+    "es-activity": {
+      "width": 393,
+      "height": 852
+    },
     "es-shopping": {
       "width": 393,
       "height": 852
@@ -93,6 +97,10 @@
       "width": 393,
       "height": 852
     },
+    "en-activity": {
+      "width": 393,
+      "height": 852
+    },
     "en-shopping": {
       "width": 393,
       "height": 852
@@ -150,6 +158,10 @@
       "height": 852
     },
     "ro-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-activity": {
       "width": 393,
       "height": 852
     },

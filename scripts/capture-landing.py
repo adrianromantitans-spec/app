@@ -83,14 +83,16 @@ def capture(browser,lang):
   if page.locator('.back-to-home:visible').count():page.locator('.back-to-home').click()
   # Use visible home shortcuts/dock; the mobile drawer gesture was removed.
   page.locator('.reference-dock [data-route=home]').click()
-  if route in ['home','expenses','tasks','polls','shopping']:
+  if route in ['home','expenses','activity','tasks','polls','shopping']:
    if route=='expenses':page.locator('.home-recent [data-route=expenses]').click()
+   elif route=='activity':page.locator('.reference-dock [data-route=activity]').click()
    elif route!='home':page.locator('.home-reference-action[data-route='+route+']').click()
   else:
    viewport=page.viewport_size.copy();page.set_viewport_size({'width':1024,'height':viewport['height']})
    page.locator('.workspace-sidebar [data-route='+route+']').click();page.set_viewport_size(viewport)
   page.evaluate('scrollTo(0,0)')
  navigate('expenses');expect(page.locator('.expense-list')).to_be_visible();save(page.screenshot(),lang+'-expenses')
+ navigate('activity');expect(page.locator('[data-action=show-history]')).to_be_visible();page.evaluate('document.fonts.ready');expect(page.locator('.concept-ok')).to_have_count(0);save(page.screenshot(),lang+'-activity')
  navigate('shopping');expect(page.locator('.shopping-row')).to_have_count(4);save(page.screenshot(),lang+'-shopping')
  for route in ['polls','tasks']:
   navigate(route)
@@ -98,8 +100,8 @@ def capture(browser,lang):
   expect(page.locator('.poll-card' if route=='polls' else '.task-row')).to_have_count(1 if route=='polls' else 3)
   save(page.screenshot(),lang+'-'+route)
  navigate('budget');expect(page.locator('.budget-card')).to_be_visible();save(page.screenshot(),lang+'-budget')
- # The real group selector fits the phone and shows both household and travel groups.
- navigate('home');page.locator('.home-group-picker').click();expect(page.locator('.home-group-option')).to_have_count(3);assert page.locator('.home-modes').count()==0;save(page.screenshot(),lang+'-groups');page.locator('[data-action=close-modal]').first.click()
+ # Capture the actual Plans cards, including the AI covers and centered create button.
+ navigate('home');page.locator('.reference-dock [data-route=groups]').click();expect(page.locator('.group-card')).to_have_count(3);page.evaluate('document.fonts.ready');page.evaluate('Promise.all([...document.querySelectorAll(".group-cover-image")].map(i=>{i.loading="eager";return i.decode()}))');save(page.screenshot(),lang+'-groups')
  for i,key in [(1,'house'),(2,'friends')]:
   page.evaluate('(value)=>sessionStorage.setItem('+json.dumps('nexo-active-'+OWNER)+',value)',rows[i]['id']);page.reload();expect(page.locator('.home-balance')).to_be_visible();page.evaluate('document.fonts.ready');save(page.screenshot(),lang+'-'+key)
  assert not errors,errors

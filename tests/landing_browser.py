@@ -15,7 +15,7 @@ with sync_playwright() as p:
   assert page.locator('link[rel=canonical]').get_attribute('href')=='https://divzplit.com/'
   assert '/app/' in page.locator('.hero-actions [data-app-link=signup]').get_attribute('href')
   stories=page.locator('.feature-story');assert stories.count()==7
-  shots=stories.locator('img[data-app-shot]').evaluate_all('(items)=>items.map(i=>i.dataset.appShot)');assert len(set(shots))==7 and set(shots)=={'expenses','shopping','polls','currency','groups','tasks','budget'}
+  shots=stories.locator('img[data-app-shot]').evaluate_all('(items)=>items.map(i=>i.dataset.appShot)');assert len(set(shots))==7 and set(shots)=={'activity','shopping','polls','currency','groups','tasks','budget'}
   assert all(language+'-'+shot in stories.locator('img').nth(i).get_attribute('src') for i,shot in enumerate(shots))
   page.locator('.faq-item').first.locator('summary').click();expect(page.locator('.faq-item').first.locator('p')).to_be_visible()
   page.locator('#como-funciona').scroll_into_view_if_needed();page.locator('[data-step=expense]').click();expect(page.locator('.step-image')).to_have_attribute('data-app-shot','expense');assert language+'-expense' in page.locator('.step-image').get_attribute('src')

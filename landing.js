@@ -1,4 +1,4 @@
-import {landingCopy} from './landing-copy.js?v=search-97';
+import {landingCopy} from './landing-copy.js?v=screens-104';
 import {detectLanguage,languagePreferences,rememberLanguage} from './language.js?v=language-78';
 let currentLanguage=detectLanguage(languagePreferences());
 const languageSelect=document.querySelector('#landing-language');
@@ -10,7 +10,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 function setShot(image,language){
  const name=image.dataset.appShot,base=new URL('./assets/landing/'+language+'-'+name,import.meta.url).href;
  const width=Number(image.getAttribute('width'))||393;
- const version=['expenses','group','groups','polls','tasks'].includes(name)?'covers-101':['home','house','friends'].includes(name)?'amount-100':'images-95';
+ const version=['activity','groups'].includes(name)?'screens-104':['expenses','group','groups','polls','tasks'].includes(name)?'covers-101':['home','house','friends'].includes(name)?'amount-100':'images-95';
  image.src=base+'.webp?v='+version;image.srcset=base+'.webp?v='+version+' '+width+'w, '+base+'-2x.webp?v='+version+' '+width*2+'w';
  if(image.dataset.alt)image.alt=landingCopy[language][image.dataset.alt];
 }
