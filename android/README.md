@@ -14,6 +14,10 @@ Proyecto Android **compilable**, basado en Trusted Web Activity (TWA). Abre la a
 
 `minSdk=24` permite instalar el paquete en Android 7; no garantiza soporte de todas las funciones en navegadores antiguos. Chrome actual requiere Android 10 o superior. La prueba real en dispositivos y la prueba a través de Play siguen pendientes.
 
+## Piloto opcional de WebView
+
+La TWA sigue siendo la compilación predeterminada. La migración experimental se selecciona con `--wrapper webview`; consulta [el alcance, los bloqueos y las pruebas del piloto](../docs/ANDROID-WEBVIEW-PILOT.md). No distribuirla como sustitución completa hasta resolver el push nativo y comprobarla en Android real.
+
 ## Compilar y firmar
 
 1. Instala Android Studio estable, **JDK 17 completo** y Python 3. Android Studio también permite descargar el SDK sin usar la terminal.

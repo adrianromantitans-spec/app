@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_connection">Comprueba tu conexión y vuelve a intentarlo.</string>
+    <string name="native_retry">Reintentar</string>
+    <string name="native_no_handler">No hay una aplicación compatible</string>
+    <string name="native_export_error">No se ha podido guardar la exportación</string>
+</resources>

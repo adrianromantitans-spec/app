@@ -1,0 +1,44 @@
+{
+  "status": "experimental-not-for-production",
+  "sourceBaseCommit": "d29a4ca3a160608463bf5948c86ad65c8252a4b9",
+  "bundles": {
+    "webview": {
+      "version": "1.1.0-webview.1",
+      "code": 4,
+      "sha256": "2a871df83feaddd92016c59c4f1b4540d8dd2830c137e8892b00ee42128f1266",
+      "bytes": 1903770,
+      "launcher": "com.divzplit.app.WebViewActivity",
+      "validated": true
+    },
+    "twa": {
+      "version": "1.0.2",
+      "code": 3,
+      "sha256": "e6581d8bca33f6339578080a0297967388508438fde0e44d52db715b4e498699",
+      "bytes": 1915839,
+      "launcher": "com.divzplit.app.LauncherActivity",
+      "validated": true
+    }
+  },
+  "checks": {
+    "signedReleaseAndLint": "passed for both wrappers",
+    "bundletool": "passed for both wrappers",
+    "jvmUrlPolicy": "passed",
+    "chromiumBridge": "passed",
+    "npmCheckAndTests": "passed",
+    "existingWebsiteFiles": "unchanged",
+    "physicalAndroid": "not run",
+    "realGoogleAppleOAuth": "not run",
+    "nativePush": "not implemented"
+  },
+  "nativeSourcesSha256": {
+    "android/app/src/webview/AndroidManifest.xml": "18f2714d29907c3b64507656107d7cd26f221daebeaf2cd51af27754a8c11f80",
+    "android/app/src/webview/assets/native-webview.js": "58eda402f2e26af05bc4d904bbd267d8dba458796b1d3a5a2803a6f43446785b",
+    "android/app/src/webview/java/com/divzplit/app/WebViewActivity.java": "7c7a963241822c860d3fd05c526fb98c057c65b5e1a3ca0bed792996bb971c17",
+    "android/app/src/webview/java/com/divzplit/app/WebViewPolicy.java": "4b423cb2ad74148435f5b6078f75f818b68e5780ed7d9e276e35bb61417002a5",
+    "android/app/src/webview/res/values/strings.xml": "dd561737e7de3b5daa21b1180ca2646821d19795e5c4af7e525b0d08c34b32de",
+    "android/app/src/webview/res/values/styles.xml": "ffa2aa13f8f7e906682d8f4ef3747ba0ea15346df2226f8b5d57a2bbc33527d4",
+    "android/app/src/webview/res/values-es/strings.xml": "40c87a7686b8faf85d835c7fb626ef699076066aa6ce1b99a5e2b65f8ab83e06",
+    "android/app/src/webview/res/values-ro/strings.xml": "95e047e2c218b1717160c31342742e6613d7857c3a311364f6d8e3b99cdd4758",
+    "android/app/src/webview/res/values-v31/styles.xml": "184e43fe7e1e3c96dcc66fab2b64ee34d78edd78e0b235380b3c27e04ebd7360"
+  }
+}

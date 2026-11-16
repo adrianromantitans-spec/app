@@ -27,6 +27,16 @@ twaManifest.applicationId = twaManifest.packageId
 twaManifest.hostName = twaManifest.host
 twaManifest.launchUrl = twaManifest.startUrl
 
+// Opt-in pilot: the existing TWA remains the default build.
+def wrapperMode = providers.gradleProperty('divzplitWrapper').getOrElse('twa')
+if (!(wrapperMode in ['twa', 'webview'])) throw new GradleException('Unknown DivZplit wrapper')
+def webViewPilot = wrapperMode == 'webview'
+if (webViewPilot) {
+    def pilot = new JsonSlurper().parse(rootProject.file('webview-pilot.json'))
+    twaManifest.appVersionCode = pilot.appVersionCode
+    twaManifest.appVersionName = pilot.appVersionName
+}
+
 def signingNames = ['DIVZPLIT_UPLOAD_STORE_FILE', 'DIVZPLIT_UPLOAD_STORE_PASSWORD',
                     'DIVZPLIT_UPLOAD_KEY_ALIAS', 'DIVZPLIT_UPLOAD_KEY_PASSWORD']
 def signingValues = signingNames.collectEntries { [(it): System.getenv(it)] }
@@ -131,6 +141,16 @@ android {
         resValue "string", "orientation", twaManifest.orientation
 
 
+    }
+    sourceSets {
+        main {
+            if (webViewPilot) {
+                manifest.srcFile 'src/webview/AndroidManifest.xml'
+                java.srcDirs = ['src/webview/java']
+                assets.srcDirs = ['src/webview/assets']
+                res.srcDirs += ['src/webview/res']
+            }
+        }
     }
     signingConfigs {
         if (signingReady) {
