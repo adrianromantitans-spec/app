@@ -1,0 +1,70 @@
+{
+  "package": "com.divzplit.app",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "minSdk": 24,
+  "targetSdk": 36,
+  "aabBytes": 1913004,
+  "aabSha256": "411ecfba85a66dcfa7e2e2e23a5a400dac5fb8bd53bd56623a398c983f721720",
+  "uploadCertificateSha256": "7A:B0:37:0C:C1:18:70:90:F6:4D:50:51:D8:89:2C:83:2C:9A:0E:17:2C:83:DD:1F:DF:A5:A3:0E:95:75:02:58",
+  "bundletool": "1.18.3",
+  "bundletoolValidate": "PASS",
+  "jarsignerVerify": "PASS",
+  "signerMatchesDeliveredUploadKey": true,
+  "permissions": [
+    "android.permission.POST_NOTIFICATIONS",
+    "com.divzplit.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "nativeLibraries": [],
+  "lintErrors": 0,
+  "lintWarnings": 8,
+  "lintIssues": [
+    {
+      "id": "SourceLockedOrientationActivity",
+      "severity": "Warning",
+      "message": "You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.bool.enableSiteSettingsShortcut` appears to be unused"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.bool.enableSiteSettingsShortcut` appears to be unused"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.string.fullScopeUrl` appears to be unused"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.string.fullScopeUrl` appears to be unused"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.color.shortcut_background` appears to be unused"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.drawable.shortcut_legacy_background` appears to be unused"
+    },
+    {
+      "id": "UnusedResources",
+      "severity": "Warning",
+      "message": "The resource `R.raw.web_app_manifest` appears to be unused"
+    }
+  ],
+  "payloadUnchangedByFinalSigning": true,
+  "signingGuardsTested": [
+    "missing signing rejected",
+    "wrong upload certificate rejected",
+    "malformed assetlinks SHA rejected",
+    "private files ignored"
+  ]
+}
