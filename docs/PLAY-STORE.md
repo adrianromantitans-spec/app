@@ -116,3 +116,10 @@ Confirmar una dirección pública de contacto adecuada y la identificación exig
 Verificar en producción la eliminación de cuenta y archivos, las migraciones,
 los registros retenidos y la conservación de proveedores antes de declarar
 resultados de borrado. Véase [OPERATIONS](privacy/OPERATIONS.md).
+
+## Alcance inicial confirmado por el propietario
+
+Primer lanzamiento en países europeos. La lista exacta se elegirá en Google Play
+Console antes de publicar. Esto no confirma por sí solo un lanzamiento limitado
+a la UE/EEE ni la inclusión de Reino Unido o Suiza. Revisar la lista definitiva
+para ajustar los requisitos aplicables. El borrador sigue sin publicar.

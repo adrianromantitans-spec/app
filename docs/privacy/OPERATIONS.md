@@ -4,7 +4,9 @@ Operator currently identified in the app: Adrian Roman, an individual based in
 Romania; support@divzplit.com. The owner confirms no company, no current ads or
 paid features, Google Play first and Apple App Store later. Future ads, a one-time
 ad-removal purchase and possible premium features are plans, not active services.
-A public contact address and intended launch territories still need confirmation.
+The owner plans European countries first, with the exact list selected in Google
+Play Console before release. Do not assume that means EU/EEA only or that the UK
+and Switzerland are included. A public contact address still needs confirmation.
 This document is an operating procedure, not a compliance certification.
 
 ## Evidence and limits
