@@ -200,6 +200,9 @@ Resend's current public documentation states US customer-data storage and primar
 processing, even with an EU sending region, and SCCs in its DPA. It also states
 that its DPA applies to every account; download the actual account copy rather
 than assuming a separate countersignature is always needed. Confirm the plan and
-tracking settings. Production OTP expiry, server-side single-use behavior, installed
-templates and delivery still need testing. No provider settings or templates have
-been changed by these source edits.
+tracking settings. The owner confirms Confirm email is enabled and OTP expiry is
+3,600 seconds (one hour), and reports the remaining email/auth checks are handled.
+Classify these results as owner reported; they were not independently tested here.
+Retest expiry, single use and delivery after relevant configuration changes. This
+does not close the separate account-deletion and storage-cleanup review. No
+provider settings or templates have been changed by these source edits.

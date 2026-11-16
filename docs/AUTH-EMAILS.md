@@ -85,7 +85,7 @@ Authentication-Results: SPF, DKIM y DMARC, más alineación con From. `p=none`
 permite observar; plantear cuarentena/rechazo solo tras validar todos los emisores,
 incluido el reenvío de soporte. No se ha cambiado ningún registro DNS.
 
-### Seguridad y entrega pendientes de prueba real
+### Seguridad y entrega: confirmación del propietario y mantenimiento
 
 El cliente ya muestra una respuesta neutral a recuperación («Si existe una
 cuenta…») y no cambia la contraseña antes de verificar el código. La plantilla
@@ -93,13 +93,18 @@ actual usa `{{ .Token }}`; los enlaces PKCE anteriores siguen admitidos. El clie
 limita su estado de enlaces PKCE a 15 minutos; ese límite no demuestra el plazo
 configurado en Supabase para los códigos/verificaciones del servidor.
 
-En la cuenta real, confirmar un plazo corto y adecuado de expiración, un solo uso,
-rate limits y protección contra abuso; probar código válido, caducado y reutilizado
+El propietario confirma que Confirm email está activado y que el OTP expira a los
+3.600 segundos (una hora); indica que el resto de las comprobaciones de correo y
+autenticación ya está resuelto. Son datos confirmados por el propietario, no una
+prueba administrativa independiente realizada en esta sesión. Conservar evidencia
+de entrega, alineación, uso único y controles de abuso en el entorno del propietario.
+Para futuros cambios, volver a probar códigos válidos, caducados y reutilizados
 con cuentas de prueba autorizadas. Mantener respuestas neutrales para correos
 registrados y no registrados, también al reenviar. No registrar ni compartir
 códigos, tokens, contraseñas o URLs de verificación completas en soporte.
 
-Revisar entrega y spam en Gmail/Outlook y recopilar solo encabezados saneados.
+En futuras comprobaciones, revisar entrega y spam en Gmail/Outlook y recopilar
+solo encabezados saneados.
 Las pruebas locales usan fixtures y no envían correos. La publicación de GitHub no
 instala las plantillas ni cambia expiración, SMTP o seguimiento en Supabase/Resend.
 La inspección administrativa sigue bloqueada por el endpoint de Supabase.
