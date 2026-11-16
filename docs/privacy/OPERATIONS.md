@@ -185,3 +185,21 @@ A public contact address and any applicable business/fiscal identification remai
 unresolved. Not having a company does not remove individual operator obligations.
 Confirm required disclosure for the intended territories without inventing an
 address or publishing a private residence without the owner's informed decision.
+
+## Transactional email follow-up — 16 November 2026
+
+Verification and requested recovery emails are service messages, kept free of
+promotions. No marketing permission or marketing unsubscribe link is required for
+that limited content; assess re-engagement or promotional emails separately before
+sending. Use the email guide for a current DNS snapshot and production checks:
+[AUTH-EMAILS](../AUTH-EMAILS.md). SPF and a DKIM key are publicly present; DMARC is
+`p=none`. Record presence alone is not a delivered-message authentication test.
+Do not change DNS without reconciling the actual sending and forwarding services.
+
+Resend's current public documentation states US customer-data storage and primary
+processing, even with an EU sending region, and SCCs in its DPA. It also states
+that its DPA applies to every account; download the actual account copy rather
+than assuming a separate countersignature is always needed. Confirm the plan and
+tracking settings. Production OTP expiry, server-side single-use behavior, installed
+templates and delivery still need testing. No provider settings or templates have
+been changed by these source edits.

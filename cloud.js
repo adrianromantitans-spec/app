@@ -1,4 +1,4 @@
-import {legalMetadata} from './legal.js?v=language-90';
+import {legalMetadata} from './legal.js?v=legal-review-20261116';
 import {currencyOf} from './model.js?v=language-90';
 import {tr,language} from './i18n.js?v=language-90';
 import {receiptPath} from './extras.js?v=language-90';
