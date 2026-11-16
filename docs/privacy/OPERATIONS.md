@@ -1,4 +1,4 @@
-# DivZplit privacy operations — unpublished review, 16 November 2026
+# DivZplit privacy operations — release review, 16 November 2026
 
 Operator currently identified in the app: Adrian Roman, an individual based in
 Romania; support@divzplit.com. The owner confirms no company, no current ads or
@@ -10,6 +10,8 @@ and Switzerland are included. The owner has instructed that their postal address
 not be published. The draft identifies Adrian Roman, Romania and the support email;
 any separate store/commercial-law address requirements remain unresolved.
 This document is an operating procedure, not a compliance certification.
+The owner approved publication of the website/document updates on 16 November.
+Backend deletion remediation and store submission are separate from that release.
 
 ## Evidence and limits
 
