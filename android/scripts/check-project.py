@@ -34,6 +34,13 @@ assert config['additionalTrustedOrigins']==[], 'Review and independently verify 
 styles=ET.parse(A/'app/src/main/res/values-v31/styles.xml').getroot()
 items={item.get('name'):item.text for item in styles.findall('./style/item')}
 assert items['android:windowSplashScreenBackground']=='@color/backgroundColor'
-assert items['android:windowSplashScreenAnimatedIcon']=='@mipmap/ic_launcher'
+assert items['android:windowSplashScreenAnimatedIcon']=='@drawable/ic_splash'
+# The splash must keep the exact existing DZ path and avoid the launcher's small bitmap.
+splash=ET.parse(A/'app/src/main/res/drawable/ic_splash_maskable.xml').getroot()
+brand=ET.parse(A.parent/'assets/divzplit-logo.svg').getroot()
+assert splash.tag=='vector'
+assert splash.findall('.//path')[-1].get(ns+'pathData')==brand.find('{http://www.w3.org/2000/svg}path').get('d')
+adaptive=ET.parse(A/'app/src/main/res/drawable-v31/ic_splash.xml').getroot()
+assert any(item.get(ns+'drawable')=='@drawable/ic_splash_maskable' for item in adaptive.findall('.//item'))
 assert not any((A/'app/src/main').rglob('*.so'))
 print(f"PASS: {config['packageId']} {config['appVersionName']} ({config['appVersionCode']}), min 24 / target 36, Gradle wrapper verified, HTTPS TWA and notification delegation intact.")

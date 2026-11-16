@@ -20,8 +20,8 @@
     "path": "./divzplit-upload.jks",
     "alias": "divzplit"
   },
-  "appVersionName": "1.0.1",
-  "appVersionCode": 2,
+  "appVersionName": "1.0.2",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://divzplit.com/manifest.webmanifest",

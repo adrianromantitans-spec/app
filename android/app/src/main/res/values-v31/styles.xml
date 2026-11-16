@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Keep Android 12+ mandatory system splash with the existing app icon.
+    <!-- Keep Android 12+ mandatory system splash with the existing brand as a resolution-independent drawable.
          No hold condition, custom exit delay or suppression of platform UI. -->
     <style name="Theme.DivZplit.Launcher" parent="Theme.DivZplit.Launcher.Base">
         <item name="android:windowSplashScreenBackground">@color/backgroundColor</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
     </style>
 </resources>
