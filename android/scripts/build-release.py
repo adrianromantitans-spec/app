@@ -9,6 +9,7 @@ def main():
  parser=argparse.ArgumentParser(description=__doc__)
  parser.add_argument('--keystore',help='Existing private upload keystore (outside the repository).')
  parser.add_argument('--alias',help='Upload key alias (default: divzplit).')
+ parser.add_argument('--wrapper',choices=['twa','webview'],default='twa',help='WebView is an experimental pilot, not production-ready.')
  args=parser.parse_args()
  env=os.environ.copy()
  store=args.keystore or env.get('DIVZPLIT_UPLOAD_STORE_FILE') or input('Ruta del almacén de subida (.jks): ').strip()
@@ -28,13 +29,14 @@ def main():
   raise RuntimeError('La clave no coincide con el certificado de subida preparado. No se generará un AAB con otra identidad.')
  wrapper=ANDROID/('gradlew.bat' if os.name=='nt' else 'gradlew')
  subprocess.run([sys.executable,str(ANDROID/'scripts/check-project.py')],check=True)
- subprocess.run([str(wrapper),'--no-daemon','--console=plain',':app:lintRelease',':app:bundleRelease'],cwd=ANDROID,env=env,check=True)
+ if args.wrapper=='webview':subprocess.run([sys.executable,str(ANDROID/'scripts/test-webview.py')],check=True)
+ subprocess.run([str(wrapper),'--no-daemon','--console=plain','-PdivzplitWrapper='+args.wrapper,':app:lintRelease',':app:bundleRelease'],cwd=ANDROID,env=env,check=True)
  bundle=ANDROID/'app/build/outputs/bundle/release/app-release.aab'
  if not bundle.is_file():raise RuntimeError('Gradle no ha generado el AAB esperado.')
  java_home=env.get('JAVA_HOME')
  verifier=Path(java_home)/'bin'/('jarsigner.exe' if os.name=='nt' else 'jarsigner') if java_home else shutil.which('jarsigner')
  if not verifier:raise RuntimeError('Falta jarsigner: instala un JDK 17 completo y configura JAVA_HOME.')
- release=json.loads((ANDROID/'twa-manifest.json').read_text(encoding='utf-8'))
+ release=json.loads((ANDROID/('webview-pilot.json' if args.wrapper=='webview' else 'twa-manifest.json')).read_text(encoding='utf-8'))
  out=ANDROID/'app/build/outputs/play';out.mkdir(parents=True,exist_ok=True)
  target=out/f"divzplit-{release['appVersionName']}.aab"
  # Standard JDK packaging puts the JAR manifest first, avoiding JarInputStream
@@ -43,6 +45,7 @@ def main():
                  '-keypass:env','DIVZPLIT_UPLOAD_KEY_PASSWORD','-sigalg','SHA256withRSA','-digestalg','SHA-256',
                  '-signedjar',str(target),str(bundle),env['DIVZPLIT_UPLOAD_KEY_ALIAS']],check=True,env=env)
  subprocess.run([str(verifier),'-verify',str(target)],check=True,env=env)
+ if args.wrapper=='webview':print('EXPERIMENTAL: comprobar docs/ANDROID-WEBVIEW-PILOT.md antes de distribuir; push nativo pendiente.')
  print('\nAAB firmado:',target)
  print('Comprueba en Play Console que el certificado de subida coincide. Nunca subas el .jks ni su contraseña.')
 

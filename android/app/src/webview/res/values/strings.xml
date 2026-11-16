@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_connection">Check your connection and try again.</string>
+    <string name="native_retry">Try again</string>
+    <string name="native_no_handler">No compatible app available</string>
+    <string name="native_export_error">Could not save export</string>
+</resources>

@@ -1,0 +1,9 @@
+{
+  "appVersionCode": 4,
+  "appVersionName": "1.1.0-webview.1",
+  "status": "experimental-not-for-production",
+  "productionBlockers": [
+    "Native push delivery requires a separate implementation; Web Push is unavailable in Android WebView.",
+    "Real-device Google/Apple OAuth, verified App Links, process recreation, receipt/OCR and export tests are pending."
+  ]
+}
