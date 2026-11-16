@@ -1,0 +1,7 @@
+# Tasks shortcut and current landing captures
+
+The existing three home shortcuts now show Tasks, Shopping and Vote. Tasks replaces only the old Add expense shortcut and uses the existing `data-route="tasks"` navigation, icon and translations. Expense creation remains in the central + menu and its existing empty-state entry. No application state, backend, startup animation, dock effects or CSS changed.
+
+All landing screenshots were captured again from the implemented app with the existing fictional local fixtures in Spanish, English and Romanian. Changed WebP images retain the original 1×/2× dimensions and compression; unchanged captures remain byte-identical. The welcome images and social preview were also regenerated. Landing markup, sections and behavior stay the same; image and script resource revisions invalidate stale browser caches.
+
+Validation: `npm test`, `npm run check`, the loading/source invariants, and the existing visual app and landing browser suites passed. App checks cover six viewport widths, the three shortcuts, the original expense form through +, shopping, polls, tasks, groups, account controls and balance states in all three languages. Landing checks cover responsive layout, real images, language switching, interactive steps, FAQ, menu, reduced motion, navigation and no backend requests. Logs: `/workspace/scratch/divzplit-tasks-95/`. These are Chromium fixture checks, not physical-device tests or production database writes.

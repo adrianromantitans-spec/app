@@ -1,7 +1,7 @@
-import {legalMetadata} from './legal.js?v=recovery-84';
-import {currencyOf} from './model.js?v=recovery-84';
-import {tr,language} from './i18n.js?v=recovery-84';
-import {receiptPath} from './extras.js?v=recovery-84';
+import {legalMetadata} from './legal.js?v=legal-review-20261116';
+import {currencyOf} from './model.js?v=language-90';
+import {tr,language} from './i18n.js?v=language-90';
+import {receiptPath} from './extras.js?v=language-90';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;
@@ -349,7 +349,7 @@ export class Cloud {
     if(!viewer)throw new CloudError(tr('Vuelve a entrar en tu cuenta.'),'session',401);
     let result;
     try{result=await this.rpc('divzplit_delete_account',{});}
-    catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado desde la cuenta todavía no está activado. Ejecuta la actualización de Supabase o escribe a soporte.'));throw error;}
+    catch(error){if(error.status===404||error.code==='PGRST202')throw new CloudError(tr('El borrado desde la cuenta no está disponible. Escribe a support@divzplit.com para solicitar ayuda.'));throw error;}
     if(this.user?.id!==viewer||result?.deleted!==true)throw new CloudError(tr('No se ha podido confirmar el borrado. Vuelve a intentarlo.'),'session',401);
     this.persistSession(null);this.user=null;
     return result;

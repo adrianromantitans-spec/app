@@ -1,197 +1,253 @@
-# DivZplit: privacy operations and outstanding launch requirements
+# DivZplit privacy operations — release review, 16 November 2026
 
-This is an operating procedure, not a legal certification. Controller: Adrian
-Roman, Romania; support@divzplit.com. Primary database region confirmed by the
-owner's Supabase screenshot: eu-west-1, Ireland. Free service, advertising planned
-but not installed. The owner has chosen to restrict registration to people aged 16 or older. No professional
-postal address has been supplied. These facts do not establish complete compliance.
+Operator currently identified in the app: Adrian Roman, an individual based in
+Romania; support@divzplit.com. The owner confirms no company, no current ads or
+paid features, Google Play first and Apple App Store later. Future ads, a one-time
+ad-removal purchase and possible premium features are plans, not active services.
+The owner plans European countries first, with the exact list selected in Google
+Play Console before release. Do not assume that means EU/EEA only or that the UK
+and Switzerland are included. The owner has instructed that their postal address
+not be published. The draft identifies Adrian Roman, Romania and the support email;
+any separate store/commercial-law address requirements remain unresolved.
+This document is an operating procedure, not a compliance certification.
+The owner approved publication of the website/document updates on 16 November.
+Backend deletion remediation and store submission are separate from that release.
 
-## Deploy the technical update
+## Evidence and limits
 
-1. In the existing Supabase project's SQL Editor, execute all of
-   `supabase/privacy-operations.sql`. It depends on the existing shopping,
-   notifications and exchange-rate migrations. It does not erase accounts,
-   expenses or confirmed payments. It creates a private self-export RPC and a
-   service-only retention function.
-2. Verify `select jobname, active from cron.job where
-   jobname='divzplit-privacy-retention';`. If pg_cron is unavailable, arrange a
-   trusted daily run of `select public.divzplit_privacy_retention();`; do not
-   claim automatic expiry before the schedule is enabled and monitored.
-3. Test account export with two test accounts in different groups. The exported
-   account ID must match the signed-in user. The web client refuses a mismatched
-   identity and reports a missing migration instead of inventing an export.
-4. Never put service-role, SMTP, Resend, signing keys or private case records in
-   frontend files, this repository, screenshots or chat.
+The source reviewed is based on commit 1862509. Draft edits are on the review branch
+`draft/legal-help-review-2026-11-16`; the live site has not been changed. Code is evidence
+of intended behavior, not proof that a migration or scheduled job is live.
 
-## Requests: check the support inbox every working day
+Supabase MCP is configured with OAuth and read-only access for project
+xvtqmmpufvmyuokpmjvf. The MCP endpoint initially rejected inspection. A later
+owner-authorized review succeeded through the Supabase Management API, with
+`read_only: true`; PostgreSQL reported `transaction_read_only=on` and the
+`supabase_read_only_user` role. The deletion, export and retention function bodies
+match the repository after SQL token normalization. This verifies those deployed
+bodies; it does not establish the status of every migration. Auth configuration
+inspection remains denied because the OAuth grant lacks `auth_config_read`.
 
-The account page contains Help centre, Contact and Download my account data.
-Contact opens the person's mail app addressed to support; they write and send
-the request themselves. Assign a case reference on receipt; it is not proof of
-identity. Gmail is the current mailbox, via Cloudflare forwarding.
-Keep case records in a restricted location outside this public GitHub repository.
+The Management API now confirms Ireland (eu-west-1) and ACTIVE_HEALTHY status.
+Previous audit notes identify
+Supabase, GitHub Pages, Resend, Google and Cloudflare. Confirm actual settings and
+contracts in the provider accounts before release. No private records or secrets
+belong in this repository.
 
-For each received request, record the received date, reference, account ID if
-known, type, proportionate verification, calendar-month deadline, handler,
-actions, response date, grounds for any retained information and planned review.
-Acknowledge receipt promptly. Normally respond without undue delay and within
-one calendar month; if an applicable complexity/volume extension is necessary,
-notify the requester within the first month and explain why. Do not silently
-restart the deadline, charge routinely, or request ID documents by default.
+## Requests and complaints
 
-Verify using the signed-in account and a reply from its verified address where
-adequate. A request ID, matching name, group invitation or screenshot alone is
-not sufficient to disclose or erase a different person's account. For genuine
-identity doubts, ask only for necessary information using a secure channel.
-If the request is sent from a different address, resolve identity before disclosure.
+Check support@divzplit.com each working day and assign a responsible handler and
+backup. Contact opens the user's mail app; it does not submit a ticket until they
+send the message. Store case records in a restricted location outside this public
+repository. Record receipt date, case reference, account identifier where needed,
+request scope, verification, deadline, handler, actions, response, retention grounds
+and review date. Avoid collecting identity documents by default.
 
-Access/portability: the self-export covers account metadata, current shared
-groups, history, payment requests, shopping, own notifications and preferences.
-Receipt references are included; obtain actual receipt files separately if
-requested. Provider logs, support correspondence, previous groups, backups and
-other data not returned by this export require a separate scoped review. Never
-send other users' private email, authentication secrets, private push keys or
-unrelated group records. Protect exports in transit and limit link lifetime.
+Respond without undue delay and normally within one month of receipt. Where an
+extension is legally available because of complexity or number of requests,
+explain the extension and reasons within that first month. Verification must be
+proportionate and must not silently restart the deadline. Review applicable
+exceptions individually and provide reasons and complaint routes where required.
 
-Correction: check the field, authoritative source and effects on other members.
-A correction is not permission to arbitrarily change settled financial records.
-Restriction/objection: record the scope and applicable basis, pause the relevant
-optional processing as appropriate, and give a reasoned response. Manage push
-permissions separately from contractual acceptance.
+Self-export uses `divzplit_privacy_export()` and covers the authenticated account,
+accessible groups, history, payment requests, shopping, own notifications and
+preferences. The client rejects a response for a different account. Missing
+function support must result in an honest error and a support route. Receipt
+references do not supply image files. Review requested receipt images, provider
+logs, support mail, previous groups and other data separately, protecting other
+people's information. Do not send authentication secrets or private push keys.
 
-## Closing accounts and erasure: human review is required
+Correction, objection and restriction require a scoped review of the data, legal
+basis and effects on other members. A corrected record must preserve the meaning
+of confirmed payments. Advertising and notification choices must remain separate
+from contractual acceptance.
 
-There is no automatic erasure RPC. The UI says this explicitly. Do not promise
-that sending an email instantly erases an account or cancels its debts.
+## Account deletion: self-service plus review of remaining data
 
-1. Verify the requester; scope their account, group membership, owned groups,
-   receipt images, shopping authorship, notifications, support mail and provider
-   records. Use `ACCOUNT-REVIEW.sql` with a verified UUID in the admin SQL editor;
-   it is read-only. Do not run broad DELETE statements from an unverified email.
-2. Address ownership and other members' rights before changing shared records.
-   The database has real foreign-key references to auth.users from group owners,
-   members, shopping authors and payment participants; blindly deleting the Auth
-   user can fail or corrupt the application's meaning.
-3. Classify what should be erased, what can be de-identified and what must be
-   retained on a documented applicable legal basis. Review names, free text,
-   before/after history, receipt images and exported/support copies, not just
-   auth metadata. An opaque UUID alone is not a guarantee of anonymization.
-4. Prepare a targeted change plan with a recoverable, access-controlled backup,
-   required successor approval and a check that unrelated balances are unchanged.
-   Apply in the administrator environment only after the plan is reviewed.
-   Remove/revoke relevant auth sessions, identities and subscriptions as applicable.
-5. Verify loss of access, the requested removals and unaffected group balances.
-   Record any necessary exceptions and when they will be reviewed. Explain the
-   result to the user. Backups follow provider schedules; do not promise immediate
-   deletion from every backup. Reapply deletions if a backup is restored.
+The app contains a self-service route in Account → Delete account and on
+`https://divzplit.com/delete-account/`. The backend implementation is
+`supabase/account-deletion.sql`. A missing function or failed call must never be
+reported as successful deletion. Verify deployment and test using authorized test
+accounts before relying on the public instructions for a store submission.
 
-If you cannot perform the plan safely, obtain qualified database/privacy help;
-acknowledge the case and comply with applicable response deadlines. The existence
-of this procedure does not mean past erasure requests have been processed.
+The current SQL disables the old auth account, clears its profile and identities,
+revokes sessions, removes notifications and subscriptions, changes displayed member
+and history names to `Cuenta eliminada`, transfers shared-group ownership and
+removes groups with no other member. A technical auth identifier remains to keep
+ledger references coherent. It is pseudonymization, not proof of anonymity.
+Removing the old identity does not establish a permanent ban on registering a new
+account with the same email. Do not promise that it does.
 
-## Retention decisions and monitoring
+Review these implementation limits before release:
 
-Once the SQL job is enabled: notifications older than 90 days; terminal push
-jobs older than 7 days (using their last scheduled attempt); disabled subscriptions
-not updated for 30 days; FX quotes older than 2 days; invitations expired for over
-30 days. Daily cleanup can add up to one run interval to these operational targets.
-Active expenses, payments, history and accounts are not purged by that function.
-Review their continued necessity on verified closure requests and inactive-service
-reviews; do not retain indefinitely merely because storage is available.
+- Descriptions, history payloads, receipts and other shared free text may still
+  identify the person. Review them for a wider erasure request and justify any
+  necessary retention; retaining balances does not justify every attachment.
+- The current SQL directly deletes `storage.objects` rows. Supabase requires its
+  Storage API to remove underlying files; deleting metadata alone is insufficient
+  and can orphan files. Implement and verify an authorized Storage API cleanup
+  workflow before claiming receipt-file erasure. Do not mark a cleanup complete
+  merely because the row disappeared.
+- Verify that existing access tokens lose the relevant access within the intended
+  window after session revocation. Do not assume deleting refresh tokens instantly
+  invalidates every previously issued JWT.
+- Check memberships, history, payment participants, shopping authorship, push jobs,
+  provider records and copied data. Confirm the account cannot authenticate and
+  unrelated balances and other members' access remain correct.
+- Backups and logs follow actual provider settings. Establish a restoration
+  process that reapplies deletions and restricts restored data before reuse.
 
-Support-case target: remove unnecessary attachments promptly after the case is
-resolved; review closed cases after 12 months, retaining only proportionate
-records needed for an identified obligation or dispute. Do not present this as
-an automatic Gmail rule; configure and perform the review. Supabase/Resend/GitHub/
-Google log and backup periods depend on actual plans and contracts and must be
-verified. Record those periods before promising exact expiry to users.
+For a broader erasure request, verify the requester, use a read-only inventory
+such as `ACCOUNT-REVIEW.sql`, classify erase/de-identify/retain outcomes and apply
+only a reviewed, targeted plan. Account deletion does not cancel debts. Explain
+remaining data, the basis and review criteria to the requester. Copies other users
+already downloaded may require separate action by those users.
 
-## Processor and transfer review: account owner actions
+## Retention: purpose-based policy and operational verification
 
-For each provider, document roles, purposes, data, location, subprocessors,
-retention, security and the applicable transfer mechanism. Primary database EU
-residency does not establish that every auth, support, email, log and backup
-operation stays in the EU. Review and enter the applicable DPA/terms through the
-actual accounts; this task does not accept contracts on the owner's behalf.
+A shared-expense app still processes personal data and needs storage limits or
+clear criteria. Do not retain everything indefinitely because the service is free
+or deals with expenses. The public draft uses purpose-based criteria: active
+account service, continuing group use, a specific obligation or an identified
+dispute. Periodically review data that is no longer needed and act on verified
+requests. The owner has not adopted exact periods for all categories.
 
-- Supabase DPA: https://supabase.com/legal/customer-resources/data-processing-addendum
-- Supabase subprocessors: https://supabase.com/legal/customer-resources/subprocessor-list
-- Resend DPA: https://resend.com/legal/dpa
-- Google Cloud / Gmail support mailbox: confirm whether the actual account's
-  contractual arrangements cover the planned processing; a consumer Google
-  account is not automatically a business processor agreement.
-- GitHub Pages, Cloudflare DNS/email forwarding and browser push services: assess
-  their roles and published privacy/security/transfer terms for the features used.
+`supabase/privacy-operations.sql` proposes cleanup of notifications older than
+90 days, terminal push jobs after 7 days, disabled subscriptions after 30 days,
+FX quotes after 2 days and invitations expired for over 30 days. Those thresholds
+were originally code defaults; the read-only production review now confirms the
+same deployed function and an active, successful daily job. The public draft
+therefore describes those existing temporary-data rules. They do not purge active
+accounts, expenses, payment records, history or receipt images.
 
-Use MFA for Supabase, GitHub, Cloudflare, Resend and support/admin Google accounts.
-Review project membership (the support Google account was shown as Owner), avoid
-shared passwords, restrict recovery methods and regularly verify access rules.
-RLS tests cannot prove the live project has all current migrations or secure
-provider account configuration. Review actual production settings separately.
+Keep the active daily `divzplit-privacy-retention` job under monitoring and review
+success/failure results without disclosing user data. Do not execute the retention
+function merely to audit it; execution deletes data. If pg_cron becomes unavailable,
+arrange a trusted alternative. Read-only access cannot install or repair jobs.
+Decide a review cadence for inactive groups, support correspondence and disputes.
+Provider log and backup periods still require actual plan/settings evidence.
 
-## Minimum registration age: 16
+## Providers, transfers and security
 
-Registration is offered only to users who declare they are 16 or older. Under-16
-selection stops the email/social registration flow; there is no guardian approval
-route. The client records an age band, not date of birth. This is self-declaration,
-not verified age assurance or a server-side anti-bypass control. Review reports
-of underage accounts and assess proportionate age-assurance measures where needed.
-Users aged 16-17 may still be minors and need the applicable protections, including
-advertising restrictions. Other contractual-capacity rules may also apply.
+For Supabase, GitHub Pages, Resend, Cloudflare, the support Google mailbox and push
+services, record roles, data, purposes, locations, subprocessors, retention and the
+applicable transfer safeguards. An Irish primary database does not establish that
+all authentication, email, support, logs and backups stay in the EU. Review and
+enter applicable agreements in the actual accounts; no agreement is accepted by
+this draft. Check whether the support mailbox's actual account arrangement is
+suitable for business processing. Confirm Resend and Cloudflare tracking settings.
 
-## Advertising: planned, not activated
+Use MFA, individual administrator accounts, least privilege and protected recovery
+methods. Review production membership, storage access and RLS policies. Local
+fixtures and source tests cannot prove production access controls are deployed.
+Acceptance/age metadata currently lives in user-editable Supabase metadata; it is
+not an immutable legal event log and must never authorize privileged actions.
+Registration uses a self-declared age band, not independent age verification.
 
-No ad SDK, pixels, fingerprinting or ad cookies have been introduced. Before
-choosing a provider, review child-directed service requirements, consent and
-age treatment, contracts, data flows and transfers. Do not serve profiling-based
-advertising to minors where prohibited; contextual/no-tracking advertising still
-needs a provider-specific review. Never send expense titles, receipt images,
-group membership, balances or support requests to an advertising system.
+## Google Play first; Apple later; future monetization
 
-Where optional tracking needs consent, load it only after valid permission;
-provide an equally accessible reject option, granular choices and withdrawal.
-Do not bundle advertising permission with account creation, terms or push access.
-Do not put a decorative cookie banner over scripts that run before permission.
+Validate working account creation, recovery, self-service account deletion and the
+public deletion URL before a Play submission. Complete Data safety, target-audience,
+content-rating and ads declarations for actual released behavior, including shared
+user content and receipts. A content rating does not change the 16+ account policy.
+Do not claim Apple publication or Apple sign-in where it is not enabled. Review
+Apple privacy disclosures and in-app deletion before its later submission.
 
-## Outstanding legal facts and review
+Ads and purchases require a separate implementation/release review. Identify the
+ad provider and data flow, protect users aged 16–17, implement any required choices
+before loading tracking, and update public disclosures and store declarations.
+Never send receipt images, expense details or group membership to an ad system.
+A one-time ad-removal purchase is not a subscription. Before sale, explain price,
+features, restoration, payment route and applicable refund/withdrawal rights, using
+the relevant store billing rules. Do not add recurring billing language by default.
 
-A professional postal address is missing. Determine the applicability and required
-identification under Romanian Law 365/2002 Art. 5, and business/fiscal obligations
-for planned ad income, with a Romanian professional. Do not invent an address,
-use the Supabase data-center location, assume an email is a postal address, or
-publish a private residence without an informed decision by the owner.
+## Incidents
 
-English remains the default public document. Full Spanish and Romanian versions
-are also available, with language links; app links select the current supported
-language. Review the legal translations and child-directed explanations for the
-actual audience. Translation alone cannot certify comprehension or compliance.
+Assign a handler, secure compromised access, contain the incident and preserve
+minimal evidence. Record personal-data breaches and assess risk. Notify the
+competent authority where required, without undue delay and where feasible within
+72 hours of awareness; document delays. Notify affected people where the high-risk
+threshold applies. Record the assessment when notification is not required.
 
-The version fields stored on signup/OAuth are user-editable Supabase metadata,
-not an immutable legal audit trail and never an authorization/age-approval signal.
-If enforceable evidence is needed, implement a server-owned acceptance event
-store with an appropriate evidence/retention policy. Legal enforceability and
-contractual capacity require jurisdiction-specific review.
+## Sources for release review
 
-## Incident procedure
-
-Contain the incident, revoke compromised credentials, preserve minimal evidence,
-identify affected data/users and assess risks. Log all personal-data breaches.
-Where required, notify ANSPDCP without undue delay and, where feasible, within
-72 hours of becoming aware; explain delays. Notify affected users where high
-risk requires it. Document the assessment even when notification is not required.
-Do not report harmless events as breaches automatically or assume encryption
-eliminates every notification duty.
-
-## Official sources used for this review
-
-- Romanian Law 365/2002, including Article 5 identification requirements:
+- GDPR, especially Articles 5, 6, 12–22, 28, 32–34 and 44–49:
+  https://eur-lex.europa.eu/eli/reg/2016/679/oj
+- European Commission, processing principles and retention:
+  https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en
+- Romanian Law 365/2002, Article 5 provider identification:
   https://legislatie.just.ro/Public/DetaliiDocumentAfis/288595
-- European Commission, response to requests:
-  https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/dealing-requests-individuals_en
-- European Commission, safeguards for children (parental consent depends on the
-  applicable age threshold and legal basis):
-  https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/legal-grounds-processing-data/are-there-any-specific-safeguards-data-about-children_en
-- EDPB small-business guide, transparency and rights:
-  https://www.edpb.europa.eu/sme/be-compliant/respect-individuals-rights_en
-- EDPB controller/processor guidance published by ANSPDCP:
-  https://www.dataprotection.ro/servlet/ViewDocument?id=2486
+- Romanian supervisory authority: https://www.dataprotection.ro/
+- Supabase Storage metadata is read-only; use the Storage API for deletion:
+  https://supabase.com/docs/guides/storage/schema/design
+- Supabase DPA:
+  https://supabase.com/legal/customer-resources/data-processing-addendum
+- Resend DPA: https://resend.com/legal/dpa
+- Google Play account deletion:
+  https://support.google.com/googleplay/android-developer/answer/13327111
+- Google Play Data safety:
+  https://support.google.com/googleplay/android-developer/answer/10787469
+- Apple account deletion:
+  https://developer.apple.com/support/offering-account-deletion-in-your-app/
+
+A public contact address and any applicable business/fiscal identification remain
+unresolved. Not having a company does not remove individual operator obligations.
+Confirm required disclosure for the intended territories without inventing an
+address or publishing a private residence without the owner's informed decision.
+
+## Transactional email follow-up — 16 November 2026
+
+Verification and requested recovery emails are service messages, kept free of
+promotions. No marketing permission or marketing unsubscribe link is required for
+that limited content; assess re-engagement or promotional emails separately before
+sending. Use the email guide for a current DNS snapshot and production checks:
+[AUTH-EMAILS](../AUTH-EMAILS.md). SPF and a DKIM key are publicly present; DMARC is
+`p=none`. Record presence alone is not a delivered-message authentication test.
+Do not change DNS without reconciling the actual sending and forwarding services.
+
+Resend's current public documentation states US customer-data storage and primary
+processing, even with an EU sending region, and SCCs in its DPA. It also states
+that its DPA applies to every account; download the actual account copy rather
+than assuming a separate countersignature is always needed. Confirm the plan and
+tracking settings. The owner confirms Confirm email is enabled and OTP expiry is
+3,600 seconds (one hour), and reports the remaining email/auth checks are handled.
+Classify these results as owner reported; they were not independently tested here.
+Retest expiry, single use and delivery after relevant configuration changes. This
+does not close the separate account-deletion and storage-cleanup review. No
+provider settings or templates have been changed by these source edits.
+
+
+## Verified read-only production review — 16 November 2026
+
+- GitHub Pages reports a successful build of main commit 1862509. The legal/help
+  draft remains unmerged; no website or database changes were deployed.
+- Deletion, export and retention routines exist and match the repository bodies.
+  Anonymous execution is denied for all three. Authenticated users can invoke
+  deletion/export; only the service role among these inspected roles can invoke
+  retention. All three use a fixed empty search path.
+- All 17 public application tables have RLS enabled. Anonymous users have no direct
+  read/write grants on these tables. Authenticated direct writes are denied.
+  Receipt storage is private, capped at 1 MiB, with JPEG-only uploads and policies
+  that check membership and uploader/owner permissions.
+- The privacy-retention job is active at 03:17 UTC daily, succeeded on the review
+  date, and has no failed runs recorded during the preceding seven days. The
+  reminder/dispatch jobs were also active with successful latest runs. A cron
+  success is not proof of final notification delivery to a device.
+- No overdue temporary records were found using each configured threshold plus
+  a one-day scheduling allowance. This query returned only booleans, not records.
+- Backup metadata reports WALG enabled, PITR disabled and no backup entries in the
+  API result. This does not establish that the provider has no internal backups;
+  a usable customer restore path and backup retention remain unverified.
+- No migration-history table was found at `supabase_migrations.schema_migrations`.
+  The direct function comparison is stronger evidence for these three routines
+  than claiming that every migration file has been tracked or deployed.
+- Offline disposable PostgreSQL tests passed for group isolation, exports,
+  housekeeping and receipt policies. The exact deployed deletion/export bodies
+  were also tested with synthetic accounts. Physical receipt cleanup remains a
+  confirmed implementation problem. Production deletion/session loss still needs
+  an end-to-end test and remediation where required; no real account was deleted.
+
+Auth secrets, SMTP settings, accepted agreements, support-mailbox controls, Resend
+tracking and Cloudflare settings were not accessible through this grant. Email
+confirmation and OTP expiry remain owner reported. Store declarations and the
+responsible support/incident handler remain owner/store-console tasks.

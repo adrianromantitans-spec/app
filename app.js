@@ -1,19 +1,21 @@
+import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';
 import {startIntroTransition} from './intro-transition.js?v=start-64';
-import {helpCentreView,filterHelp} from './help.js?v=recovery-84';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=recovery-84';
-import {settlementPlan} from './settlement-plan.js?v=recovery-84';
-import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=recovery-84';
-import {convertedAmount,validConversion} from './fx.js?v=recovery-84';
-import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=recovery-84';
-import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=recovery-84';
-import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=recovery-84';
-import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=recovery-84';
-import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=recovery-84';
-import {Cloud} from './cloud.js?v=recovery-84';
-import {historyView,paymentRequestsView} from './activity-ui.js?v=recovery-84';
-import {NotificationCentre} from './notifications.js?v=recovery-84';
+import {helpCentreView,filterHelp} from './help.js?v=legal-review-20261116';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=legal-review-20261116';
+import {settlementPlan} from './settlement-plan.js?v=language-90';
+import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=language-90';
+import {convertedAmount,validConversion} from './fx.js?v=language-90';
+import {optionalBudget,localDateTime,planClosed,planningFields} from './planning.js?v=language-90';
+import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader,handleReceiptAction} from './receipt-ui.js?v=language-90';
+import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=language-90';
+import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-90';
+import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=language-90';
+import {Cloud} from './cloud.js?v=legal-review-20261116';
+import {historyView,paymentRequestsView} from './activity-ui.js?v=activity-102';
+import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=activity-103';
+import {NotificationCentre} from './notifications.js?v=loading-92';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=recovery-84';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-90';
 
 import {languageSelection} from './language.js?v=language-78';
 const languageLabels={es:'Español',en:'English',ro:'Română'};
@@ -68,6 +70,9 @@ const paymentArchives=new Map();
 const archiveRequests=new Map();
 
 const icons = {
+  bars:'<path d="M5 21V11m7 10V3m7 18v-7"/>',
+  cart:'<path d="M3 3h2l3 12h10l3-9H6M9 21h.01M18 21h.01"/>',
+  pulse:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a18 18 0 0 1 0 18 18 18 0 0 1 0-18Z"/>',
   edit:'<path d="m16 3 5 5-12 12-6 1 1-6L16 3Zm-2 2 5 5"/>',
   refresh:'<path d="M20 7V3m0 4h-4M4 17v4m0-4h4M20 7a9 9 0 0 0-15-2M4 17a9 9 0 0 0 15 2"/>',
@@ -116,8 +121,11 @@ let page = 'home';
 const demoState=structuredClone(state);
 let tab = 'summary';
 let expenseFilter = 'all';
+let activityGraphMode='categories',activityGraphSelection=null;
 let modalOpener;
 const root = document.querySelector('#app');
+window.addEventListener('resize',()=>fitActivityAmount(root),{passive:true});
+document.fonts?.ready.then(()=>fitActivityAmount(root));
 const modalRoot = document.querySelector('#modal-root');
 const group = () => state.groups.find(g => g.id === state.activeGroup);
 const money=(cents,currency=currencyOf(group()))=>formatMoney(cents,currency);
@@ -157,6 +165,7 @@ async function save(checkout=null) {
     return;
   }
   remoteBusy=true;setSync(tr('Guardando…'));
+  const finishSaving=beginContentRefresh(root,tr('Guardando…'),{preferButton:true});
   try {
     for (let i=0;i<state.groups.length;i++) {
       const g=state.groups[i];
@@ -175,16 +184,21 @@ async function save(checkout=null) {
       try {await loadSharedGroups();} catch { /* Keep only the last server-confirmed state. */ }
     }
     setSync(tr('Cambio no confirmado'));render();throw error;
-  } finally {remoteBusy=false;}
+  } finally {remoteBusy=false;finishSaving();}
 }
 function empty(title, description, action, label) { return `<div class="empty-state">${icon('spark')}<h3>${title}</h3><p>${description}</p>${action?`<button class="button primary" data-action="${action}">${icon('plus')}${label}</button>`:''}</div>`; }
 function sectionTitle(title, subtitle, extra='') {return `<div class="section-heading"><div><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra}</div>`;}
 
 function currentSection(){return page==='home'?(tab==='expenses'?'expenses':tab==='tasks'?'tasks':tab==='plans'?'polls':'home'):page;}
+function groupPhoto(g){
+ const name=g?.type==='Viaje'?'travel':g?.type==='Plan con amigos'?'friends':'home';
+ return new URL('./assets/groups/'+name+'.webp?v=covers-101',import.meta.url).href;
+}
+function groupThumbnail(g){return `<span class="home-group-symbol group-photo-thumb"><img src="${groupPhoto(g)}" alt="" decoding="async"></span>`;}
 function workspaceLinks(){return [['home','home','Inicio'],['expenses','receipt','Gastos y pagos'],['tasks','task','Tareas'],['polls','vote','Votaciones'],['shopping','receipt','Lista de la compra'],['budget','chart','Presupuesto']];}
 function workspaceMenu(){
  const g=group(),selected=currentSection(),links=workspaceLinks();
- return `${g?`<button class="drawer-group" data-action="choose-group"><span class="home-group-symbol">${icon(groupMode(g)==='travel'?'plane':'home')}</span><span><strong>${esc(g.name)}</strong><small>${g.members.length} · ${esc(tr(g.type))}</small></span>${icon('chevron')}</button>`:''}<div class="drawer-section-label">${tr('Tu grupo')}</div><nav class="workspace-links" aria-label="${tr('Secciones del grupo')}">${links.map(([id,ic,label])=>`<button class="workspace-link ${selected===id||(id==='expenses'&&page==='activity')?'active':''}" data-route="${id}" ${selected===id||(id==='expenses'&&page==='activity')?'aria-current="page"':''}>${icon(ic)}<span>${tr(label)}</span></button>`).join('')}</nav><div class="drawer-divider"></div><button class="workspace-link ${page==='groups'?'active':''}" data-route="groups">${icon('users')}<span>${tr('Mis grupos')}</span><small>${state.groups.length}</small></button><div class="workspace-menu-footer"><button class="drawer-profile" data-route="profile">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${tr('Tu perfil y preferencias')}</small></span>${icon('chevron')}</button></div>`;
+ return `${g?`<button class="drawer-group" data-action="choose-group">${groupThumbnail(g)}<span><strong>${esc(g.name)}</strong><small>${g.members.length} · ${esc(tr(g.type))}</small></span>${icon('chevron')}</button>`:''}<div class="drawer-section-label">${tr('Tu grupo')}</div><nav class="workspace-links" aria-label="${tr('Secciones del grupo')}">${links.map(([id,ic,label])=>`<button class="workspace-link ${selected===id||(id==='expenses'&&page==='activity')?'active':''}" data-route="${id}" ${selected===id||(id==='expenses'&&page==='activity')?'aria-current="page"':''}>${icon(ic)}<span>${tr(label)}</span></button>`).join('')}</nav><div class="drawer-divider"></div><button class="workspace-link ${page==='groups'?'active':''}" data-route="groups">${icon('users')}<span>${tr('Mis grupos')}</span><small>${state.groups.length}</small></button><div class="workspace-menu-footer"><button class="drawer-profile" data-route="profile">${avatar(currentProfile())}<span><strong>${esc(currentProfile().name)}</strong><small>${tr('Tu perfil y preferencias')}</small></span>${icon('chevron')}</button></div>`;
 }
 function openWorkspaceMenu(){
  openModal(`<span class="brand-wordmark">${brandWordmark}</span>`,workspaceMenu(),'','navigation-drawer');
@@ -205,6 +219,10 @@ async function navigateWorkspace(route){
 function quickAddButton(){
  return '<div class="mobile-quick-add"><button class="nav-add" data-action="quick-add" aria-label="'+tr('Añadir')+'" aria-haspopup="dialog" aria-expanded="false">'+icon('plus')+'</button></div>';
 }
+// Presentation only: every button uses the existing delegated route handler.
+function referenceDock(){
+ return `<nav class="reference-dock" aria-label="${tr('Navegación principal')}">${[['home','home','Inicio'],['groups','users','Planes'],['activity','pulse','Actividad'],['profile','person','Cuenta']].map(([route,ic,label])=>`<button data-route="${route}" class="reference-dock-item ${currentSection()===route?'active':''}" ${currentSection()===route?'aria-current="page"':''}>${icon(ic)}<span>${tr(label)}</span></button>`).join('')}</nav>`;
+}
 function render() {
  root.toggleAttribute('aria-busy',authLoading);
  if(authLoading){if(!brandIntroShown)renderWelcome();return;}
@@ -213,8 +231,11 @@ function render() {
  root.classList.add('personal-shell');document.body.classList.add('personal-app');
  const helpFocus=page==='help'&&document.activeElement?.matches('[data-help-search]')?{start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd}:null;
  const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Cuenta',help:'Centro de ayuda',activity:'Gastos y pagos'}[page])||'Inicio';
- root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">${brandWordmark}</span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home" aria-label="DivZplit, ${tr('Inicio')}">${brandWordmark}</a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():page==='help'?helpCentreView(helpQuery):!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}</div>`;
+ root.dispatchEvent(new Event('dock-before-render'));
+ root.innerHTML=ui`<aside class="sidebar workspace-sidebar" aria-label="Navegación principal"><a class="brand" href="#" data-route="home"><span class="brand-wordmark">${brandWordmark}</span></a>${workspaceMenu()}</aside><div class="main-shell" data-current-page="${esc(page)}"><header class="topbar"><div class="breadcrumb">${page==='shopping'?`<button class="mobile-menu-trigger back-to-home" data-route="home" aria-label="${tr('Inicio')}">${icon('chevron','back-arrow')}</button>`:`<button class="mobile-menu-trigger" data-action="workspace-menu" aria-label="${tr('Abrir menú')}" aria-haspopup="dialog" aria-expanded="false">${icon('menu')}</button>`}<a class="mobile-logo brand-wordmark" href="#" data-route="home" aria-label="DivZplit, ${tr('Inicio')}">${brandWordmark}</a><span class="desktop-crumb">${tr(title)}</span></div><div class="topbar-right">${!accountUser?`<button class="button secondary account-button" data-action="account">${tr('Entrar')}</button>`:''}${accountUser?notifications.bell():''}</div></header><main id="main" tabindex="-1">${accountBanner()}${page==='profile'?profileView():page==='help'?helpCentreView(helpQuery):!state.groups.length?emptyAccount():page==='shopping'?shoppingPageView():page==='home'?homeView():page==='groups'?groupsView():page==='activity'?activityView():budgetView()}</main>${quickAddButton()}${referenceDock()}</div>`;
+ if(page==='activity')fitActivityAmount(root);
  root.inert=brandIntroActive||authLoading||!!modalRoot.firstElementChild;
+ root.dispatchEvent(new Event('dock-after-render'));
  if(page==='shopping')renderShoppingList();
  if(page==='help'){filterHelp(root,helpQuery);if(helpFocus){const input=root.querySelector('[data-help-search]');input?.focus({preventScroll:true});input?.setSelectionRange(helpFocus.start,helpFocus.end);}}
 
@@ -228,8 +249,7 @@ function balanceCaption(group){
  return owing?ui`Debes a ${ids.length} personas`:ui`Te deben ${ids.length} personas`;
 }
 function homeGroupHeader(g){
- const travel=groupMode(g)==='travel';
- return `<div class="home-group-header"><button class="home-group-picker" data-action="choose-group" aria-label="${tr('Seleccionar grupo')}"><span class="home-group-symbol">${icon(travel?'plane':'home')}</span><span class="home-group-copy"><strong>${esc(g.name)} <span aria-hidden="true">⌄</span></strong>${g.date?`<small>${esc(tripDetail(g.date,g.endDate))}</small>`:''}</span></button><span class="home-group-context">${g.members.length} · ${esc(tr(g.type))}</span></div>`;
+ return `<div class="home-group-header"><button class="home-group-picker" data-action="choose-group" aria-label="${tr('Seleccionar grupo')}">${groupThumbnail(g)}<span class="home-group-copy"><strong>${esc(g.name)} <span aria-hidden="true">⌄</span></strong>${g.date?`<small>${esc(tripDetail(g.date,g.endDate))}</small>`:''}</span></button><span class="home-group-context"><span class="reference-members"><span class="reference-avatars">${g.members.slice(0,2).map(person=>avatar(person,true)).join('')}</span><span>${g.members.slice(0,2).map(person=>esc(memberName(person))).join(' · ')}</span></span><span>${g.members.length} · ${esc(tr(g.type))}</span></span></div>`;
 }
 function homeView(){
  const g=group();homeClock=Math.floor(Date.now()/60000);
@@ -237,7 +257,7 @@ function homeView(){
  const info=homeSummary(g),amount=Math.abs(info.ownBalance),credit=info.ownBalance>0,debt=info.ownBalance<0,data=activityData(),incoming=data.requests.filter(r=>r.to_id===accountUser?.id),outgoing=data.requests.filter(r=>r.from_id===accountUser?.id),pending=incoming.length||outgoing.length;
  const caption=balanceCaption(g),label=caption||tr(credit?'Te deben':debt?'Debes':'Todo saldado'),symbol=credit?'+':debt?'−':'✓';
  const attention=data.ready===true&&pending?`<button class="home-attention" data-action="show-pending-payments"><span class="home-attention-count">${pending}</span><strong>${incoming.length?incoming.length===1?tr('Un pago espera tu confirmación'):ui`${incoming.length} pagos esperan tu confirmación`:outgoing.length===1?tr('Un pago espera confirmación'):ui`${outgoing.length} pagos esperan confirmación`}</strong>${icon('chevron')}</button>`:'';
- return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<div class="home-greeting"><p>${tr('Hola!')}</p><h1>${tr(info.travel?'Viajad. Lo demás, aquí.':['Pareja','Convivencia'].includes(g.type)?'Tu casa, sin líos.':'Tus cuentas, al día.')}</h1></div><article class="home-balance balance-stat ${credit?'is-credit':debt?'is-owed':'is-settled'}" data-balance-state="${credit?'credit':debt?'debt':'settled'}"><div class="stat-copy"><span class="balance-status stat-label"><span class="balance-status-sign" aria-hidden="true">${symbol}</span><span class="balance-status-text">${esc(label)}</span></span><strong class="stat-amount" aria-label="${esc(label+': '+money(amount))}">${statMoney(amount)}</strong></div><div class="home-balance-bottom"><small>${tr(info.travel&&currencyOf(g)!=='EUR'?'Consulta el cambio a otra moneda':'Tu saldo personal')}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':amount?'Saldar':'Ver saldos')}${icon('arrow')}</button></div></article>${attention}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Últimos gastos')}</h2><button class="text-button" data-route="expenses">${tr('Ver todos')}${icon('arrow')}</button></div>${g.expenses.length?expenseList(recentExpenses(g)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</section></section>`;
+ return `<section class="personal-home" data-home-mode="${info.travel?'travel':'home'}">${homeGroupHeader(g)}<article class="home-balance balance-stat ${credit?'is-credit':debt?'is-owed':'is-settled'}" data-balance-state="${credit?'credit':debt?'debt':'settled'}"><div class="stat-copy"><span class="balance-status stat-label"><span class="balance-status-sign" aria-hidden="true">${symbol}</span><span class="balance-status-text">${esc(label)}</span></span><strong class="stat-amount" aria-label="${esc(label+': '+money(amount))}">${statMoney(amount)}</strong></div><div class="home-balance-bottom"><small>${tr(info.travel&&currencyOf(g)!=='EUR'?'Consulta el cambio a otra moneda':'Tu saldo personal')}</small><button class="text-button" data-action="settlements" ${info.travel&&currencyOf(g)!=='EUR'?'data-prefer-euros="true"':''}>${tr(info.travel&&currencyOf(g)!=='EUR'?'Ver cambio':amount?'Saldar':'Ver saldos')}${icon('arrow')}</button></div></article><nav class="home-reference-actions" aria-label="${tr('Organización')}"><button class="home-reference-action primary" data-route="tasks">${icon('task')}<span>${tr('Tareas')}</span></button><button class="home-reference-action" data-route="shopping">${icon('cart')}<span>${tr('Compras')}</span></button><button class="home-reference-action" data-route="polls">${icon('bars')}<span>${tr('Votar')}</span></button></nav>${attention}<section class="home-recent"><div class="home-section-heading"><h2>${tr('Últimos gastos')}</h2><button class="text-button" data-route="expenses">${tr('Ver todos')}${icon('arrow')}</button></div>${g.expenses.length?expenseList(recentExpenses(g)):`<button class="home-empty-action" data-action="new-expense">${icon('receipt')}<span>${tr('Añade el primer gasto del grupo.')}</span>${icon('plus')}</button>`}</section></section>`;
 }
 function rememberHomeMode(g) {
  try{const key='divzplit-home-groups:'+ (accountUser?.id||'demo'),saved=JSON.parse(sessionStorage.getItem(key)||'{}');sessionStorage.setItem(key,JSON.stringify({...saved,[groupMode(g)]:g.id}));}catch{/* Navigation also works without browser storage. */}
@@ -249,7 +269,7 @@ async function activateHomeGroup(id) {
 }
 function chooseGroup(mode=null) {
  const groups=mode?state.groups.filter(g=>groupMode(g)===mode):state.groups;
- openModal(tr('Seleccionar grupo'),`<div class="home-group-options">${groups.map(g=>`<button class="home-group-option" data-group="${esc(g.id)}"><span class="home-group-symbol">${icon(groupMode(g)==='travel'?'plane':'home')}</span><span><strong>${esc(g.name)}</strong><small>${esc(tr(g.type))} · ${g.members.length} ${tr('personas')}</small></span>${icon(g.id===group()?.id?'check':'chevron')}</button>`).join('')}${!groups.length?`<p class="dialog-copy">${tr(mode==='travel'?'Aún no tienes grupos de viaje.':'Aún no tienes grupos para el día a día.')}</p>`:''}<button class="button primary full-width" data-action="new-group" data-group-type="${mode==='home'?'Convivencia':'Viaje'}">${icon('plus')}${tr(mode==='home'?'Crear grupo de casa':mode==='travel'?'Crear grupo de viaje':'Crear grupo')}</button><div class="home-group-management">${canManage()?`<button class="text-button" data-action="edit-group">${tr('Detalles del grupo')}</button>`:''}${accountUser&&canManage()?`<button class="text-button" data-action="invite">${tr('Invitar')}</button>`:''}</div></div>`);
+ openModal(tr('Seleccionar grupo'),`<div class="home-group-options">${groups.map(g=>`<button class="home-group-option" data-group="${esc(g.id)}">${groupThumbnail(g)}<span><strong>${esc(g.name)}</strong><small>${esc(tr(g.type))} · ${g.members.length} ${tr('personas')}</small></span>${icon(g.id===group()?.id?'check':'chevron')}</button>`).join('')}${!groups.length?`<p class="dialog-copy">${tr(mode==='travel'?'Aún no tienes grupos de viaje.':'Aún no tienes grupos para el día a día.')}</p>`:''}<button class="button primary full-width" data-action="new-group" data-group-type="${mode==='home'?'Convivencia':'Viaje'}">${icon('plus')}${tr(mode==='home'?'Crear grupo de casa':mode==='travel'?'Crear grupo de viaje':'Crear grupo')}</button><div class="home-group-management">${canManage()?`<button class="text-button" data-action="edit-group">${tr('Detalles del grupo')}</button>`:''}${accountUser&&canManage()?`<button class="text-button" data-action="invite">${tr('Invitar')}</button>`:''}</div></div>`);
 }
 async function selectHomeMode(mode) {
  if(!['home','travel'].includes(mode))return;
@@ -262,13 +282,14 @@ function shoppingCurrent(){return shoppingState.groupId===group()?.id&&shoppingS
 function demoShoppingKey(){return 'divzplit-demo-shopping:'+group().id;}
 async function loadShopping(){
  const g=group(),viewer=shoppingViewer(),request=++shoppingRequest;if(!g)return;
+ const finishLoading=shoppingState.loading?()=>{}:beginContentRefresh(root,tr('Cargando lista…'));
  try {
   let items=[];
   if(accountUser)items=await cloud.shoppingList(g.id);
   else {try{items=JSON.parse(localStorage.getItem(demoShoppingKey())||'[]');}catch{}if(!Array.isArray(items))items=[];}
   if(request!==shoppingRequest||g.id!==group()?.id||viewer!==shoppingViewer())return;
   shoppingState={groupId:g.id,viewer,items,error:'',loading:false};renderShoppingList();
- }catch(error){if(request===shoppingRequest&&g.id===group()?.id&&viewer===shoppingViewer()){shoppingState={groupId:g.id,viewer,items:[],error:error.message,loading:false};renderShoppingList();}}
+ }catch(error){if(request===shoppingRequest&&g.id===group()?.id&&viewer===shoppingViewer()){shoppingState={groupId:g.id,viewer,items:[],error:error.message,loading:false};renderShoppingList();}}finally{finishLoading();}
 }
 function shoppingPageView(){
  return `<section class="shopping-page"><div class="eyebrow">${esc(group().name)} / ${tr('Organización')}</div><h1>${tr('Lista de la compra')}</h1><p class="shopping-intro">${tr('Todo lo que falta, sin mensajes perdidos.')}</p><div class="shopping-list" data-shopping-group="${esc(group().id)}"><div class="shopping-toolbar"><button class="button primary" data-shopping-action="add">${icon('plus')}${tr('Añadir producto')}</button><button class="text-button" data-shopping-action="refresh" aria-label="${tr('Actualizar lista')}">${icon('refresh')}</button></div><div class="shopping-items" aria-live="polite"></div><div class="shopping-footer"></div><p class="form-error" role="alert"></p></div></section>`;
@@ -284,7 +305,7 @@ function renderShoppingList(){
  const focusedProduct=document.activeElement?.dataset.shoppingCheck;
  const items=shoppingState.items,pending=items.filter(i=>!i.bought),bought=items.filter(i=>i.bought),unlinked=bought.filter(i=>!i.expense_id);
  const row=i=>{const manage=canManage()||i.created_by===shoppingViewer();return `<article class="shopping-row ${i.bought?'is-bought':''}"><label class="shopping-check"><input type="checkbox" data-shopping-check="${esc(i.id)}" ${i.bought?'checked':''} ${i.expense_id?'disabled':''} aria-label="${esc(i.title)}"><span>${icon('check')}</span></label><div class="shopping-product"><strong>${esc(i.title)}</strong>${i.quantity?`<small>${esc(i.quantity)}</small>`:''}${i.expense_id?`<button class="text-button" data-shopping-action="expense" data-shopping-id="${esc(i.id)}">${tr('Gasto registrado')}${icon('chevron')}</button>`:''}</div>${manage?`<div class="shopping-row-actions">${!i.expense_id?`<button class="icon-button" data-shopping-action="edit" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Editar ${i.title}`)}">${icon('edit')}</button>`:''}<button class="icon-button" data-shopping-action="delete" data-shopping-id="${esc(i.id)}" aria-label="${esc(ui`Borrar ${i.title}`)}">${icon('close')}</button></div>`:''}</article>`;};
- root.querySelector('.shopping-items').innerHTML=shoppingState.loading?`<p role="status">${tr('Cargando lista…')}</p>`:shoppingState.error?`<p role="alert" class="form-error">${esc(shoppingState.error)}</p>`:`<section><h3>${tr('Por comprar')}<span>${pending.length}</span></h3>${pending.length?pending.map(row).join(''):`<div class="shopping-empty">${icon('check')}<p>${tr(items.length?'Todo comprado.':'Añade lo que hace falta para la próxima compra.')}</p></div>`}</section>${bought.length?`<section class="shopping-bought"><h3>${tr('Comprados')}<span>${bought.length}</span></h3>${bought.map(row).join('')}</section>`:''}`;
+ root.querySelector('.shopping-items').innerHTML=shoppingState.loading?loadingSkeleton('list',tr('Cargando lista…')):shoppingState.error?`<p role="alert" class="form-error">${esc(shoppingState.error)}</p>`:`<section><h3>${tr('Por comprar')}<span>${pending.length}</span></h3>${pending.length?pending.map(row).join(''):`<div class="shopping-empty">${icon('check')}<p>${tr(items.length?'Todo comprado.':'Añade lo que hace falta para la próxima compra.')}</p></div>`}</section>${bought.length?`<section class="shopping-bought"><h3>${tr('Comprados')}<span>${bought.length}</span></h3>${bought.map(row).join('')}</section>`:''}`;
  root.querySelector('.shopping-footer').innerHTML=!shoppingState.error&&!shoppingState.loading?`<button class="button primary full-width" data-shopping-action="checkout" ${unlinked.length?'':'disabled'}>${icon('receipt')}${tr('Crear gasto de la compra')}${unlinked.length?`<span>${unlinked.length}</span>`:''}</button><p class="shopping-note">${tr('Revisa el importe, el pagador y el reparto antes de guardar.')}</p>${pending.length&&accountUser?`<button class="button secondary full-width shopping-remind" data-shopping-action="remind">${icon('bell')}${tr('Recordar al grupo')}</button>`:''}${canManage()&&bought.length?`<button class="text-button danger-text full-width" data-shopping-action="clear">${tr('Limpiar comprados')}</button>`:''}`:'';
  root.querySelector('[data-shopping-action="add"]').disabled=shoppingState.loading||!!shoppingState.error;
  if(focusedProduct)root.querySelector('[data-shopping-check="'+CSS.escape(focusedProduct)+'"]')?.focus({preventScroll:true});
@@ -296,6 +317,7 @@ function shoppingItemForm(item=null){
 async function shoppingMutation(action,item={}){
  if(!shoppingCurrent())throw new Error(tr('El grupo ha cambiado. Vuelve a abrir el formulario.'));
  const gid=group().id,viewer=shoppingViewer();++shoppingRequest;remoteBusy=true;
+ const finishSaving=beginContentRefresh(root,tr('Guardando…'),{preferButton:true});
  try {
   let items;
   if(accountUser)items=await cloud.shoppingAction(gid,action,item);
@@ -308,7 +330,7 @@ async function shoppingMutation(action,item={}){
    localStorage.setItem(demoShoppingKey(),JSON.stringify(items));
   }
   if(gid===group()?.id&&viewer===shoppingViewer()){shoppingState.items=items;renderShoppingList();}
- }finally{remoteBusy=false;}
+ }finally{remoteBusy=false;finishSaving();}
 }
 async function shoppingAction(el){
  const action=el.dataset.shoppingAction;
@@ -346,7 +368,7 @@ async function shoppingAction(el){
 
 function expenseList(items) {
   if (!items.length) return empty(tr('Las cuentas empiezan aquí'),tr('Añade el primer gasto y DivZplit calculará el reparto.'),'new-expense',tr('Añadir gasto'));
-  return `<div class="expense-list">${items.map(e=>ui`<button type="button" class="expense-row" data-expense="${esc(e.id)}" aria-label="Ver detalle de ${esc(e.title)}"><span class="expense-icon ${categoryTone(e.category)}">${categoryMark(e.category)}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?` <span class="expense-receipt-badge">${icon('receipt')}${tr('Ticket')}</span>`:''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><span class="expense-detail-button" aria-hidden="true">${icon('chevron')}</span></button>`).join('')}</div>`;
+  return `<div class="expense-list">${items.map(e=>ui`<button type="button" class="expense-row" data-expense="${esc(e.id)}" data-paid-by-self="${e.payer==='you'}" aria-label="Ver detalle de ${esc(e.title)}"><span class="expense-icon ${categoryTone(e.category)}">${categoryMark(e.category)}</span><div class="expense-description"><strong>${esc(e.title)}${e.recurrence?' ↻':''}${e.receipt?` <span class="expense-receipt-badge">${icon('receipt')}${tr('Ticket')}</span>`:''}</strong><small>Pagó ${esc(member(e.payer).name)} <span>·</span> ${dateLabel(e.date)}</small></div><div class="expense-value"><strong>${money(e.amount)}</strong><small>${e.participants.length} ${e.participants.length===1?tr('persona'):tr('personas')}</small></div><span class="expense-detail-button" aria-hidden="true">${icon('chevron')}</span></button>`).join('')}</div>`;
 }
 
 function expensesView() {
@@ -418,19 +440,20 @@ async function applyPlanningAction(kind,action,item={}) {
   await save();
  }
 }
-function groupsView() {return ui`<div class="welcome-row"><div><div class="eyebrow">CADA GRUPO, SU HISTORIA</div><h1>La gente con la que compartes<span class="purple-text">.</span></h1><p>De la escapada del finde a las cuentas de casa.</p></div><button class="button primary" data-action="new-group">${icon('plus')} Crear grupo</button></div><div class="group-cards">${state.groups.map((g,i)=>ui`<button class="group-card" data-group="${esc(g.id)}"><div class="group-card-cover cover-${i%3}"><span>${esc(g.emoji)}</span><span class="tiny-pill">${esc(tr(g.type))}</span></div><div class="group-card-body"><h2>${esc(g.name)} ${icon('arrow')}</h2><p>${icon('pin')}${esc(g.place || tr('El próximo gran plan'))}</p>${g.date?`<p class="group-card-dates">${esc(tripDetail(g.date,g.endDate))}</p>`:''}<div class="group-card-footer">${avatars(g.members)}<span>${g.members.length} personas</span></div><div class="group-card-total"><span>Compartido hasta ahora</span><strong>${money(totalSpent(g),currencyOf(g))}</strong></div></div></button>`).join('')}<button class="new-group-card" data-action="new-group"><span>${icon('plus')}</span><h3>El siguiente buen plan</h3><p>Empieza con un grupo.</p></button></div>`;}
+function groupsView() {return ui`<div class="welcome-row"><div><div class="eyebrow">CADA GRUPO, SU HISTORIA</div><h1>La gente con la que compartes<span class="purple-text">.</span></h1><p>De la escapada del finde a las cuentas de casa.</p></div><button class="button primary group-create-button" data-action="new-group" aria-label="${tr('Crear grupo')}">${icon('plus')}<span>Crear grupo</span></button></div><div class="group-cards">${state.groups.map(g=>ui`<button class="group-card" data-group="${esc(g.id)}"><div class="group-card-cover has-group-image"><img class="group-cover-image" src="${groupPhoto(g)}" alt="" loading="lazy" decoding="async"><span class="tiny-pill">${esc(tr(g.type))}</span></div><div class="group-card-body"><h2>${esc(g.name)} ${icon('arrow')}</h2><p>${icon('pin')}${esc(g.place || tr('El próximo gran plan'))}</p>${g.date?`<p class="group-card-dates">${esc(tripDetail(g.date,g.endDate))}</p>`:''}<div class="group-card-footer">${avatars(g.members)}<span>${g.members.length} personas</span></div><div class="group-card-total"><span>Compartido hasta ahora</span><strong>${money(totalSpent(g),currencyOf(g))}</strong></div></div></button>`).join('')}<button class="new-group-card" data-action="new-group"><span>${icon('plus')}</span><h3>El siguiente buen plan</h3><p>Empieza con un grupo.</p></button></div>`;}
 function activityData() {return activityCache.get(group()?.id)||{ready:null,events:[],requests:[],next:null};}
 const activityMemberName=id=>id===accountUser?.id?tr('Tú'):group()?.members.find(m=>m.id===id)?.name||tr('Miembro');
 function activityNotice(data) {
   if(!accountUser)return `<p class="muted">${tr('Entra con tu cuenta para confirmar pagos compartidos.')}</p>`;
   if(data.error)return `<p class="activity-error" role="alert">${esc(data.error)}<button class="text-button" data-action="reload-activity">${tr('Volver a intentar')}</button></p>`;
   if(data.ready===false)return `<p class="muted">${tr('Los pagos con confirmación y el historial todavía no están activados.')}</p>`;
-  if(data.ready===null)return `<p class="muted" role="status">${tr('Cargando actividad…')}</p>`;
+  if(data.ready===null)return loadingSkeleton('button',tr('Cargando actividad…'));
   return '';
 }
 async function loadActivity(more=false,preservePages=false) {
   const g=group(),viewer=accountUser?.id;if(!viewer||!g)return;
   const previous=activityCache.get(g.id),request=(activityRequests.get(g.id)||0)+1;activityRequests.set(g.id,request);
+  const finishLoading=previous?.ready===true?beginContentRefresh(root,tr('Cargando actividad…')):()=>{};
   try{
     const ready=await cloud.collaborationAvailable();
     if(activityRequests.get(g.id)!==request||accountUser?.id!==viewer)return;
@@ -440,14 +463,18 @@ async function loadActivity(more=false,preservePages=false) {
     if(accountUser?.id!==viewer||activityRequests.get(g.id)!==request)return;
     const keepPages=preservePages&&previous?.events?.length>50&&JSON.stringify(previous.events.slice(0,50))===JSON.stringify(result.events);
     activityCache.set(g.id,{ready:true,...result,events:more?[...new Map([...(previous?.events||[]),...result.events].map(event=>[event.id,event])).values()]:keepPages?previous.events:result.events,next:keepPages?previous.next:result.next});
-  }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}
+  }catch(error){if(accountUser?.id===viewer&&activityRequests.get(g.id)===request)activityCache.set(g.id,{...(previous||{events:[],requests:[],next:null}),ready:null,error:error.message});}finally{finishLoading();}
 }
-function pendingPaymentsPanel(data) {
-  return `<section class="panel activity-panel">${sectionTitle(tr('Pagos pendientes de confirmar'),tr('El saldo cambia cuando quien recibe confirma el pago.'))}${activityNotice(data)||ui`<button class="button secondary" data-action="show-pending-payments">Ver pagos pendientes ${icon('arrow')}<span class="payment-list-count">${data.requests.length}</span></button>`}</section>`;
+function activityChart(){return activityChartView(group(),{mode:activityGraphMode,selection:activityGraphSelection?.groupId===group()?.id&&activityGraphSelection?.mode===activityGraphMode?activityGraphSelection.key:null});}
+function refreshActivityChart(){
+ const chart=root.querySelector('[data-activity-chart]');
+ if(chart){chart.innerHTML=activityChart();fitActivityAmount(chart);}
 }
 function activityView() {
-  const g=group(),data=activityData();
-  return ui`<div class="finance-sections"><button data-route="expenses">Gastos</button><button class="active" data-route="activity">Pagos y actividad</button></div><div class="welcome-row"><div><div class="eyebrow">LO QUE VA PASANDO</div><h1>Actividad del grupo<span class="purple-text">.</span></h1><p>Pagos y cambios, con las cuentas claras.</p></div><select class="group-select" aria-label="Seleccionar grupo" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div>${pendingPaymentsPanel(data)}<section class="panel activity-panel">${sectionTitle(tr('Historial de cambios'),tr('Quién cambió qué y cuándo.'))}<p class="history-policy">${tr('Todos los miembros pueden consultarlo. Solo el administrador puede borrar entradas.')}</p>${activityNotice(data)||ui`<button class="button secondary" data-action="show-history">Ver historial ${icon('arrow')}</button>`}</section><section class="panel activity-panel">${sectionTitle(tr('Devoluciones registradas'),tr('Pagos confirmados por quien recibe el dinero.'))}${ui`<button class="button secondary" data-action="show-recorded-payments">Ver devoluciones ${icon('arrow')}<span class="payment-list-count">${visibleRepayments(g).length}</span></button>`}</section>`;
+ const g=group(),data=activityData(),summary=activitySummary(g),known=data.ready===true,notice=activityNotice(data);
+ const pending=known?data.requests.length:null;
+ const pendingView=notice||(pending?`<button class="concept-ok is-pending" data-action="show-pending-payments"><b>${icon('wallet')}</b><span><strong>${esc(tr('Pagos pendientes de confirmar'))}</strong><small>${esc(tr('Ver pagos pendientes'))}</small></span></button>`:'');
+ return `<div class="activity-overview"><div class="finance-sections"><button data-route="expenses">${tr('Gastos')}</button><button class="active" data-route="activity">${tr('Pagos y actividad')}</button></div><div class="concept-title"><div><h1>${tr('Actividad')}</h1><p class="concept-subtitle">${activityText('Todo lo que pasa, de un vistazo.')}</p></div><select class="concept-group-select" aria-label="${tr('Seleccionar grupo')}" data-group-select>${state.groups.map(item=>`<option value="${esc(item.id)}" ${item.id===g.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><div class="concept-stats"><article class="concept-stat"><small>${activityText('Gastos del grupo')}</small><strong>${statMoney(summary.total)}</strong><span>${summary.count} ${tr('Gastos')}</span></article><article class="concept-stat"><small>${activityText('Tu parte')}</small><strong>${statMoney(summary.ownShare)}</strong><span>${activityText('Del gasto total')}</span></article><article class="concept-stat"><small>${activityText('Pendientes')}</small><strong>${pending??'—'}</strong><span>${activityText('Por confirmar')}</span></article></div><section class="concept-card"><div class="concept-card-heading"><h2>${activityText('El gasto, en perspectiva')}</h2><span class="concept-period">${activityText(g.type==='Viaje'?'Todo el viaje':'Todo el periodo')}</span></div><div data-activity-chart>${activityChart()}</div></section>${pendingView?`<section class="activity-panel concept-pending-host">${pendingView}</section>`:''}<section class="concept-card activity-panel">${notice||activityTimelineView(g,data.events,{name:id=>member(id).name,viewerId:accountUser?.id})}${notice?'':`<button class="concept-history" data-action="show-history">${activityText('Ver historial completo')}${icon('arrow')}</button>`}</section><section class="concept-card activity-panel">${data.ready===null&&!data.error?loadingSkeleton('button',tr('Cargando actividad…')):`<button class="concept-repayment" data-action="show-recorded-payments"><span><strong>${tr('Devoluciones registradas')}</strong><small>${tr('Pagos confirmados por quien recibe el dinero.')}</small></span><span class="payment-list-count">${visibleRepayments(g).length}</span>${icon('arrow')}</button>`}</section></div>`;
 }
 
 async function loadPaymentArchives(g=group()) {
@@ -477,7 +504,7 @@ function renderPaymentList() {
 async function showPaymentList(kind) {
   const g=group();if(!g||!['pending','recorded'].includes(kind))return;
   recordedPaymentLimit=50;showArchivedRepayments=false;
-  openModal(tr(kind==='pending'?'Pagos pendientes de confirmar':'Devoluciones registradas'),`<div class="payment-list-dialog" data-kind="${kind}" data-payment-group="${esc(g.id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,esc(g.name));
+  openModal(tr(kind==='pending'?'Pagos pendientes de confirmar':'Devoluciones registradas'),`<div class="payment-list-dialog" data-kind="${kind}" data-payment-group="${esc(g.id)}">${loadingSkeleton('list',tr('Cargando actividad…'))}</div>`,esc(g.name));
   if(kind==='pending')await loadActivity();else if(accountUser){await loadSharedGroups();await loadPaymentArchives(g);}
   renderPaymentList();
 }
@@ -490,7 +517,7 @@ function renderHistoryModal() {
 }
 async function showHistory() {
   const g=group();if(!g)return;
-  openModal(tr('Historial de cambios'),`<div class="history-dialog" data-history-group="${esc(g.id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,esc(g.name));
+  openModal(tr('Historial de cambios'),`<div class="history-dialog" data-history-group="${esc(g.id)}">${loadingSkeleton('list',tr('Cargando actividad…'))}</div>`,esc(g.name));
   await loadActivity();renderHistoryModal();
 }
 
@@ -579,7 +606,7 @@ function updateSplitTotal(form) {
 function groupModal(edit=false,defaultType='Viaje') {
   const g=group() || {};
   const selectedCurrency=currencyOf(edit?g:undefined);
-  openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="form-columns emoji-columns"><label class="field">Icono<select name="emoji">${['🚋','🌴','🪴','☀️','🏕️','🍕','🎉','🏠','✈️','⛷️'].map(e=>`<option ${edit&&g.emoji===e?'selected':''}>${e}</option>`).join('')}</select></label><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label></div><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${(edit?g.type:defaultType)===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns group-date-fields"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}" ${edit&&g.endDate?`max="${esc(g.endDate)}"`:''}></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}" ${edit&&g.date?`min="${esc(g.date)}"`:''}></label></div><p class="trip-span" data-trip-span>${esc(tripDetail(edit?g.date:'',edit?g.endDate:''))}</p>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}>${currencies.map(code=>`<option value="${code}" ${selectedCurrency===code?'selected':''}>${esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))} (${code})</option>`).join('')}</select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='EUR'?'€':selectedCurrency})`}</span><input name="budget" type="number" min="1" max="10000000" step="${currencyStep(selectedCurrency)}" value="${edit&&g.budget?g.budget/currencyScale(selectedCurrency):''}" placeholder="1200"><span class="muted">${tr('Opcional. Déjalo vacío si no necesitas presupuesto.')}</span></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
+  openModal(edit?tr('Los detalles del plan'):tr('Todo empieza con un grupo'),ui`<form id="group-form" data-entity-id="${uid()}" data-edit="${edit}"><div class="group-form-cover"><img data-group-cover-preview src="${groupPhoto(edit?g:{type:defaultType})}" alt="" decoding="async"></div><input type="hidden" name="emoji" value="${esc(edit?g.emoji||'🏠':defaultType==='Viaje'?'🚋':defaultType==='Plan con amigos'?'🎉':'🏠')}"><label class="field">Nombre del grupo<input name="name" placeholder="Ej. Escapada al sur" value="${edit?esc(g.name):''}" maxlength="60" required></label><div class="form-columns"><label class="field">Tipo de grupo<select name="type">${['Viaje','Convivencia','Pareja','Plan con amigos'].map(t=>`<option value="${esc(t)}" ${(edit?g.type:defaultType)===t?'selected':''}>${tr(t)}</option>`).join('')}</select></label><label class="field">Lugar<input name="place" placeholder="Ej. Málaga, España" value="${edit?esc(g.place):''}" maxlength="80"></label></div><div class="form-columns group-date-fields"><label class="field">Desde<input type="date" name="date" value="${edit?esc(g.date):''}" ${edit&&g.endDate?`max="${esc(g.endDate)}"`:''}></label><label class="field">Hasta<input type="date" name="endDate" value="${edit?esc(g.endDate):''}" ${edit&&g.date?`min="${esc(g.date)}"`:''}></label></div><p class="trip-span" data-trip-span>${esc(tripDetail(edit?g.date:'',edit?g.endDate:''))}</p>${edit||accountUser?'':ui`<label class="field">¿Quién se apunta? <span class="muted">Nombres separados por comas</span><input name="members" placeholder="Marta, Pablo, Lucía" maxlength="300"></label>`}<label class="field">Moneda del grupo<select name="currency" ${edit&&!canChangeCurrency(g)?'disabled':''}>${currencies.map(code=>`<option value="${code}" ${selectedCurrency===code?'selected':''}>${esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))} (${code})</option>`).join('')}</select><span class="muted">${tr(edit&&!canChangeCurrency(g)?'La moneda no se puede cambiar después de registrar gastos o pagos. Crea otro grupo para usar otra moneda.':'La moneda se comparte con todo el grupo. No se convierten importes automáticamente.')}</span></label><label class="field"><span class="budget-currency-label">${ui`Presupuesto total del grupo (${selectedCurrency==='EUR'?'€':selectedCurrency})`}</span><input name="budget" type="number" min="1" max="10000000" step="${currencyStep(selectedCurrency)}" value="${edit&&g.budget?g.budget/currencyScale(selectedCurrency):''}" placeholder="1200"><span class="muted">${tr('Opcional. Déjalo vacío si no necesitas presupuesto.')}</span></label><div class="form-note">${icon('users')} ${accountUser?tr('Comparte un enlace de invitación después de crear el grupo. Cada persona entrará con su cuenta.'):tr('Demo local: los participantes y los datos se guardan solo en este navegador.')}</div>${actions(edit?tr('Guardar cambios'):tr('Crear grupo'))}${edit&&canManage()?ui`<button type="button" class="text-button danger-text delete-group-link" data-action="delete-group">Eliminar grupo</button>`:''}</form>`);
 }
 function currentSettlementPlan(){
  const pending=activityData().ready===true?activityData().requests:[];
@@ -611,7 +638,7 @@ function fxDetails(snapshot,baseCurrency){
 }
 function fxPanel(){
  const fx=fxSession,base=currencyOf(group()),ready=fx.mode&&conversionReady();
- return ui`<section class="fx-panel"><div class="fx-controls"><button class="button ${fx.mode?'secondary':'primary'} small-button" data-action="fx-original">${esc(base)}</button><label class="fx-target-field"><span>${tr('Convertir a')}</span><select data-fx-target aria-label="${tr('Moneda de destino')}"><option value="" ${!fx.mode?'selected':''}>${tr('Elegir moneda')}</option>${currencies.filter(code=>code!==base).map(code=>'<option value="'+code+'" '+(fx.mode&&fx.target===code?'selected':'')+'>'+code+' · '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))+'</option>').join('')}</select></label></div>${fx.loading?ui`<p role="status">Consultando el cambio más reciente…</p>`:fx.error?'<p class="activity-error" role="alert">'+esc(fx.error)+'</p><button class="text-button" data-action="fx-refresh">'+tr('Volver a intentar')+'</button>':ready?fxDetails(conversionSnapshot(1),base)+'<button class="text-button" data-action="fx-refresh">'+tr('Actualizar cambio')+'</button>':''}<p class="form-note">Cambio de referencia: el banco puede aplicar otro cambio o comisiones. Los gastos y saldos se mantienen en la moneda original.</p></section>`;
+ return ui`<section class="fx-panel"><div class="fx-controls"><button class="button ${fx.mode?'secondary':'primary'} small-button" data-action="fx-original">${esc(base)}</button><label class="fx-target-field"><span>${tr('Convertir a')}</span><select data-fx-target aria-label="${tr('Moneda de destino')}"><option value="" ${!fx.mode?'selected':''}>${tr('Elegir moneda')}</option>${currencies.filter(code=>code!==base).map(code=>'<option value="'+code+'" '+(fx.mode&&fx.target===code?'selected':'')+'>'+code+' · '+esc(new Intl.DisplayNames([locale],{type:'currency'}).of(code))+'</option>').join('')}</select></label></div>${fx.loading?loadingSkeleton('text',tr('Consultando el cambio más reciente…')):fx.error?'<p class="activity-error" role="alert">'+esc(fx.error)+'</p><button class="text-button" data-action="fx-refresh">'+tr('Volver a intentar')+'</button>':ready?fxDetails(conversionSnapshot(1),base)+'<button class="text-button" data-action="fx-refresh">'+tr('Actualizar cambio')+'</button>':''}<p class="form-note">Cambio de referencia: el banco puede aplicar otro cambio o comisiones. Los gastos y saldos se mantienen en la moneda original.</p></section>`;
 }
 function renderSettlements() {
  const box=modalRoot.querySelector('.settlements-dialog');if(!box||box.dataset.settlementGroup!==group()?.id)return;
@@ -634,7 +661,7 @@ async function loadFxQuote() {
 async function settlementsModal() {
  const id=group()?.id;if(!id)return;
  fxSession={groupId:id,mode:false,target:currencyOf(group())==='EUR'?'USD':'EUR',quote:null,targetQuote:null,error:'',loading:false,request:fxSession.request+1};
- openModal(tr('Las cuentas claras'),`<div class="settlements-dialog" data-settlement-group="${esc(id)}"><p role="status">${tr('Cargando actividad…')}</p></div>`,tr('Menos transferencias para equilibrar los saldos.'));
+ openModal(tr('Las cuentas claras'),`<div class="settlements-dialog" data-settlement-group="${esc(id)}">${loadingSkeleton('list',tr('Cargando actividad…'))}</div>`,tr('Menos transferencias para equilibrar los saldos.'));
  await loadActivity();renderSettlements();
 }
 async function respondToPayment(requestId,action,returnToPending=false) {
@@ -681,7 +708,7 @@ function minimumAgeModal(){
 }
 function deleteAccountModal(){
  if(!accountUser?.email){toast(tr('Esta cuenta no tiene un correo que puedas confirmar. Escribe a support@divzplit.com.'));return;}
- openModal(tr('Eliminar cuenta'),ui`<form id="delete-account-form"><p class="dialog-copy">Se cerrará la sesión en todos tus dispositivos y no podrás volver a entrar con este correo. En los grupos compartidos tu nombre pasará a ser «Cuenta eliminada»; los gastos y saldos de las demás personas se conservan. Los grupos en los que estás solo se eliminan. Si administras un grupo con más gente, otro miembro pasa a administrarlo. Se borran tus avisos y datos de perfil. Las fotos de tickets compartidos se conservan.</p><label class="field">Escribe ${esc(accountUser.email)} para confirmar<input name="confirmEmail" type="email" autocomplete="off" required></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button secondary" type="button" data-action="close-modal">Cancelar</button><button class="button danger" type="submit">Eliminar mi cuenta</button></div></form>`);
+ openModal(tr('Eliminar cuenta'),ui`<form id="delete-account-form"><p class="dialog-copy">La cuenta anterior quedará deshabilitada y se retirarán su perfil, avisos y suscripciones push. Los grupos compartidos conservan saldos e historial con la etiqueta «Cuenta eliminada»; las descripciones y los tickets pueden seguir conteniendo datos personales. Los grupos donde estás solo se retiran de la app. Si administras un grupo compartido, otro miembro pasa a administrarlo. Eliminar la cuenta no cancela deudas. Pide a soporte una revisión de los datos o archivos restantes. No se puede deshacer.</p><label class="field">Escribe ${esc(accountUser.email)} para confirmar<input name="confirmEmail" type="email" autocomplete="off" required></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button secondary" type="button" data-action="close-modal">Cancelar</button><button class="button danger" type="submit">Eliminar mi cuenta</button></div></form>`);
 }
 async function finishDeletedAccount(){
  try{await notifications.disconnect();}catch{/* Local logout still proceeds. */}
@@ -705,7 +732,7 @@ async function handlePrivacyForm(form,data){
   const alert=form.querySelector('.form-error');
   if(!accountUser||!expected||typed!==expected){if(alert)alert.textContent=tr(expected?'Escribe el correo de esta cuenta para confirmar.':'Esta cuenta no tiene un correo que puedas confirmar. Escribe a support@divzplit.com.');return true;}
   remoteBusy=true;
-  try{await cloud.deleteAccount();await finishDeletedAccount();toast(tr('Cuenta eliminada. Ya no puedes entrar con ese correo.'),'success');}
+  try{await cloud.deleteAccount();await finishDeletedAccount();toast(tr('Cuenta eliminada. La cuenta anterior ha quedado deshabilitada.'),'success');}
   catch(error){if(alert?.isConnected)alert.textContent=error.message;else toast(error.message);}
   finally{remoteBusy=false;}
   return true;
@@ -729,29 +756,23 @@ function quickAddModal() {
   root.querySelector('.nav-add')?.setAttribute('aria-expanded','true');
 }
 
-document.addEventListener('click', event => {onAppClick(event).catch(handleActionError);});
-let edgeSwipe=null,edgeSwipeUsed=false;
-document.addEventListener('pointerdown',event=>{
- if(!document.body.classList.contains('personal-app')||innerWidth>760||event.isPrimary===false)return;
- const menuOpen=document.body.classList.contains('workspace-menu-open');
- if(!menuOpen&&(event.clientX>32||modalRoot.firstElementChild||event.target.closest('input,textarea,select')))return;
- edgeSwipe={x:event.clientX,y:event.clientY,open:menuOpen};
-},{passive:true});
-document.addEventListener('pointerup',event=>{
- if(!edgeSwipe)return;
- const dx=event.clientX-edgeSwipe.x,dy=event.clientY-edgeSwipe.y,sideways=Math.abs(dx)>56&&Math.abs(dx)>Math.abs(dy)*1.3;
- if(sideways&&!edgeSwipe.open&&dx>0){edgeSwipeUsed=true;openWorkspaceMenu();}
- else if(sideways&&edgeSwipe.open&&dx<0){edgeSwipeUsed=true;closeModal();}
- edgeSwipe=null;
-});
-document.addEventListener('pointercancel',()=>{edgeSwipe=null;});
-document.addEventListener('click',event=>{if(!edgeSwipeUsed)return;edgeSwipeUsed=false;event.preventDefault();event.stopPropagation();},true);
+document.addEventListener('click', event => {withClickFeedback(onAppClick,()=>remoteBusy||authLoading)(event).catch(handleActionError);});
 async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
-  if(remoteBusy || authLoading){event.preventDefault();toast(tr('Espera un momento; estamos conectando con tus grupos.'));return;}
+  if(remoteBusy || authLoading){event.preventDefault();showBusyInPlace(root,tr('Espera un momento; estamos conectando con tus grupos.'),()=>remoteBusy||authLoading);return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
+  if(el.dataset.activityMode){
+   if(!['categories','people'].includes(el.dataset.activityMode))return;
+   activityGraphMode=el.dataset.activityMode;activityGraphSelection=null;refreshActivityChart();
+   root.querySelector('[data-activity-mode="'+activityGraphMode+'"]')?.focus({preventScroll:true});return;
+  }
+  if(el.hasAttribute('data-activity-segment')){
+   const key=el.dataset.activitySegment;
+   activityGraphSelection=activityGraphSelection?.groupId===group()?.id&&activityGraphSelection?.mode===activityGraphMode&&activityGraphSelection.key===key?null:{groupId:group()?.id,mode:activityGraphMode,key};
+   refreshActivityChart();[...root.querySelectorAll('[data-activity-segment]')].find(button=>button.dataset.activitySegment===key)?.focus({preventScroll:true});return;
+  }
   if(el.dataset.route){await navigateWorkspace(el.dataset.route);return;}
   if(el.dataset.shoppingAction){await shoppingAction(el);return;}
   if(el.dataset.languageChoice){applyLanguage(el.dataset.languageChoice);return;}
@@ -891,6 +912,9 @@ async function onAppChange(event) {
   const el=event.target;
   if(el.name==='ageBand'&&el.value==='under_16'){minimumAgeModal();return;}
   if(remoteBusy || authLoading){if(el.dataset.shoppingCheck){el.checked=!!shoppingState.items.find(i=>i.id===el.dataset.shoppingCheck)?.bought;return;}render();return;}
+  if(el.form?.id==='group-form'&&el.name==='type'){
+   el.form.querySelector('[data-group-cover-preview]').src=groupPhoto({type:el.value});return;
+  }
   if(el.matches('[data-fx-target]')){if(!currencies.includes(el.value)||el.value===currencyOf(group()))return;fxSession.target=el.value;fxSession.mode=true;await loadFxQuote();return;}
   if(el.matches('[data-quick-group]')){state.activeGroup=el.value;await save();render();modalOpener=[...root.querySelectorAll('[data-action=quick-add]')].find(button=>button.getClientRects().length);quickAddModal();return;}
   if(el.form?.id==='expense-form'&&(el.name==='splitMode'||el.name==='participants')){renderSplitFields(el.form);return;}
@@ -910,7 +934,7 @@ async function onAppChange(event) {
   if(el.dataset.task){const t=group().tasks.find(t=>t.id===el.dataset.task);t.done=el.checked;await save();render();renderPlanningList();toast(t.done?tr('¡Una cosa menos por hacer!'):tr('Tarea marcada como pendiente.'));}
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'||page==='home'){await loadActivity();render();}}
 }
-document.addEventListener('submit',async event=>{
+document.addEventListener('submit',withSubmitFeedback(async event=>{
   const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','recovery-code-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);if(event.submitter?.name==='recoveryAction')data.set('recoveryAction',event.submitter.value);
   if(await handleDeleteGroupForm(form,data))return;
   if(await handleRecoveryForm(form,data))return;
@@ -994,7 +1018,7 @@ document.addEventListener('submit',async event=>{
     else if(form.isConnected) form.querySelector('.form-error').textContent=error.message;
     else toast(error.message);
   }
-});
+},()=>remoteBusy||authLoading));
 modalRoot.addEventListener('click',event=>{if(event.target.classList.contains('modal-overlay'))closeModal();});
 document.addEventListener('keydown',event=>{
   const modal=modalRoot.querySelector('.modal');if(!modal)return;
@@ -1070,7 +1094,7 @@ async function receiptChanged(input) {
 }
 async function viewReceipt(id) {
   const g=group();const e=g.expenses.find(e=>e.id===id);if(!e?.receipt)return;
-  openModal(tr('Foto del ticket'),tr('<p class="receipt-loading" role="status">Abriendo ticket…</p>'));const container=modalRoot.querySelector('.modal');
+  openModal(tr('Foto del ticket'),'<div class="receipt-loading" role="status">'+loadingSkeleton('media',tr('Abriendo ticket…'),{status:false})+'</div>');const container=modalRoot.querySelector('.modal');
   try {
     let url;
     if(accountUser)url=await cloud.receiptURL(g.id,e.receipt.path);
@@ -1215,6 +1239,7 @@ async function refreshShared() {
   if(!accountUser&&demoMode&&!remoteBusy&&!modalRoot.firstElementChild&&!document.hidden){const before=JSON.stringify(state.groups);await processRecurrences();if(before!==JSON.stringify(state.groups))render();return;}
   if (!accountUser||remoteBusy||authLoading||modalRoot.firstElementChild||document.hidden) return;
   remoteBusy=true;
+  const finishRefreshing=beginContentRefresh(root,tr('Cargando actividad…'));
   const before=JSON.stringify(state.groups),beforeActivity=JSON.stringify(activityData());
   try {
     await loadSharedGroups();await processRecurrences();await notifications.poll();if(page==='activity'||page==='home')await loadActivity(false,true);setSync(tr('Actualizado'));
@@ -1222,7 +1247,7 @@ async function refreshShared() {
   } catch(error) {
     setSync(tr('Sin conexión · Reintentar'));
     if (!cloud.session) {notifications.disconnect().catch(()=>{});accountUser=null;state=structuredClone(demoState);remoteBaseline.clear();render();toast(tr('Tu sesión ha caducado. Vuelve a entrar.'));}
-  } finally {remoteBusy=false;}
+  } finally {remoteBusy=false;finishRefreshing();}
 }
 async function signOutAccount() {
   remoteBusy=true;

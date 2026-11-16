@@ -1,6 +1,6 @@
 export const landingCopy={
  es:{
-  title:'DivZplit — Divide gastos. Comparte planes.',description:'Organiza viajes, comparte gastos y lleva tus planes en grupo al siguiente nivel. Todo en un solo lugar.',
+  title:'DivZplit',description:'Organiza viajes, comparte gastos y lleva tus planes en grupo al siguiente nivel. Todo en un solo lugar.',
   skip:'Saltar al contenido',navLabel:'Navegación principal',menu:'Abrir menú',language:'Idioma',featuresNav:'Lo que puedes hacer',howNav:'Cómo funciona',plansNav:'Para tus planes',faqNav:'Preguntas',login:'Iniciar sesión',start:'Empieza gratis',
   eyebrow:'MENOS CUENTAS PENDIENTES. MÁS PLANES.',hero1:'Divide gastos.',hero2:'Comparte planes.',hero3:'Disfruta juntos.',heroText:'Organiza viajes, comparte gastos y lleva tus planes en grupo al siguiente nivel. Todo en un solo lugar.',discover:'Descubre cómo funciona',heroNote:'Gratis. Desde el navegador. A vuestro ritmo.',screenNote:'Capturas reales de DivZplit con datos de ejemplo.',heroAlt:'Pantalla real de inicio de DivZplit con un grupo de viaje y sus saldos.',balanceAlt:'Saldo real calculado por DivZplit para el grupo de ejemplo.',recentAlt:'Un gasto del grupo de ejemplo en la interfaz real de DivZplit.',floatingLabel:'EL PLAN, EN EQUILIBRIO',
   featureEyebrow:'TODO EL GRUPO. TODO EN SU SITIO.',featureTitle:'Que las cuentas no interrumpan el plan.',featureText:'Un espacio compartido para organizar lo de todos, sin perder el tiempo con lo de siempre.',
@@ -12,7 +12,7 @@ export const landingCopy={
   footerText:'Tu gente. Tus planes. Todo conectado.',product:'DivZplit',legal:'Información',privacy:'Privacidad',terms:'Condiciones',contact:'Contacto',openApp:'Abrir la aplicación',footerNote:'Hecho para compartir.'
  },
  en:{
-  title:'DivZplit — Split expenses. Share plans.',description:'Organize trips, share expenses and take your group plans to the next level. All in one place.',
+  title:'DivZplit',description:'Organize trips, share expenses and take your group plans to the next level. All in one place.',
   skip:'Skip to content',navLabel:'Main navigation',menu:'Open menu',language:'Language',featuresNav:'What you can do',howNav:'How it works',plansNav:'For your plans',faqNav:'Questions',login:'Sign in',start:'Start for free',
   eyebrow:'FEWER UNSETTLED EXPENSES. MORE PLANS.',hero1:'Split expenses.',hero2:'Share plans.',hero3:'Enjoy it together.',heroText:'Organize trips, share expenses and take your group plans to the next level. All in one place.',discover:'See how it works',heroNote:'Free. In your browser. At your own pace.',screenNote:'Actual DivZplit screenshots with example data.',heroAlt:'The actual DivZplit home screen showing a trip group and its balances.',balanceAlt:'The balance calculated by DivZplit for the example group.',recentAlt:'An example group expense in the actual DivZplit interface.',floatingLabel:'YOUR PLANS, IN BALANCE',
   featureEyebrow:'THE WHOLE GROUP. ALL IN ONE PLACE.',featureTitle:'Keep the plans flowing. And the expenses clear.',featureText:'A shared space to organize the things you do together, without the usual back and forth.',
@@ -24,7 +24,7 @@ export const landingCopy={
   footerText:'Your people. Your plans. All connected.',product:'DivZplit',legal:'Information',privacy:'Privacy',terms:'Terms',contact:'Contact',openApp:'Open the app',footerNote:'Made for sharing.'
  },
  ro:{
-  title:'DivZplit — Împarte cheltuielile. Faceți planuri împreună.',description:'Organizează călătorii, împarte cheltuielile și du planurile de grup la următorul nivel. Totul într-un singur loc.',
+  title:'DivZplit',description:'Organizează călătorii, împarte cheltuielile și du planurile de grup la următorul nivel. Totul într-un singur loc.',
   skip:'Sari la conținut',navLabel:'Navigare principală',menu:'Deschide meniul',language:'Limbă',featuresNav:'Ce poți face',howNav:'Cum funcționează',plansNav:'Pentru planurile tale',faqNav:'Întrebări',login:'Autentificare',start:'Începe gratuit',
   eyebrow:'MAI PUȚINE SOCOTELI. MAI MULTE PLANURI.',hero1:'Împarte cheltuielile.',hero2:'Faceți planuri.',hero3:'Bucurați-vă împreună.',heroText:'Organizează călătorii, împarte cheltuielile și du planurile de grup la următorul nivel. Totul într-un singur loc.',discover:'Vezi cum funcționează',heroNote:'Gratuit. În browser. În ritmul vostru.',screenNote:'Capturi reale DivZplit cu date de exemplu.',heroAlt:'Ecranul real de pornire DivZplit, cu un grup de călătorie și soldurile sale.',balanceAlt:'Soldul calculat de DivZplit pentru grupul de exemplu.',recentAlt:'O cheltuială a grupului de exemplu în interfața reală DivZplit.',floatingLabel:'PLANURILE VOASTRE, ÎN ECHILIBRU',
   featureEyebrow:'TOT GRUPUL. TOTUL LA LOCUL LUI.',featureTitle:'Cheltuielile să nu întrerupă planul.',featureText:'Un spațiu comun pentru a organiza ce împărțiți, fără discuțiile nesfârșite de fiecare dată.',
@@ -44,6 +44,7 @@ const featureCopy={
     "showExpensesTitle": "Cada gasto, con su reparto.",
     "showExpensesBody": "Anota el concepto, quién pagó y quién participa. Consulta los gastos del grupo y los saldos que se calculan a partir de ellos.",
     "showExpensesAlt": "Pantalla real de gastos compartidos de DivZplit con datos de ejemplo.",
+    "showActivityAlt": "Pantalla actual de Actividad de DivZplit con resumen de gastos y gráfico por categorías, con datos de ejemplo.",
     "showShoppingLabel": "Listas de la compra",
     "showShoppingTitle": "Lo que falta, a la vista de todos.",
     "showShoppingBody": "Añadid productos y cantidades, marcad lo comprado y preparad un gasto con la compra. Antes de guardarlo, revisad el importe y el reparto.",
@@ -74,6 +75,7 @@ const featureCopy={
     "showExpensesTitle": "Every expense, clearly split.",
     "showExpensesBody": "Record what you shared, who paid and who took part. Check the group’s expenses and the balances calculated from them.",
     "showExpensesAlt": "Actual DivZplit shared expenses screen with example data.",
+    "showActivityAlt": "Current DivZplit Activity screen with expense summary and category chart, using example data.",
     "showShoppingLabel": "Shopping lists",
     "showShoppingTitle": "What you need, where everyone can see it.",
     "showShoppingBody": "Add products and quantities, mark purchases and prepare an expense from your shopping. Review the amount and split before saving.",
@@ -104,6 +106,7 @@ const featureCopy={
     "showExpensesTitle": "Fiecare cheltuială, împărțită clar.",
     "showExpensesBody": "Notează ce ați împărțit, cine a plătit și cine participă. Vezi cheltuielile grupului și soldurile calculate pe baza lor.",
     "showExpensesAlt": "Ecranul real de cheltuieli comune DivZplit, cu date de exemplu.",
+    "showActivityAlt": "Ecranul actual Activitate din DivZplit, cu rezumatul cheltuielilor și grafic pe categorii, folosind date de exemplu.",
     "showShoppingLabel": "Liste de cumpărături",
     "showShoppingTitle": "Ce lipsește, la vedere pentru toți.",
     "showShoppingBody": "Adăugați produse și cantități, bifați cumpărăturile și pregătiți o cheltuială din listă. Verificați suma și împărțirea înainte de salvare.",

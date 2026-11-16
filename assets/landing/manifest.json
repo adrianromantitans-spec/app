@@ -6,12 +6,12 @@
       "height": 852
     },
     "es-balance": {
-      "width": 349,
-      "height": 191
+      "width": 353,
+      "height": 143
     },
     "es-recent": {
-      "width": 349,
-      "height": 80
+      "width": 325,
+      "height": 68
     },
     "es-group": {
       "width": 393,
@@ -30,6 +30,10 @@
       "height": 852
     },
     "es-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "es-activity": {
       "width": 393,
       "height": 852
     },
@@ -66,12 +70,12 @@
       "height": 852
     },
     "en-balance": {
-      "width": 349,
-      "height": 191
+      "width": 353,
+      "height": 143
     },
     "en-recent": {
-      "width": 349,
-      "height": 80
+      "width": 325,
+      "height": 68
     },
     "en-group": {
       "width": 393,
@@ -90,6 +94,10 @@
       "height": 852
     },
     "en-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "en-activity": {
       "width": 393,
       "height": 852
     },
@@ -126,12 +134,12 @@
       "height": 852
     },
     "ro-balance": {
-      "width": 349,
-      "height": 191
+      "width": 353,
+      "height": 143
     },
     "ro-recent": {
-      "width": 349,
-      "height": 80
+      "width": 325,
+      "height": 68
     },
     "ro-group": {
       "width": 393,
@@ -150,6 +158,10 @@
       "height": 852
     },
     "ro-expenses": {
+      "width": 393,
+      "height": 852
+    },
+    "ro-activity": {
       "width": 393,
       "height": 852
     },

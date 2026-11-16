@@ -2,6 +2,9 @@
 
 Entrega preparada el **5 de noviembre de 2026** en la rama `review/google-play-preparation`, desde `89c74f1ac6d364a263c31f2604c04bf32dcc0c1b`. No se ha fusionado a `main`, publicado una versión en Play, cambiado Supabase ni desplegado la web. La rama contiene un proyecto Android TWA, no una reescritura ni una web rediseñada.
 
+
+**Actualización del 16 de noviembre:** la rama incorpora el arranque Android **1.0.1, código 2**, de la PR #4. Para actualizar la prueba existente, usa ese AAB y consulta [ANDROID-STARTUP-FIX.md](ANDROID-STARTUP-FIX.md). Las referencias a 1.0.0 de esta guía documentan la primera entrega. La huella de Play App Signing de la PR #3 ya está incorporada en `main`; comprueba su despliegue y la instalación real antes de dar la verificación por completada.
+
 ## 1. Archivos de la entrega
 
 - **`divzplit-1.0.0.aab`**: bundle release firmado con la clave de subida nueva. Paquete `com.divzplit.app`, versión `1.0.0`, código `1`, min SDK `24`, target `36`.
@@ -51,6 +54,45 @@ Distingue recopilación, finalidad y compartición según las definiciones de Pl
 Si Play muestra la declaración de funciones financieras, describe el **registro/reparto de gastos y gestión de saldos**. DivZplit no envía dinero ni ejecuta transferencias. Revisa las opciones actuales del formulario antes de elegir una categoría.
 
 Comprueba que la política identifique al responsable, contactos, destinatarios, conservación, solicitudes y países aplicables. La existencia de una página HTTP 200 no acredita esa revisión ni que el borrado funcione realmente.
+
+### Eliminación de cuenta: comprobación operativa
+
+En el SQL Editor de Supabase, ejecuta una vez
+[`supabase/account-deletion.sql`](../supabase/account-deletion.sql).
+
+Después, en la app: **Cuenta → Eliminar cuenta**. La misma acción está en
+`https://divzplit.com/delete-account/` (inicia sesión y confirma el correo).
+
+Qué hace:
+
+- Deshabilita la cuenta anterior, revoca sesiones y retira las identidades
+  asociadas. Esto no garantiza una prohibición de volver a registrarse.
+- Borra avisos, suscripciones push y el nombre del perfil.
+- En grupos compartidos el nombre pasa a ser «Cuenta eliminada». Los gastos y
+  saldos de las demás personas se conservan.
+- Un grupo donde esa persona está sola se retira de la app. La eliminación de
+  fotos requiere completar y verificar el borrado mediante la API de Storage;
+  borrar filas de `storage.objects` no elimina los archivos físicos.
+- Si administraba un grupo con más gente, otro miembro pasa a administrarlo.
+
+Play Console pide esa URL en **Política → Seguridad de los datos → Eliminación
+de cuentas**: `https://divzplit.com/delete-account/`.
+
+### Comparación con Splitwise
+
+Consulta de fuentes oficiales: 5 de noviembre de 2026. Sus condiciones prohíben
+el uso a menores de **13 años** y su ficha de Play consultada muestra **Everyone**
+en la región servida. Las etiquetas regionales, como PEGI 3, no equivalen a su
+edad mínima contractual. El cuestionario de DivZplit se debe completar por sus
+propias funciones; no se puede copiar la clasificación ni el público objetivo
+privado de otra app.
+
+Para bajar el registro a 13, hay que adaptar el producto y las políticas a los
+países de uso y a las bases del tratamiento. Cuando el tratamiento se basa en el
+consentimiento, el umbral de consentimiento parental en la UE varía entre 13 y
+16 años. Cambiar solo los textos o aceptar una casilla del menor no implementa
+la autorización de un tutor. Revisa también la capacidad contractual y los
+permisos opcionales; 16 no es una obligación universal para toda app.
 
 ## 4. Subir el AAB a pruebas internas
 
@@ -135,3 +177,27 @@ Consultadas el 5 de noviembre de 2026:
 - [Eliminación de cuentas](https://support.google.com/googleplay/android-developer/answer/13327111?hl=es)
 - [Chrome y requisitos Android actuales](https://support.google.com/chrome/answer/95414?hl=es&co=GENIE.Platform%3DAndroid)
 - [TWA y verificación de origen](https://developer.chrome.com/docs/android/trusted-web-activity/quick-start)
+
+- [Condiciones de Splitwise](https://www.splitwise.com/terms)
+- [Ficha de Splitwise en Google Play](https://play.google.com/store/apps/details?id=com.Splitwise.SplitwiseMobile)
+- [Protección de datos de menores: Comisión Europea](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/legal-grounds-processing-data/are-there-any-specific-safeguards-data-about-children_en)
+
+## Revisión local de 16 de noviembre de 2026 — antes de publicar
+
+No se ha enviado ninguna ficha a una tienda ni desplegado este borrador.
+El operador confirma que actúa como persona física, sin empresa, y que no hay
+anuncios ni funciones de pago. Google Play será la primera tienda; App Store
+se revisará después. Una posible compra única para quitar anuncios no es una
+suscripción recurrente. No declarar compras o anuncios futuros como activos.
+
+Confirmar una dirección pública de contacto adecuada y la identificación exigible.
+Verificar en producción la eliminación de cuenta y archivos, las migraciones,
+los registros retenidos y la conservación de proveedores antes de declarar
+resultados de borrado. Véase [OPERATIONS](privacy/OPERATIONS.md).
+
+## Alcance inicial confirmado por el propietario
+
+Primer lanzamiento en países europeos. La lista exacta se elegirá en Google Play
+Console antes de publicar. Esto no confirma por sí solo un lanzamiento limitado
+a la UE/EEE ni la inclusión de Reino Unido o Suiza. Revisar la lista definitiva
+para ajustar los requisitos aplicables. El borrador sigue sin publicar.

@@ -1,6 +1,6 @@
-import {tr,ui,language} from './i18n.js?v=recovery-84';
-export const TERMS_VERSION='2026-11-02.2';
-export const PRIVACY_VERSION='2026-11-02.3';
+import {tr,ui,language} from './i18n.js?v=language-90';
+export const TERMS_VERSION='2026-11-16.1';
+export const PRIVACY_VERSION='2026-11-16.1';
 export const SUPPORT_EMAIL='support@divzplit.com';
 export function legalURL(kind){if(!['privacy','terms'].includes(kind))throw new Error('Invalid legal document');return new URL('./'+(kind==='privacy'?'privacy':'terms')+'/',import.meta.url).href;}
 export function legalMetadata(accepted,ageBand,source){

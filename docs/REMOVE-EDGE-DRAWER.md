@@ -1,0 +1,5 @@
+# Remove the remaining mobile drawer gesture
+
+The hidden mobile drawer could still open when swiping from the left edge. The edge pointer listeners and their associated click-suppression flag have been removed. There is no replacement gesture. The original desktop sidebar, drawer implementation for any explicit callers, app routes, data logic, startup animation and floating dock effects remain unchanged.
+
+Validation: mouse and touch edge swipes at 320/393/430 px in Spanish, English and Romanian no longer open the drawer. The touch test disables Chromium's native history overscroll only in the test browser; native browser/OS back navigation is not modified in the application. Existing tasks, shopping, + expense form and dock destinations still work. The existing dock effects suite passed in all three languages, including drag, scroll contraction/restore, keyboard, cancellation and reduced motion. Source invariants confirm all unrelated runtime/style/backend files remain unchanged. Capture and route-test helpers now use visible home/dock controls and the existing desktop navigation rather than the deleted mobile gesture.

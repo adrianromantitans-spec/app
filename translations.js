@@ -1,5 +1,7 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Planes": {"en": "Plans", "ro": "Planuri"},
+  "Votar": {"en": "Vote", "ro": "Votează"},
   "Elegir foto del ticket": {"en": "Choose receipt photo", "ro": "Alege fotografia bonului"},
   "Elegir foto": {"en": "Choose photo", "ro": "Alege o fotografie"},
   "Ninguna foto seleccionada": {"en": "No photo selected", "ro": "Nicio fotografie selectată"},
@@ -2609,5 +2611,8 @@ export const translations = {
   "Todo empieza con tu gente.": {
     "en": "It all starts with your people.",
     "ro": "Totul începe cu oamenii tăi."
-  }
+  },
+  "La cuenta anterior quedará deshabilitada y se retirarán su perfil, avisos y suscripciones push. Los grupos compartidos conservan saldos e historial con la etiqueta «Cuenta eliminada»; las descripciones y los tickets pueden seguir conteniendo datos personales. Los grupos donde estás solo se retiran de la app. Si administras un grupo compartido, otro miembro pasa a administrarlo. Eliminar la cuenta no cancela deudas. Pide a soporte una revisión de los datos o archivos restantes. No se puede deshacer.": {"en": "The old account will be disabled and its profile, notifications and push subscriptions cleared. Shared groups keep balances and history under “Cuenta eliminada”; descriptions and receipts may still contain personal information. Groups where you are the only member are removed from the app. If you administer a shared group, another member takes over. Account deletion does not cancel debts. Ask support to review remaining data or files. This cannot be undone.", "ro": "Vechiul cont va fi dezactivat, iar profilul, notificările și abonările push eliminate. Grupurile comune păstrează soldurile și istoricul sub «Cuenta eliminada»; descrierile și bonurile pot conține încă date personale. Grupurile în care ești singur sunt eliminate din aplicație. Dacă administrezi un grup comun, alt membru preia administrarea. Ștergerea nu anulează datoriile. Cere asistenței revizuirea datelor sau fișierelor rămase. Acțiunea nu poate fi anulată."},
+  "Cuenta eliminada. La cuenta anterior ha quedado deshabilitada.": {"en": "Account deleted. The old account has been disabled.", "ro": "Cont șters. Vechiul cont a fost dezactivat."},
+  "El borrado desde la cuenta no está disponible. Escribe a support@divzplit.com para solicitar ayuda.": {"en": "Account deletion is unavailable. Email support@divzplit.com for help.", "ro": "Ștergerea contului nu este disponibilă. Scrie la support@divzplit.com pentru ajutor."}
 };

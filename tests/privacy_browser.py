@@ -11,7 +11,7 @@ with sync_playwright() as p:
  expect(page.get_by_role('heading',name='Registro a partir de 16 años',exact=True)).to_be_visible();assert len(seen['signup'])==0
  assert page.locator('[data-kind=guardian]').count()==0
  page.goto(BASE+'#registro');page.get_by_label('¿Cómo te llamas?').fill('Ana');page.get_by_label('Correo electrónico',exact=True).fill('ana@example.test');page.get_by_label('Contraseña',exact=True).fill('fixture-password');page.locator('select[name=ageBand]').select_option('16_or_over');page.locator('input[name=acceptTerms]').check();page.get_by_role('button',name='Crear cuenta',exact=True).click()
- expect(page.get_by_role('heading',name='Revisa tu correo',exact=True)).to_be_visible();assert len(seen['signup'])==1;assert seen['signup'][0]['data']['terms_version']=='2026-11-02.2';assert seen['signup'][0]['data']['declared_age_band']=='16_or_over'
+ expect(page.get_by_role('heading',name='Revisa tu correo',exact=True)).to_be_visible();assert len(seen['signup'])==1;assert seen['signup'][0]['data']['terms_version']=='2026-11-16.1';assert seen['signup'][0]['data']['declared_age_band']=='16_or_over'
  print('PASS: email signup requires explicit terms and age band; under-16 registration is stopped without a guardian registration route')
  c.close()
  for provider in ['google','apple']:

@@ -88,6 +88,8 @@ body{background:radial-gradient(ellipse at 5% 12%,#eee5fb75,transparent 52%),rad
 
 /* Keep the animated wordmark outside rerenders and reveal the real screen below. */
 .brand-intro-host.modern-auth{background:transparent;position:fixed;inset:0;z-index:1000;margin:0;padding:0;min-height:0;pointer-events:auto;isolation:isolate}
+/* The curtain owns the entire reveal; do not leave the auth glow above the app. */
+.brand-intro-host.modern-auth:before{display:none}
 .brand-intro-host>.auth-header{position:absolute;inset:0;margin:0;padding:0;pointer-events:none}
 .brand-intro-host .brand{pointer-events:auto;will-change:left,top,font-size,letter-spacing}
 .brand-intro-host .split-word,.brand-wordmark .split-word{perspective:none;line-height:1.2;letter-spacing:inherit;font-weight:inherit}

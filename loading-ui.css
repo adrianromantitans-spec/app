@@ -1,0 +1,20 @@
+/* Scoped to transient loading elements; completed pages and startup keep their styling. */
+.loading-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+.content-skeleton{position:relative;min-width:0;color:inherit}
+.skeleton-shapes{position:relative;overflow:hidden;border-radius:12px;pointer-events:none}
+.skeleton-shapes:after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 15%,#ffffff8c 50%,transparent 85%);translate:-100% 0;animation:content-shimmer 1.6s ease-in-out infinite;pointer-events:none}
+.skeleton-line,.skeleton-square,.skeleton-value,.skeleton-pill,.skeleton-photo{display:block;background:#eee9f4;border-radius:7px;font-style:normal}
+.skeleton-line{height:12px;width:80%;margin:8px 0}.skeleton-line.short{width:48%;height:9px;background:#f1edf6}
+.skeleton-row{display:flex;align-items:center;gap:13px;min-height:64px;padding:10px 0;border-bottom:1px solid #f0ebf4}.skeleton-row:last-child{border-bottom:0}.skeleton-row>span{flex:1;min-width:0}
+.skeleton-square{width:34px;height:34px;border-radius:12px;flex:none}.skeleton-value{width:55px;height:12px;flex:none}
+.content-skeleton--button{width:min(100%,220px)}.skeleton-pill{height:43px;border-radius:14px}
+.content-skeleton--text{max-width:340px;padding:4px 0}.skeleton-photo{width:100%;aspect-ratio:4/3;max-height:380px;border-radius:18px}
+.content-refresh{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none}
+.content-refresh:after{content:'';display:block;width:13px;height:13px;border:2px solid #dfd1f0;border-top-color:#8552db;border-radius:50%;box-sizing:border-box;animation:content-spin .8s linear infinite}
+.loading-button{position:relative}.loading-button.is-loading,.loading-button.has-saved{color:transparent!important}.loading-button.is-loading>*,.loading-button.has-saved>*{opacity:0}
+.loading-button.is-loading:after{content:'';position:absolute;left:calc(50% - 8px);top:calc(50% - 8px);width:16px;height:16px;border:2px solid var(--loading-ink,#8552db);border-right-color:transparent;border-radius:50%;box-sizing:border-box;animation:content-spin .8s linear infinite;pointer-events:none}
+.loading-button.has-saved:after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;color:var(--loading-ink,#8552db);font-size:18px;font-weight:800;pointer-events:none}
+@keyframes content-shimmer{to{translate:100% 0}}@keyframes content-spin{to{rotate:360deg}}
+@media(prefers-reduced-motion:reduce){.skeleton-shapes:after{animation:none;display:none}.content-refresh:after,.loading-button.is-loading:after{animation:none}}
+
+.personal-shell .shopping-items>.content-skeleton{background:#fff;border:1px solid #eae3f0;border-radius:22px;padding:4px 15px}

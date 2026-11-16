@@ -9,8 +9,9 @@ exec(fixture_source)
 
 
 def navigate(page, section):
-    if page.locator('[data-action="workspace-menu"]').is_visible():
-        page.locator('[data-action="workspace-menu"]').click()
+    if page.locator('.nav-add').is_visible():
+        page.locator('.nav-add').click()
+        page.locator('.quick-add-modal [data-action="workspace-menu"]').click()
         page.locator('.navigation-drawer [data-route="'+section+'"]').click()
     else:
         page.locator('.workspace-sidebar [data-route="'+section+'"]').click()

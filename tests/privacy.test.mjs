@@ -43,7 +43,7 @@ test('account deletion calls the rpc and drops the local session',async()=>{
  assert.equal(called.url,'https://fixture.supabase.co/rest/v1/rpc/divzplit_delete_account');
  assert.equal(called.body,'{}');assert.equal(result.deleted,true);assert.equal(c.session,null);assert.equal(c.user,null);
  const missing=authed(async()=>new Response(JSON.stringify({code:'PGRST202'}),{status:404}));
- await assert.rejects(()=>missing.deleteAccount(),/activad/);
+ await assert.rejects(()=>missing.deleteAccount(),/support@divzplit/);
  const rejected=authed(async()=>response({deleted:false}));
  await assert.rejects(()=>rejected.deleteAccount(),/confirmar/);
 });

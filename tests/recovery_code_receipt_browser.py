@@ -38,7 +38,7 @@ with sync_playwright() as p:
   ns={};exec(planning,ns);ns['group']['document']['currency']='EUR';c,page=ns['context'](b,ns['OWNER'],locale='es-ES')
   page.evaluate('(lang)=>localStorage.setItem("divzplit-language",lang)',locale[:2]);page.reload();expect(page.locator('.balance-stat')).to_be_visible()
   for width in [320,393,1440]:
-   page.set_viewport_size({'width':width,'height':852});page.locator('.nav-add:visible').first.click();page.locator('[data-action="new-expense"]').click();form=page.locator('#expense-form');form.locator('details').evaluate('(el)=>el.open=true')
+   page.set_viewport_size({'width':width,'height':852});page.locator('.nav-add:visible').first.click();page.locator('.quick-add-modal [data-action="new-expense"]').click();form=page.locator('#expense-form');form.locator('details').evaluate('(el)=>el.open=true')
    control=form.locator('.receipt-file-control');expect(control.locator('.receipt-file-button')).to_have_text(choose);expect(control.locator('[data-receipt-filename]')).to_have_text(empty)
    expect(control.locator('[type="file"]')).to_have_css('opacity','0');assert not any(s in control.inner_text() for s in ['Seleccionar archivo','nada seleccionado'])
    form.locator('[name="amount"]').fill('10');image=page.locator('.modal-heading').screenshot()
