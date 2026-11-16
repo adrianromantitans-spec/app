@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same adaptive framing as the launcher, but no low-resolution bitmap in the splash. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background>
+        <layer-list>
+            <item android:drawable="@android:color/white" />
+            <item android:drawable="@drawable/ic_splash_maskable"
+                android:top="8.5dp" android:right="8.5dp"
+                android:left="8.5dp" android:bottom="8.5dp" />
+        </layer-list>
+    </background>
+    <foreground android:drawable="@android:color/transparent" />
+    <monochrome android:drawable="@drawable/ic_notification_icon" />
+</adaptive-icon>

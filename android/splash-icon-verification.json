@@ -1,0 +1,18 @@
+{
+  "package": "com.divzplit.app",
+  "versionName": "1.0.2",
+  "versionCode": 3,
+  "minSdk": 24,
+  "targetSdk": 36,
+  "aabBytes": 1915843,
+  "aabSha256": "3ee8de36590fa46baecd96c20b124afdcf25b3ec12ca2ebe91fafae087d05e7d",
+  "bundletoolValidate": "PASS",
+  "jarsignerVerify": "PASS",
+  "sameUploadCertificate": true,
+  "lintErrors": 0,
+  "lintWarnings": 11,
+  "compiledSplashVectorPresent": true,
+  "existingNonAndroidFilesUnchanged": 373,
+  "systemSplashAndAnimationTimingUnchanged": true,
+  "realDeviceVisualComparison": "PENDING"
+}
