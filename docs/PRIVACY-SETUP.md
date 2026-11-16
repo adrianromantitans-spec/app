@@ -10,12 +10,20 @@ y archivos restantes; no basta con borrar metadatos de Storage. Consulta el
 [procedimiento actualizado](privacy/OPERATIONS.md) y [la guía de Play](PLAY-STORE.md).
 
 La revisión del 16 de noviembre de 2026 es un borrador local sin publicar.
-El MCP de Supabase está autenticado, pero la inspección devolvió HTTP 403;
-no se han verificado las migraciones ni tareas activas. Los cambios de la web
+El endpoint MCP devolvió HTTP 403 en el primer intento. Una revisión posterior
+mediante la API de gestión, en modo solo lectura, confirmó las funciones de
+privacidad y la tarea diaria activa con ejecución correcta. La configuración
+Auth no está incluida en los permisos actuales. No se ha ejecutado ningún borrado
+ni migración en producción. Los cambios de la web
 no equivalen a una certificación legal. La política y las
 condiciones están en inglés, español y rumano, con el responsable al final.
 
-## Una acción en Supabase
+## Instalación en otros proyectos y comprobaciones futuras
+
+En el proyecto actual, las funciones de privacidad y la tarea ya se han comprobado
+como instaladas. No es necesario volver a instalarlas para esta revisión.
+Los pasos siguientes son instrucciones de instalación, no acciones pendientes
+para el proyecto auditado.
 
 1. Abrir el proyecto existente → **SQL Editor → New query**.
 2. Copiar todo [`supabase/privacy-operations.sql`](../supabase/privacy-operations.sql)

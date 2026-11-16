@@ -6,7 +6,9 @@ paid features, Google Play first and Apple App Store later. Future ads, a one-ti
 ad-removal purchase and possible premium features are plans, not active services.
 The owner plans European countries first, with the exact list selected in Google
 Play Console before release. Do not assume that means EU/EEA only or that the UK
-and Switzerland are included. A public contact address still needs confirmation.
+and Switzerland are included. The owner has instructed that their postal address
+not be published. The draft identifies Adrian Roman, Romania and the support email;
+any separate store/commercial-law address requirements remain unresolved.
 This document is an operating procedure, not a compliance certification.
 
 ## Evidence and limits
@@ -16,12 +18,16 @@ The source reviewed is based on commit 1862509. Draft edits are on the review br
 of intended behavior, not proof that a migration or scheduled job is live.
 
 Supabase MCP is configured with OAuth and read-only access for project
-xvtqmmpufvmyuokpmjvf. On 16 November its endpoint rejected inspection from this
-environment with HTTP 403 / Cloudflare error 1010. No live migration, job, backup
-or region verification was possible. Do not describe configuration/authentication
-alone as a successful administrative audit. Do not retry a denied access path.
+xvtqmmpufvmyuokpmjvf. The MCP endpoint initially rejected inspection. A later
+owner-authorized review succeeded through the Supabase Management API, with
+`read_only: true`; PostgreSQL reported `transaction_read_only=on` and the
+`supabase_read_only_user` role. The deletion, export and retention function bodies
+match the repository after SQL token normalization. This verifies those deployed
+bodies; it does not establish the status of every migration. Auth configuration
+inspection remains denied because the OAuth grant lacks `auth_config_read`.
 
-Previous audit notes identify Ireland (eu-west-1) from an owner screenshot,
+The Management API now confirms Ireland (eu-west-1) and ACTIVE_HEALTHY status.
+Previous audit notes identify
 Supabase, GitHub Pages, Resend, Google and Cloudflare. Confirm actual settings and
 contracts in the provider accounts before release. No private records or secrets
 belong in this repository.
@@ -107,18 +113,17 @@ requests. The owner has not adopted exact periods for all categories.
 `supabase/privacy-operations.sql` proposes cleanup of notifications older than
 90 days, terminal push jobs after 7 days, disabled subscriptions after 30 days,
 FX quotes after 2 days and invitations expired for over 30 days. Those thresholds
-are code defaults, not evidence that cleanup is deployed, running or owner-approved.
-They do not purge active accounts, expenses, payment records, history or receipts.
-Do not put automatic expiry promises in public text until implementation and
-monitoring have been verified.
+were originally code defaults; the read-only production review now confirms the
+same deployed function and an active, successful daily job. The public draft
+therefore describes those existing temporary-data rules. They do not purge active
+accounts, expenses, payment records, history or receipt images.
 
-Before activation, approve the targets, inspect the deployed function, confirm an
-active daily `divzplit-privacy-retention` job, review recent success/failure results
-without disclosing user data, and assign failure monitoring. Do not execute the
-retention function merely to audit it; execution deletes data. If pg_cron is
-unavailable, arrange a trusted alternative. Read-only access cannot install or
-repair jobs. Decide a review cadence for inactive groups, support correspondence
-and disputes. Provider log and backup periods must come from actual plans/settings.
+Keep the active daily `divzplit-privacy-retention` job under monitoring and review
+success/failure results without disclosing user data. Do not execute the retention
+function merely to audit it; execution deletes data. If pg_cron becomes unavailable,
+arrange a trusted alternative. Read-only access cannot install or repair jobs.
+Decide a review cadence for inactive groups, support correspondence and disputes.
+Provider log and backup periods still require actual plan/settings evidence.
 
 ## Providers, transfers and security
 
@@ -208,3 +213,39 @@ Classify these results as owner reported; they were not independently tested her
 Retest expiry, single use and delivery after relevant configuration changes. This
 does not close the separate account-deletion and storage-cleanup review. No
 provider settings or templates have been changed by these source edits.
+
+
+## Verified read-only production review — 16 November 2026
+
+- GitHub Pages reports a successful build of main commit 1862509. The legal/help
+  draft remains unmerged; no website or database changes were deployed.
+- Deletion, export and retention routines exist and match the repository bodies.
+  Anonymous execution is denied for all three. Authenticated users can invoke
+  deletion/export; only the service role among these inspected roles can invoke
+  retention. All three use a fixed empty search path.
+- All 17 public application tables have RLS enabled. Anonymous users have no direct
+  read/write grants on these tables. Authenticated direct writes are denied.
+  Receipt storage is private, capped at 1 MiB, with JPEG-only uploads and policies
+  that check membership and uploader/owner permissions.
+- The privacy-retention job is active at 03:17 UTC daily, succeeded on the review
+  date, and has no failed runs recorded during the preceding seven days. The
+  reminder/dispatch jobs were also active with successful latest runs. A cron
+  success is not proof of final notification delivery to a device.
+- No overdue temporary records were found using each configured threshold plus
+  a one-day scheduling allowance. This query returned only booleans, not records.
+- Backup metadata reports WALG enabled, PITR disabled and no backup entries in the
+  API result. This does not establish that the provider has no internal backups;
+  a usable customer restore path and backup retention remain unverified.
+- No migration-history table was found at `supabase_migrations.schema_migrations`.
+  The direct function comparison is stronger evidence for these three routines
+  than claiming that every migration file has been tracked or deployed.
+- Offline disposable PostgreSQL tests passed for group isolation, exports,
+  housekeeping and receipt policies. The exact deployed deletion/export bodies
+  were also tested with synthetic accounts. Physical receipt cleanup remains a
+  confirmed implementation problem. Production deletion/session loss still needs
+  an end-to-end test and remediation where required; no real account was deleted.
+
+Auth secrets, SMTP settings, accepted agreements, support-mailbox controls, Resend
+tracking and Cloudflare settings were not accessible through this grant. Email
+confirmation and OTP expiry remain owner reported. Store declarations and the
+responsible support/incident handler remain owner/store-console tasks.

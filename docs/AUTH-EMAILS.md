@@ -107,7 +107,9 @@ En futuras comprobaciones, revisar entrega y spam en Gmail/Outlook y recopilar
 solo encabezados saneados.
 Las pruebas locales usan fixtures y no envían correos. La publicación de GitHub no
 instala las plantillas ni cambia expiración, SMTP o seguimiento en Supabase/Resend.
-La inspección administrativa sigue bloqueada por el endpoint de Supabase.
+La API de gestión permitió después inspección de base de datos en modo lectura.
+La configuración Auth sigue inaccesible porque el permiso OAuth auth_config_read
+no está incluido; los datos de confirmación y OTP siguen confirmados por el propietario.
 
 Fuentes:
 
