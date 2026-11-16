@@ -13,11 +13,14 @@ Después, en la app: **Cuenta → Eliminar cuenta**. La misma acción está en
 
 Qué hace:
 
-- Cierra todas las sesiones y bloquea ese correo y Google/Apple asociados.
+- Deshabilita la cuenta anterior, revoca sesiones y retira las identidades
+  asociadas. Esto no garantiza una prohibición de volver a registrarse.
 - Borra avisos, suscripciones push y el nombre del perfil.
 - En grupos compartidos el nombre pasa a ser «Cuenta eliminada». Los gastos y
   saldos de las demás personas se conservan.
-- Un grupo donde esa persona está sola se elimina, incluidas sus fotos.
+- Un grupo donde esa persona está sola se retira de la app. La eliminación de
+  fotos requiere completar y verificar el borrado mediante la API de Storage;
+  borrar filas de `storage.objects` no elimina los archivos físicos.
 - Si administraba un grupo con más gente, otro miembro pasa a administrarlo.
 
 Play Console pide esa URL en **Política → Seguridad de los datos → Eliminación
@@ -100,3 +103,23 @@ Fuentes oficiales:
 - [Clasificación del contenido en Google Play](https://support.google.com/googleplay/android-developer/answer/9859655?hl=es)
 - [Público objetivo en Google Play](https://support.google.com/googleplay/android-developer/answer/9867159?hl=es)
 - [Protección de datos de menores: Comisión Europea](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/legal-grounds-processing-data/are-there-any-specific-safeguards-data-about-children_en)
+
+## Revisión local de 16 de noviembre de 2026 — antes de publicar
+
+No se ha enviado ninguna ficha a una tienda ni desplegado este borrador.
+El operador confirma que actúa como persona física, sin empresa, y que no hay
+anuncios ni funciones de pago. Google Play será la primera tienda; App Store
+se revisará después. Una posible compra única para quitar anuncios no es una
+suscripción recurrente. No declarar compras o anuncios futuros como activos.
+
+Confirmar una dirección pública de contacto adecuada y la identificación exigible.
+Verificar en producción la eliminación de cuenta y archivos, las migraciones,
+los registros retenidos y la conservación de proveedores antes de declarar
+resultados de borrado. Véase [OPERATIONS](privacy/OPERATIONS.md).
+
+## Alcance inicial confirmado por el propietario
+
+Primer lanzamiento en países europeos. La lista exacta se elegirá en Google Play
+Console antes de publicar. Esto no confirma por sí solo un lanzamiento limitado
+a la UE/EEE ni la inclusión de Reino Unido o Suiza. Revisar la lista definitiva
+para ajustar los requisitos aplicables. El borrador sigue sin publicar.

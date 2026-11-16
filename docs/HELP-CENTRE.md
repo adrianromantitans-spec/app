@@ -1,16 +1,16 @@
 # Centro de ayuda
 
 Cuenta → Ayuda y asistencia → Centro de ayuda abre una página dentro de la app,
-también si la cuenta todavía no tiene grupos. Incluye 14 respuestas sobre grupos,
+también si la cuenta todavía no tiene grupos. Incluye 22 respuestas sobre grupos,
 acceso, gastos, presupuestos, tickets, pagos, simplificación, monedas, notificaciones,
-compra, tareas, datos y edad mínima. El contenido completo está en español, inglés
+compra, tareas, datos, edad mínima, confirmación de correo, permisos de Google, seguridad de invitaciones, conservación, derechos, almacenamiento, incidencias y futuras compras. El contenido completo está en español, inglés
 y rumano y sigue el idioma de la aplicación.
 
 Las preguntas son desplegables nativos (`details`/`summary`). La búsqueda combina
 los términos, ignora mayúsculas y tildes, filtra categorías vacías y permite limpiar
 el resultado. La consulta se conserva en memoria al volver desde Cuenta y no se
 envía a un servicio externo ni se guarda en almacenamiento persistente. El pie
-incluye Contactar con soporte mediante el correo habitual.
+incluye Contactar con soporte mediante el correo habitual y enlaces a privacidad y condiciones en el idioma seleccionado.
 
 Contenido y búsqueda: `help.js`. Diseño: `help.css`. La entrada de Cuenta reutiliza
 las filas de configuración. Actualizar las tres versiones de cada respuesta si

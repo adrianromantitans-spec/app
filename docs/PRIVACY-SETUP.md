@@ -4,13 +4,26 @@ El borrado de cuenta lo hace la propia persona desde **Cuenta → Eliminar cuent
 o desde [divzplit.com/delete-account](https://divzplit.com/delete-account/).
 Para activarlo en un proyecto ya creado, ejecuta una vez
 [`supabase/account-deletion.sql`](../supabase/account-deletion.sql).
-Los grupos compartidos conservan gastos y saldos; el nombre pasa a ser
-«Cuenta eliminada». Consulta [la guía de Play](PLAY-STORE.md).
+Los grupos compartidos conservan gastos y saldos; el nombre visible pasa a ser
+«Cuenta eliminada». Esto no anonimiza todos los datos. Hay que revisar los datos
+y archivos restantes; no basta con borrar metadatos de Storage. Consulta el
+[procedimiento actualizado](privacy/OPERATIONS.md) y [la guía de Play](PLAY-STORE.md).
 
-Los cambios de la web no equivalen a una certificación legal. La política y las
+La revisión del 16 de noviembre de 2026 es un borrador local sin publicar.
+El endpoint MCP devolvió HTTP 403 en el primer intento. Una revisión posterior
+mediante la API de gestión, en modo solo lectura, confirmó las funciones de
+privacidad y la tarea diaria activa con ejecución correcta. La configuración
+Auth no está incluida en los permisos actuales. No se ha ejecutado ningún borrado
+ni migración en producción. Los cambios de la web
+no equivalen a una certificación legal. La política y las
 condiciones están en inglés, español y rumano, con el responsable al final.
 
-## Una acción en Supabase
+## Instalación en otros proyectos y comprobaciones futuras
+
+En el proyecto actual, las funciones de privacidad y la tarea ya se han comprobado
+como instaladas. No es necesario volver a instalarlas para esta revisión.
+Los pasos siguientes son instrucciones de instalación, no acciones pendientes
+para el proyecto auditado.
 
 1. Abrir el proyecto existente → **SQL Editor → New query**.
 2. Copiar todo [`supabase/privacy-operations.sql`](../supabase/privacy-operations.sql)
@@ -42,8 +55,8 @@ las deudas de otros miembros por pulsar un botón.
 
 ## Pendientes que no se resuelven con código
 
-- **Dirección y actividad en Rumanía:** el propietario ha confirmado que no tiene
-  dirección profesional. Revisar la identificación exigible y la forma fiscal o
+- **Dirección y actividad en Rumanía:** el propietario confirma que no tiene empresa;
+  falta una dirección pública de contacto adecuada. Revisar la identificación exigible y la forma fiscal o
   empresarial para ingresos publicitarios con un profesional local.
 - **Proveedores:** revisar y formalizar los acuerdos aplicables y las condiciones
   reales de conservación y transferencias; no se han aceptado contratos por ti.
@@ -56,7 +69,7 @@ las deudas de otros miembros por pulsar un botón.
   revisar consentimiento y protección de menores antes de activarlos. Nunca usar
   aceptación de condiciones como consentimiento publicitario general.
 
-Las pruebas locales de base de datos, los flujos de registro y los documentos
-traducidos han pasado. Las comprobaciones anónimas de siete tablas privadas de
-producción no devolvieron registros. Esto no sustituye una auditoría completa de
-la configuración de producción ni una revisión jurídica.
+Las verificaciones anteriores de base de datos y producción son históricas,
+no una comprobación nueva de este borrador. Las comprobaciones locales actuales
+se detallan en la entrega de revisión. Esto no sustituye verificar la configuración
+de producción ni una revisión jurídica.
