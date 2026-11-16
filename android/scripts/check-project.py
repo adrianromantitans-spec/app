@@ -24,5 +24,16 @@ permissions={item.get(ns+'name') for item in manifest.findall('uses-permission')
 assert permissions=={'android.permission.POST_NOTIFICATIONS'},permissions
 links=manifest.findall('.//intent-filter/data');assert len(links)==1
 assert links[0].get(ns+'scheme')=='https' and links[0].get(ns+'pathPrefix')=='/app/'
+launcher=app.find("activity[@"+ns+"name='LauncherActivity']")
+assert launcher is not None and launcher.get(ns+'theme')=='@style/Theme.DivZplit.Launcher'
+metadata={item.get(ns+'name'):item for item in launcher.findall('meta-data')}
+assert 'android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE' not in metadata
+assert 'android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION' not in metadata
+assert config['splashScreenFadeOutDuration']==0
+assert config['additionalTrustedOrigins']==[], 'Review and independently verify any additional origin.'
+styles=ET.parse(A/'app/src/main/res/values-v31/styles.xml').getroot()
+items={item.get('name'):item.text for item in styles.findall('./style/item')}
+assert items['android:windowSplashScreenBackground']=='@color/backgroundColor'
+assert items['android:windowSplashScreenAnimatedIcon']=='@mipmap/ic_launcher'
 assert not any((A/'app/src/main').rglob('*.so'))
 print(f"PASS: {config['packageId']} {config['appVersionName']} ({config['appVersionCode']}), min 24 / target 36, Gradle wrapper verified, HTTPS TWA and notification delegation intact.")

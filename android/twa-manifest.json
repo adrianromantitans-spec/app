@@ -15,13 +15,13 @@
   "startUrl": "/app/?source=installed",
   "iconUrl": "https://divzplit.com/assets/app-icon-512.png",
   "maskableIconUrl": "https://divzplit.com/assets/app-icon-maskable-512.png",
-  "splashScreenFadeOutDuration": 300,
+  "splashScreenFadeOutDuration": 0,
   "signingKey": {
     "path": "./divzplit-upload.jks",
     "alias": "divzplit"
   },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://divzplit.com/manifest.webmanifest",
@@ -32,7 +32,12 @@
   "fullScopeUrl": "https://divzplit.com/app/",
   "minSdkVersion": 24,
   "orientation": "portrait",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "name": "Google Play App Signing (provided by owner)",
+      "value": "65:59:83:FB:B9:3A:E3:CC:0F:46:86:D7:2D:C8:05:FA:40:79:45:68:29:1E:47:84:7E:B9:22:B4:5E:A9:BC:64"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": []
 }

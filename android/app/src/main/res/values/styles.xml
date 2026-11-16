@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Native launch surface only. Does not change the website or its animation. -->
+    <style name="Theme.DivZplit.Launcher.Base" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowBackground">@color/backgroundColor</item>
+    </style>
+    <style name="Theme.DivZplit.Launcher" parent="Theme.DivZplit.Launcher.Base" />
+</resources>
