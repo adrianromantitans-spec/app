@@ -44,10 +44,11 @@ function tick(time){
  const dt=previousTime?Math.min(1/30,(time-previousTime)/1000):1/60;previousTime=time;
  amountVelocity+=(240*(amountTarget-amount)-28*amountVelocity)*dt;amount=clamp(amount+amountVelocity*dt,0,1);
  lensVelocity+=(250*(lensTarget-lensAmount)-25*lensVelocity)*dt;lensAmount=clamp(lensAmount+lensVelocity*dt,0,1.08);
- const before=lensX;lensX+=(lensXTarget-lensX)*Math.min(1,dt*32);
+ // Preserve the 60 Hz response, using elapsed time at other refresh rates.
+ const before=lensX;lensX+=(lensXTarget-lensX)*(1-Math.pow(1-32/60,dt*60));
  layout();
  if(view.geometry&&lensAmount>.008){
-  const g=view.geometry,speed=Math.abs(lensX-before),width=54+22*lensAmount+Math.min(13,speed*1.2),height=54+21*lensAmount-Math.min(5,speed*.4);
+  const g=view.geometry,speed=dt>0?Math.abs(lensX-before)/(dt*60):0,width=54+22*lensAmount+Math.min(13,speed*1.2),height=54+21*lensAmount-Math.min(5,speed*.4);
   const left=lensX-width/2,top=g.top+g.height/2-height/2;
   view.lens.hidden=false;Object.assign(view.lens.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px',opacity:String(Math.min(1,lensAmount))});
   Object.assign(view.copy.style,{left:(g.left-left)+'px',top:(g.top-top)+'px',width:g.width+'px',height:g.height+'px',transformOrigin:(lensX-g.left)+'px '+g.height/2+'px',transform:'scale('+(1+.18*lensAmount)+')'});
