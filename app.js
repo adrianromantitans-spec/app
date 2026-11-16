@@ -1,7 +1,7 @@
 import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';
 import {startIntroTransition} from './intro-transition.js?v=start-64';
-import {helpCentreView,filterHelp} from './help.js?v=language-90';
-import {legalFields,legalLinks,legalMetadata} from './legal.js?v=language-90';
+import {helpCentreView,filterHelp} from './help.js?v=legal-review-20261116';
+import {legalFields,legalLinks,legalMetadata} from './legal.js?v=legal-review-20261116';
 import {settlementPlan} from './settlement-plan.js?v=language-90';
 import {groupMode,homeSummary,groupForMode,recentExpenses} from './home.js?v=language-90';
 import {convertedAmount,validConversion} from './fx.js?v=language-90';
@@ -10,7 +10,7 @@ import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader
 import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=language-90';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-90';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=language-90';
-import {Cloud} from './cloud.js?v=language-90';
+import {Cloud} from './cloud.js?v=legal-review-20261116';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=activity-102';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=activity-103';
 import {NotificationCentre} from './notifications.js?v=loading-92';
@@ -708,7 +708,7 @@ function minimumAgeModal(){
 }
 function deleteAccountModal(){
  if(!accountUser?.email){toast(tr('Esta cuenta no tiene un correo que puedas confirmar. Escribe a support@divzplit.com.'));return;}
- openModal(tr('Eliminar cuenta'),ui`<form id="delete-account-form"><p class="dialog-copy">Se cerrará la sesión en todos tus dispositivos y no podrás volver a entrar con este correo. En los grupos compartidos tu nombre pasará a ser «Cuenta eliminada»; los gastos y saldos de las demás personas se conservan. Los grupos en los que estás solo se eliminan. Si administras un grupo con más gente, otro miembro pasa a administrarlo. Se borran tus avisos y datos de perfil. Las fotos de tickets compartidos se conservan.</p><label class="field">Escribe ${esc(accountUser.email)} para confirmar<input name="confirmEmail" type="email" autocomplete="off" required></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button secondary" type="button" data-action="close-modal">Cancelar</button><button class="button danger" type="submit">Eliminar mi cuenta</button></div></form>`);
+ openModal(tr('Eliminar cuenta'),ui`<form id="delete-account-form"><p class="dialog-copy">La cuenta anterior quedará deshabilitada y se retirarán su perfil, avisos y suscripciones push. Los grupos compartidos conservan saldos e historial con la etiqueta «Cuenta eliminada»; las descripciones y los tickets pueden seguir conteniendo datos personales. Los grupos donde estás solo se retiran de la app. Si administras un grupo compartido, otro miembro pasa a administrarlo. Eliminar la cuenta no cancela deudas. Pide a soporte una revisión de los datos o archivos restantes. No se puede deshacer.</p><label class="field">Escribe ${esc(accountUser.email)} para confirmar<input name="confirmEmail" type="email" autocomplete="off" required></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button secondary" type="button" data-action="close-modal">Cancelar</button><button class="button danger" type="submit">Eliminar mi cuenta</button></div></form>`);
 }
 async function finishDeletedAccount(){
  try{await notifications.disconnect();}catch{/* Local logout still proceeds. */}
@@ -732,7 +732,7 @@ async function handlePrivacyForm(form,data){
   const alert=form.querySelector('.form-error');
   if(!accountUser||!expected||typed!==expected){if(alert)alert.textContent=tr(expected?'Escribe el correo de esta cuenta para confirmar.':'Esta cuenta no tiene un correo que puedas confirmar. Escribe a support@divzplit.com.');return true;}
   remoteBusy=true;
-  try{await cloud.deleteAccount();await finishDeletedAccount();toast(tr('Cuenta eliminada. Ya no puedes entrar con ese correo.'),'success');}
+  try{await cloud.deleteAccount();await finishDeletedAccount();toast(tr('Cuenta eliminada. La cuenta anterior ha quedado deshabilitada.'),'success');}
   catch(error){if(alert?.isConnected)alert.textContent=error.message;else toast(error.message);}
   finally{remoteBusy=false;}
   return true;
