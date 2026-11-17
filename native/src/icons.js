@@ -1,0 +1,4 @@
+import React from 'react';
+import Svg,{Path,Circle,Rect} from 'react-native-svg';
+const paths={home:'M3 10 12 3l9 7v10H3z M9 21v-8h6v8',groups:'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',activity:'M5 20V11 M12 20V4 M19 20v-7',profile:'M5 21v-2a7 7 0 0 1 14 0v2 M8 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4',plus:'M12 4v16 M4 12h16',back:'m15 4-8 8 8 8',chevron:'m9 5 7 7-7 7',check:'m5 12 4 4L19 6',close:'M5 5l14 14 M5 19 19 5',mail:'M3 5h18v14H3z M3 5l9 7 9-7',eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12 M9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0',arrow:'M4 12h16 m-6-6 6 6-6 6',settings:'M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M9 15v6'};
+export function Icon({name,size=24,color='#28212f'}){return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><Path d={paths[name]||paths.groups}/></Svg>;}

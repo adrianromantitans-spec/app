@@ -1,0 +1,48 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'com.facebook.react'
+apply plugin: 'com.google.gms.google-services'
+def nativeConfig = new groovy.json.JsonSlurper().parse(file('../../native-config.json'))
+def signingNames=['DIVZPLIT_UPLOAD_STORE_FILE','DIVZPLIT_UPLOAD_STORE_PASSWORD','DIVZPLIT_UPLOAD_KEY_ALIAS','DIVZPLIT_UPLOAD_KEY_PASSWORD']
+def signingValues=signingNames.collectEntries{[(it):System.getenv(it)]}
+def signingReady=signingValues.values().every{it!=null&&!it.isEmpty()}
+react { autolinkLibrariesWithApp() }
+android {
+ namespace 'com.divzplit.app'
+ ndkVersion rootProject.ext.ndkVersion
+ buildToolsVersion rootProject.ext.buildToolsVersion
+ compileSdk rootProject.ext.compileSdkVersion
+ defaultConfig {
+  applicationId 'com.divzplit.app'
+  minSdkVersion 24
+  targetSdkVersion 36
+  versionCode nativeConfig.versionCode
+  versionName nativeConfig.versionName
+  resValue 'string','appName','DivZplit'
+  resValue 'color','backgroundColor','#F8F5FD'
+ }
+ sourceSets { main { res.srcDirs += ['../../../android/app/src/main/res']; java.srcDirs += [layout.buildDirectory.dir('generated/push').get().asFile] } }
+ signingConfigs { if(signingReady){upload {storeFile file(signingValues.DIVZPLIT_UPLOAD_STORE_FILE);storePassword signingValues.DIVZPLIT_UPLOAD_STORE_PASSWORD;keyAlias signingValues.DIVZPLIT_UPLOAD_KEY_ALIAS;keyPassword signingValues.DIVZPLIT_UPLOAD_KEY_PASSWORD}} }
+ buildTypes {
+  release {if(signingReady)signingConfig signingConfigs.upload;minifyEnabled true;proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),'proguard-rules.pro'}
+ }
+ lint {abortOnError true;checkReleaseBuilds true}
+}
+tasks.register('copySharedPush') {
+ inputs.file('../../../android/app/src/webview/java/com/divzplit/app/DivZplitMessagingService.java')
+ outputs.dir(layout.buildDirectory.dir('generated/push'))
+ doLast {
+  def source=file('../../../android/app/src/webview/java/com/divzplit/app/DivZplitMessagingService.java').text
+  def destination=layout.buildDirectory.file('generated/push/com/divzplit/app/DivZplitMessagingService.java').get().asFile
+  assert source.contains('!p.getBoolean("enabled", false)')
+  destination.parentFile.mkdirs();destination.text=source.replace('WebViewActivity.class','MainActivity.class').replace('!p.getBoolean("enabled", false)','(!p.getBoolean("enabled", false) || !p.getBoolean("nativeSessionReady", false))')
+ }
+}
+preBuild.dependsOn('copySharedPush')
+tasks.configureEach { if(name=='bundleRelease'||name=='assembleRelease')doFirst{if(!signingReady)throw new GradleException('Use the existing upload signing environment; do not generate another identity.')} }
+dependencies {
+ implementation('com.facebook.react:react-android')
+ implementation('com.facebook.react:hermes-android')
+ implementation('com.google.firebase:firebase-messaging:24.1.2')
+ implementation('androidx.browser:browser:1.9.0')
+}
