@@ -122,6 +122,20 @@ public final class ReceiptModule extends ReactContextBaseJavaModule {
    .addOnCompleteListener(task->{image.recycle();recognizer.close();});
   }catch(Exception error){image.recycle();recognizer.close();reply.reject("OCR","No se ha podido leer el ticket. Puedes escribir el importe.");}
  });}
+ @ReactMethod public void edit(String id,int turns,double x,double y,double width,double height,Promise reply){io.execute(()->{
+  Bitmap source=null,rotated=null,cropped=null;File temporary=null;
+  try{
+   if(turns<0||turns>3||!Double.isFinite(x)||!Double.isFinite(y)||!Double.isFinite(width)||!Double.isFinite(height)||x<0||y<0||width<=0||height<=0||x+width>1.00001||y+height>1.00001)throw new IllegalArgumentException();
+   source=BitmapFactory.decodeFile(receipt(id).getPath());if(source==null)throw new IOException();
+   Matrix matrix=new Matrix();matrix.setRotate(turns*90);rotated=Bitmap.createBitmap(source,0,0,source.getWidth(),source.getHeight(),matrix,true);
+   int left=Math.min(rotated.getWidth()-1,(int)Math.floor(x*rotated.getWidth())),top=Math.min(rotated.getHeight()-1,(int)Math.floor(y*rotated.getHeight()));
+   int w=Math.max(1,Math.min(rotated.getWidth()-left,(int)Math.round(width*rotated.getWidth()))),h=Math.max(1,Math.min(rotated.getHeight()-top,(int)Math.round(height*rotated.getHeight())));
+   cropped=Bitmap.createBitmap(rotated,left,top,w,h);temporary=File.createTempFile("edit-",".jpg",directory);
+   try(OutputStream out=new FileOutputStream(temporary)){if(!cropped.compress(Bitmap.CompressFormat.JPEG,95,out))throw new IOException();}
+   reply.resolve(prepare(Uri.fromFile(temporary)));
+  }catch(Exception|OutOfMemoryError error){reply.reject("PHOTO","No se ha podido editar la foto. Vuelve a seleccionarla.");}
+  finally{if(temporary!=null)temporary.delete();if(cropped!=null&&cropped!=rotated&&cropped!=source)cropped.recycle();if(rotated!=null&&rotated!=source)rotated.recycle();if(source!=null)source.recycle();}
+ });}
  @ReactMethod public void release(String id,Promise reply){io.execute(()->{try{receipt(id).delete();reply.resolve(true);}catch(Exception error){reply.reject("PHOTO","Invalid receipt");}});}
  @Override public void invalidate(){if(pending!=null)pending.reject("CLOSED","Photo selection interrupted");pending=null;io.shutdown();super.invalidate();}
 }
