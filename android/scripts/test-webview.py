@@ -18,7 +18,9 @@ assert activity.get(ns+'name')=='.WebViewActivity'
 links=activity.findall('.//data');assert len(links)==2
 assert all(e.get(ns+'scheme')=='https' and e.get(ns+'host')=='divzplit.com' for e in links)
 assert {e.get(ns+'path') or e.get(ns+'pathPrefix') for e in links}=={'/','/app/'}
-assert not app.findall('service') and not app.findall('provider')
+assert not app.findall('service')
+provider=app.find('provider');assert provider is not None and provider.get(ns+'exported')=='false'
+paths=ET.parse(P/'res/xml/webview_filepaths.xml').getroot();assert len(paths)==1 and paths[0].tag=='cache-path' and paths[0].get('path')=='receipt_camera/'
 styles=ET.parse(P/'res/values-v31/styles.xml').getroot()
 items={e.get('name'):e.text for e in styles.findall('./style/item')}
 assert items['android:windowSplashScreenAnimatedIcon']=='@drawable/ic_splash'

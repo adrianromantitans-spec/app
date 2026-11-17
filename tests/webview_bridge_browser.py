@@ -22,6 +22,14 @@ with sync_playwright() as p:
  assert page.evaluate("JSON.parse(atob(messages[1].base64)).fixture===true")
  page.evaluate("window.__divzplitDownload('https://evil.test/fixture.json')")
  assert page.evaluate('messages.length')==2
+ # Android Back closes a modal, returns a SPA section home, then allows exit.
+ page.evaluate("document.body.insertAdjacentHTML('beforeend','<div id=modal-root><section>Dialog</section></div><div class=main-shell data-current-page=profile></div><div class=reference-dock><button data-route=home>Home</button></div>');document.addEventListener('keydown',e=>{if(e.key===\"Escape\")document.querySelector('#modal-root').replaceChildren()});document.querySelector('[data-route=home]').onclick=()=>document.querySelector('.main-shell').dataset.currentPage='home';void 0")
+ assert page.evaluate('window.__divzplitBack()') is True
+ assert page.locator('#modal-root').inner_html()==''
+ assert page.evaluate("document.querySelector('.main-shell').dataset.currentPage")=='profile'
+ assert page.evaluate('window.__divzplitBack()') is True
+ assert page.evaluate("document.querySelector('.main-shell').dataset.currentPage")=='home'
+ assert page.evaluate('window.__divzplitBack()') is False
  # A frame must not acquire the main-frame clipboard/export bridge.
  page.evaluate("document.body.append(document.createElement('iframe'))")
  frame=page.frames[1];frame.evaluate(SCRIPT)

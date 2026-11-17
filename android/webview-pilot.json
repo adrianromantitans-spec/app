@@ -1,6 +1,6 @@
 {
-  "appVersionCode": 4,
-  "appVersionName": "1.1.0-webview.1",
+  "appVersionCode": 5,
+  "appVersionName": "1.1.0-webview.2",
   "status": "experimental-not-for-production",
   "productionBlockers": [
     "Native push delivery requires a separate implementation; Web Push is unavailable in Android WebView.",

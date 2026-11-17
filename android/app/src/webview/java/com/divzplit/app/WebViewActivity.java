@@ -13,6 +13,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.IOException;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.PermissionRequest;
@@ -50,6 +54,8 @@ public final class WebViewActivity extends Activity {
     private View errorView;
     private ValueCallback<Uri[]> fileResult;
     private byte[] pendingExport;
+    private File cameraFile;
+    private Uri cameraUri;
     private WebMessagePort nativePort;
     private String bridgeScript;
     private boolean failed;
@@ -192,10 +198,14 @@ public final class WebViewActivity extends Activity {
         @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
             if (fileResult != null) fileResult.onReceiveValue(null);
             fileResult = callback;
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            clearCamera(true);
+            Intent documents = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
                     .setType("image/*").putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
-            try { startActivityForResult(intent, PICK_FILE); }
-            catch (ActivityNotFoundException error) { fileResult.onReceiveValue(null); fileResult = null; }
+            Intent camera = cameraIntent();
+            Intent picker = Intent.createChooser(documents, null);
+            if (camera != null) picker.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
+            try { startActivityForResult(params.isCaptureEnabled() && camera != null ? camera : picker, PICK_FILE); }
+            catch (ActivityNotFoundException error) { clearCamera(true); fileResult.onReceiveValue(null); fileResult = null; }
             return true;
         }
         @Override public boolean onCreateWindow(WebView view, boolean dialog, boolean userGesture, android.os.Message result) {
@@ -211,6 +221,31 @@ public final class WebViewActivity extends Activity {
             });
             ((WebView.WebViewTransport) result.obj).setWebView(popup); result.sendToTarget(); return true;
         }
+    }
+
+    private Intent cameraIntent() {
+        Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (camera.resolveActivity(getPackageManager()) == null) return null;
+        try {
+            File directory = new File(getCacheDir(), "receipt_camera");
+            if (!directory.isDirectory() && !directory.mkdirs()) return null;
+            File[] old = directory.listFiles();
+            if (old != null) for (File file : old) {
+                if (file.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000L) file.delete();
+            }
+            cameraFile = File.createTempFile("receipt-", ".jpg", directory);
+            cameraUri = FileProvider.getUriForFile(this, getPackageName() + ".webviewfiles", cameraFile);
+            camera.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+            camera.setClipData(ClipData.newRawUri("DivZplit receipt", cameraUri));
+            camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            return camera;
+        } catch (IOException | IllegalArgumentException error) { clearCamera(true); return null; }
+    }
+
+    private void clearCamera(boolean delete) {
+        if (cameraUri != null) revokeUriPermission(cameraUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if (delete && cameraFile != null) cameraFile.delete();
+        cameraFile = null; cameraUri = null;
     }
 
     private void receive(WebMessagePort port, String data) {
@@ -243,7 +278,12 @@ public final class WebViewActivity extends Activity {
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request == PICK_FILE && fileResult != null) {
-            fileResult.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result, data)); fileResult = null;
+            Uri[] selected = WebChromeClient.FileChooserParams.parseResult(result, data);
+            boolean captured = result == RESULT_OK && selected == null && cameraFile != null && cameraFile.length() > 0;
+            if (captured) selected = new Uri[]{cameraUri};
+            fileResult.onReceiveValue(selected); fileResult = null;
+            // Successful output stays private in cache for the async web/OCR reader.
+            clearCamera(!captured);
         }
         if (request == SAVE_JSON) {
             byte[] bytes = pendingExport; pendingExport = null;
@@ -271,7 +311,7 @@ public final class WebViewActivity extends Activity {
     @Override public void onBackPressed() { navigateBack(); }
     private void navigateBack() {
         if (web == null) { finish(); return; }
-        web.evaluateJavascript("(()=>{const modal=document.querySelector('#modal-root');if(!modal?.firstElementChild)return false;document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true})()", closed -> {
+        web.evaluateJavascript("window.__divzplitBack?.() || false", closed -> {
             if (web == null || isFinishing() || "true".equals(closed)) return;
             if (web.canGoBack()) web.goBack(); else finish();
         });
@@ -281,7 +321,7 @@ public final class WebViewActivity extends Activity {
     @Override protected void onResume() { super.onResume(); if (web != null) web.onResume(); }
     private void closePort() { if (nativePort != null) { nativePort.close(); nativePort = null; } }
     @Override protected void onDestroy() {
-        closePort(); pendingExport = null;
+        closePort(); pendingExport = null; clearCamera(true);
         if (fileResult != null) { fileResult.onReceiveValue(null); fileResult = null; }
         if (web != null) { surface.removeView(web); web.destroy(); web = null; }
         super.onDestroy();

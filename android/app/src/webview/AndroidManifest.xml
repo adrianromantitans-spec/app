@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <queries>
+        <intent><action android:name="android.media.action.IMAGE_CAPTURE" /></intent>
+    </queries>
     <application
         android:allowBackup="false"
         android:fullBackupContent="false"
@@ -11,6 +14,12 @@
         android:label="@string/appName"
         android:supportsRtl="true"
         android:theme="@style/Theme.DivZplit.WebView">
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.webviewfiles"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/webview_filepaths" />
+        </provider>
         <activity android:name=".WebViewActivity"
             android:exported="true"
             android:launchMode="singleTask"
