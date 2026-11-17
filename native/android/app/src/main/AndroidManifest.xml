@@ -9,5 +9,6 @@
    <intent-filter android:autoVerify="true"><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="https" android:host="divzplit.com"/></intent-filter>
   </activity>
   <service android:name=".DivZplitMessagingService" android:exported="false"><intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT"/></intent-filter></service>
+  <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.native.receipts" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/native_receipt_paths"/></provider>
  </application>
 </manifest>

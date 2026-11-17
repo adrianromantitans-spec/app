@@ -45,4 +45,5 @@ dependencies {
  implementation('com.facebook.react:hermes-android')
  implementation('com.google.firebase:firebase-messaging:24.1.2')
  implementation('androidx.browser:browser:1.9.0')
+ implementation('com.google.mlkit:text-recognition:16.0.1')
 }

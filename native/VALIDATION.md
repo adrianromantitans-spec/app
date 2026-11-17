@@ -1,24 +1,27 @@
 # Migration candidate validation — 17 November 2026
 
-Base repository commit: `fe7cf5ae268d0b82461668cff7aa689e0f72c660`.
+Base repository commit: `f05d0c887587fa614da35c0461f67fc35db6feda`.
 
 ## Passed automatically
 
 - Existing repository `npm run check` and complete `npm test` command.
-- `npm test --prefix native`: 11 tests, including real shared Cloud/model integration through a fixture HTTP transport, canonical identity/version mapping, registration consent, financial failure/retry/concurrency, permissions, stale activity response, callback origins, binary encoding, persisted PKCE state and SHA-256.
+- `npm test --prefix native`: 22 tests, including real shared Cloud/model integration through a fixture HTTP transport, canonical identity/version mapping, registration consent, financial failure/retry/concurrency, permissions, stale activity response, callback origins, binary encoding, persisted PKCE state and SHA-256.
+- Receipt tests cover exact binary uploads through the existing Cloud transport, private storage/session headers, input limits, failed-save retry reuse, account/group changes, safe old-photo cleanup, monthly calendar anchors, stopped series, deletion permissions and concurrent refreshes. They do not call the production backend.
 - Metro production Android bundle; Gradle release compilation (Kotlin, Java, C++ and Hermes), R8 and AAB generation for ARM64 and ARMv7.
-- Android `lintRelease`: 0 errors, 12 warnings. Warnings concern the pinned Gradle version and unused resources inherited from the existing Android wrapper. No lint baseline or error suppression was added.
+- Android `lintRelease`: 0 errors, 19 warnings. Warnings concern the pinned Gradle version, Android framework ExifInterface, private AppCompat resources referenced by the inherited React Native text-input drawable, and unused resources inherited from the existing Android wrapper. No lint baseline or error suppression was added.
 - Existing upload certificate comparison and `jarsigner -verify`.
-- Bundletool 1.18.3 `validate` on the final signed candidate. Manifest: package `com.divzplit.app`, version code `7`, name `1.2.0-native.1`, minimum API 24 / target API 36, native `MainActivity` launcher.
-- Final bundle contains the offline Hermes application bundle, Manrope font and its OFL license. The application screens use React Native views, with no WebView activity or browser-based application shell in this candidate.
-- Source scope scan: all existing website, domain/backend and legacy Android wrapper files unchanged. Only `.gitignore` and new `native/` files are included. No private signing key or service-account private key is included.
+- Bundletool 1.18.3 `validate` on the final signed candidate. Manifest: package `com.divzplit.app`, version code `8`, name `1.2.0-native.2`, minimum API 24 / target API 36, native `MainActivity` launcher.
+- Final bundle contains the offline Hermes application bundle, bundled Latin-script ML Kit OCR models, Manrope font and its OFL license. All 13 packaged ARM64 libraries, including the OCR pipeline, have ELF LOAD alignment of at least 16 KB. This static check does not replace an installation test on a 16 KB device.
+- Final manifest contains a nonexported receipt FileProvider with temporary grants, and no broad camera, media-library or storage permission.
+- The application screens use React Native views, with no WebView activity or browser-based application shell in this candidate.
+- Source scope scan: all existing website, domain/backend and legacy Android wrapper files unchanged. This follow-up changes only files under `native/`. No private signing key or service-account private key is included.
 
 Final local review artifact (not published to Play):
 
 ```
-divzplit-1.2.0-native.1.aab
-bytes: 23165998
-SHA-256: 7650b1d702f422c9a7bc299149b0ba132fcad8fd772afe26b55e68dc2d0fb452
+divzplit-1.2.0-native.2.aab
+bytes: 32790379
+SHA-256: 9116b402266ee3ae768499a4a21c067207268b36e12e3cbf7cde24db0c4c7110
 ```
 
 Android upload certificates are normally self-signed: jarsigner reports the untrusted certificate chain and absence of a timestamp while verifying the bundle signature. The build checks the certificate against the repository's existing upload certificate before signing.
