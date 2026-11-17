@@ -11,6 +11,6 @@ export async function createRuntime(){
  const home=require('../../home.js'),settlement=require('../../settlement-plan.js'),i18n=require('../../i18n.js');
  const {cloudConfig}=require('../../config.js');
  const cloud=new Cloud(cloudConfig,{storage:platform.storage,temporaryStorage:platform.temporaryStorage,fetcher:receiptFetcher(globalThis.fetch.bind(globalThis))});
- const extras=require('../../extras.js'),receipt=require('../../receipt-ocr.js');
- return new NativeController({cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos:NativeModules.DivZplitReceipts});
+ const extras=require('../../extras.js'),receipt=require('../../receipt-ocr.js'),planning=require('../../planning.js');
+ return new NativeController({cloud,model,home,settlement,i18n,native,platform,extras,receipt,planning,photos:NativeModules.DivZplitReceipts});
 }

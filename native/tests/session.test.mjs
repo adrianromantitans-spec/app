@@ -5,12 +5,13 @@ import * as model from '../../model.js';
 import {Cloud,mapGroup} from '../../cloud.js';
 import {legalMetadata} from '../../legal.js';
 import * as extras from '../../extras.js';
+import * as planning from '../../planning.js';
 
 function fixture(){
  const group=structuredClone(model.seed().groups[0]);group.expenses=[];group.remote={ownerId:'owner',version:1};
  const storage=new Map();
  const cloud={user:{id:'owner',email:'test@example.invalid'},storageKey:'test',async saveGroup(g){return g;}};
- const c=new NativeController({cloud,model,extras,i18n:{tr:v=>v},native:{},platform:{storage:{getItem:k=>storage.get(k)||null},temporaryStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},flush:async()=>{}}});
+ const c=new NativeController({cloud,model,extras,planning,i18n:{tr:v=>v},native:{},platform:{storage:{getItem:k=>storage.get(k)||null},temporaryStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},flush:async()=>{}}});
  c.update({user:cloud.user,groups:[group],groupId:group.id});return {c,cloud,group,storage};
 }
 const fields={title:'Dinner',amount:1001,payer:'you',participants:['you','marta','pablo'],date:'2026-11-17',category:'Comida'};
@@ -143,4 +144,105 @@ test('simultaneous refreshes share one recurring save and unauthorized sources s
  await Promise.all([c.refresh(),c.refresh(),c.refresh()]);assert.equal(reads,1);assert.equal(writes,1);
  c.group.remote.ownerId='different';cloud.user={id:'another'};const before=structuredClone(c.group.expenses);
  await c.refresh();assert.equal(writes,1);assert.deepEqual(c.group.expenses,before);
+});
+
+test('planning edits preserve poll options and votes and reject nonowner changes before HTTP',async()=>{
+ const {c,cloud,group}=fixture();const poll={id:'poll',title:'Food',description:'',createdBy:'owner',options:[{id:'a',label:'A'},{id:'b',label:'B'}],votes:{marta:'a'},dueAt:'',remindAt:''};group.polls=[poll];
+ let payload;cloud.planningAction=async(g,kind,action,item)=>{payload=item;const draft=structuredClone(g);draft.polls[0]={...draft.polls[0],...item};return draft;};
+ await c.plan('polls','save',{id:'poll',title:'Dinner',options:['Replacement','Wrong'],description:'Tonight'},group.id,true);
+ assert.deepEqual(payload.options,poll.options);assert.equal(payload.votes,undefined);assert.deepEqual(c.group.polls[0].votes,{marta:'a'});
+ cloud.user={id:'outsider'};payload=null;
+ await assert.rejects(c.plan('polls','save',{id:'poll',title:'Unauthorized'},group.id,true),/permiso/);assert.equal(payload,null);
+ await assert.rejects(c.plan('polls','clear',{},group.id),/permiso/);
+});
+test('planning scheduling preserves existing seconds, validates future order and membership',async()=>{
+ const {c,cloud,group}=fixture();group.tasks=[{id:'task',title:'Book',createdBy:'owner',done:true,assignee:'you',dueAt:'2099-07-10T14:35:29.000Z',remindAt:'',important:false}];
+ let payload;cloud.planningAction=async(g,k,a,item)=>{payload=item;return {...g,tasks:[{...g.tasks[0],...item}]};};
+ const dueAt=planning.localDateTime(group.tasks[0].dueAt);
+ await c.plan('tasks','save',{id:'task',title:'Book hotel',assignee:'you',dueAt,important:true},group.id,true);
+ assert.equal(payload.dueAt,'2099-07-10T14:35:29.000Z');assert.equal(payload.done,undefined);assert.equal(c.group.tasks[0].done,true);
+ await assert.rejects(c.plan('tasks','save',{id:'task',title:'Book',assignee:'you',dueAt:'2099-01-01T10:00',remindAt:'2099-01-01T11:00'},group.id,true),/anterior/);
+ await assert.rejects(c.plan('tasks','save',{id:'task',title:'Book',assignee:'outsider'},group.id,true),/persona/);
+ await assert.rejects(c.plan('tasks','save',{id:'deleted',title:'Book',assignee:'you'},group.id,true),/ya no existe/);
+});
+test('new polls validate distinct choices and use stable item IDs on failed-save retries',async()=>{
+ const {c,cloud,group}=fixture();group.polls=[];let requests=[];
+ cloud.planningAction=async(g,k,a,item)=>{requests.push(item);throw new Error('Offline');};
+ await assert.rejects(c.plan('polls','save',{id:'stable',title:'Dinner?',options:['A','a']},group.id),/diferentes/);assert.equal(requests.length,0);
+ const fields={id:'stable',title:'Dinner?',options:['A','B']};
+ await assert.rejects(c.plan('polls','save',fields,group.id),/Offline/);
+ await assert.rejects(c.plan('polls','save',fields,group.id),/Offline/);
+ assert.equal(requests[0].id,requests[1].id);assert.equal(c.group.polls.length,0);
+});
+test('closed polls cannot vote and a failed completion does not change the visible task',async()=>{
+ const {c,cloud,group}=fixture();group.polls=[{id:'poll',dueAt:'2020-01-01T12:00:00Z',options:[{id:'a'}],votes:{}}];group.tasks=[{id:'task',done:false}];let writes=0;
+ cloud.saveGroup=async()=>{writes++;throw new Error('Offline');};
+ await assert.rejects(c.vote({id:'poll'},'a',group.id),/cerrada/);assert.equal(writes,0);
+ await assert.rejects(c.task({id:'task'},group.id),/Offline/);assert.equal(c.group.tasks[0].done,false);
+});
+test('shopping applies versioned edits and ignores late replies after group or account changes',async()=>{
+ const {c,cloud,group}=fixture();const row={id:'milk',title:'Milk',version:2,created_by:'owner',bought:false};c.update({shopping:[row],shoppingGroupId:group.id});let finish;
+ cloud.shoppingAction=()=>new Promise(resolve=>finish=resolve);
+ const pending=c.shoppingAction('edit',{id:'milk',version:2,title:'Milk 2',quantity:'1'},group.id);
+ c.update({groups:[],groupId:null,shopping:[],shoppingGroupId:null});finish([{...row,title:'Old group'}]);await pending;assert.deepEqual(c.state.shopping,[]);
+ c.update({groups:[group],groupId:group.id,shopping:[row],shoppingGroupId:group.id});
+ const pendingAccount=c.shoppingAction('edit',{id:'milk',version:2,title:'Milk 3'},group.id);
+ cloud.user={id:'new-account'};finish([{...row,title:'Old account'}]);await pendingAccount;assert.equal(c.state.shopping[0].title,'Milk');
+});
+test('shopping permissions, stale versions and linked-item locks reject before mutation',async()=>{
+ const {c,cloud,group}=fixture();const row={id:'milk',version:3,created_by:'other',expense_id:'expense',bought:true};c.update({shopping:[row],shoppingGroupId:group.id});let requests=0;
+ cloud.shoppingAction=async()=>{requests++;return [];};
+ await assert.rejects(c.shoppingAction('check',{id:'milk',version:2,bought:false},group.id),/ha cambiado/);
+ await assert.rejects(c.shoppingAction('check',{id:'milk',version:3,bought:false},group.id),/vinculado/);
+ group.remote.ownerId='other';await assert.rejects(c.shoppingAction('delete',{id:'milk',version:3},group.id),/permiso/);
+ await assert.rejects(c.shoppingAction('clear',{},group.id),/administrador/);assert.equal(requests,0);
+});
+test('only the latest shopping read can update a group and failed reads disable checkout',async()=>{
+ const {c,cloud,group}=fixture();const replies=[];cloud.shoppingList=()=>new Promise(resolve=>replies.push(resolve));
+ const first=c.shopping(),second=c.shopping();replies[1]([{id:'new'}]);await second;replies[0]([{id:'old'}]);await first;
+ assert.equal(c.state.shopping[0].id,'new');assert.equal(c.state.shoppingLoading,false);
+ cloud.shoppingList=async()=>{throw new Error('Offline');};await assert.rejects(c.shopping(),/Offline/);assert.equal(c.state.shoppingGroupId,null);assert.equal(c.state.shoppingError,'Offline');
+});
+test('shopping checkout uses a single atomic save and retries its stable expense ID',async()=>{
+ const {c,cloud,group}=fixture();const row={id:'milk',version:1,bought:true,expense_id:null};c.update({shopping:[row],shoppingGroupId:group.id});let saved=null,calls=[];
+ cloud.saveGroup=async(draft,checkout)=>{calls.push(checkout);if(!saved){saved=structuredClone(draft);throw new Error('Response lost');}return saved;};
+ cloud.shoppingList=async()=>[{...row,expense_id:'stable-expense'}];
+ await assert.rejects(c.saveExpense(fields,null,'stable-expense',{groupId:group.id,checkout:['milk']}),/Response lost/);
+ assert.equal(c.group.expenses.length,0);assert.equal(c.state.shopping[0].expense_id,null);
+ await c.saveExpense(fields,null,'stable-expense',{groupId:group.id,checkout:['milk']});
+ assert.deepEqual(calls,[{expenseId:'stable-expense',items:['milk']},{expenseId:'stable-expense',items:['milk']}]);
+ assert.equal(c.group.expenses.length,1);assert.equal(c.state.shopping[0].expense_id,'stable-expense');
+});
+test('checkout rejects changed selection and refresh failure cannot undo a confirmed expense',async()=>{
+ const {c,cloud,group}=fixture();c.update({shopping:[{id:'milk',bought:false}],shoppingGroupId:group.id});let writes=0;
+ cloud.saveGroup=async draft=>{writes++;return draft;};
+ await assert.rejects(c.saveExpense(fields,null,'expense',{checkout:['milk']}),/ha cambiado/);assert.equal(writes,0);
+ c.update({shopping:[{id:'milk',bought:true}]});cloud.shoppingList=async()=>{throw new Error('Offline');};
+ await c.saveExpense(fields,null,'expense',{checkout:['milk']});assert.equal(writes,1);assert.equal(c.group.expenses.length,1);assert.match(c.state.notice,/se ha guardado/);
+});
+test('reminders enforce edit permissions and completion and preserve shopping request ID',async()=>{
+ const {c,cloud,group}=fixture();group.tasks=[{id:'task',createdBy:'other',done:false}];group.remote.ownerId='other';let calls=0;
+ cloud.remindPlan=async()=>{calls++;return 2;};
+ await assert.rejects(c.remind('tasks','task',group.id),/permiso/);
+ group.remote.ownerId='owner';group.tasks[0].done=true;await assert.rejects(c.remind('tasks','task',group.id),/terminado/);assert.equal(calls,0);
+ c.update({shopping:[{id:'milk',bought:false}],shoppingGroupId:group.id});cloud.remindShopping=async(id,request)=>{assert.equal(id,group.id);assert.equal(request,'stable-reminder');return 2;};
+ await c.remind('shopping',null,group.id,'stable-reminder');assert.match(c.state.notice,/Recordatorio enviado/);
+});
+test('native checkout reaches the existing atomic RPC with canonical identity and item IDs',async()=>{
+ const actor='11111111-1111-4111-8111-111111111111',product='22222222-2222-4222-8222-222222222222',stored=new Map();let payload,endpoint;
+ const storage={getItem:k=>stored.get(k)||null,setItem:(k,v)=>stored.set(k,v),removeItem:k=>stored.delete(k)};
+ const cloud=new Cloud({url:'https://native-fixture.supabase.co',publishableKey:'sb_publishable_test_fixture'},{storage,fetcher:async(url,options)=>{
+  endpoint=url;payload=JSON.parse(options.body);return new Response(JSON.stringify({document:payload.p_document,version:2,owner_id:actor}),{headers:{'Content-Type':'application/json'}});
+ }});
+ cloud.user={id:actor};cloud.persistSession({access_token:'fixture',refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600});
+ const {c,group}=fixture();c.cloud=cloud;group.remote={ownerId:actor,version:1};c.update({shopping:[{id:product,bought:true}],shoppingGroupId:group.id});c.shopping=async()=>{};
+ await c.saveExpense(fields,null,'stable-checkout',{groupId:group.id,checkout:[product]});
+ assert.ok(endpoint.endsWith('/rpc/divzplit_shopping_checkout'));assert.equal(payload.p_version,1);assert.equal(payload.p_expense_id,'stable-checkout');assert.deepEqual(payload.p_items,[product]);
+ assert.equal(payload.p_document.expenses[0].payer,actor);assert.equal(payload.p_document.expenses[0].createdBy,actor);assert.equal(c.group.remote.version,2);
+});
+test('confirmed checkout updates its group without switching back from a newly selected group',async()=>{
+ const {c,cloud,group}=fixture(),other={...structuredClone(group),id:'other'};c.update({groups:[group,other],shopping:[{id:'milk',bought:true}],shoppingGroupId:group.id});let finish;
+ cloud.saveGroup=draft=>new Promise(resolve=>finish=()=>resolve(draft));cloud.shoppingList=async()=>{throw new Error('Must not load another group');};
+ const pending=c.saveExpense(fields,null,'expense',{groupId:group.id,checkout:['milk']});c.update({groupId:'other',shopping:[],shoppingGroupId:null});finish();await pending;
+ assert.equal(c.state.groupId,'other');assert.equal(c.state.groups.find(g=>g.id===group.id).expenses.length,1);assert.deepEqual(c.state.shopping,[]);
 });

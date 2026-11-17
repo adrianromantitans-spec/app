@@ -10,7 +10,7 @@ The candidate uses the existing `cloud.js`, `model.js`, `home.js`, `settlement-p
 
 Android provides the Keystore-backed encrypted session file, secure randomness and SHA-256 for PKCE, date chooser, document export, clipboard, notification permission and Firebase messaging. Google authentication opens the system browser with PKCE and returns through the existing verified HTTPS App Link. A browser screen during authentication is expected; app screens are native views. Never embed Google sign-in in a WebView.
 
-The package remains `com.divzplit.app`. The migration candidate reserves version code 8; confirm the latest Play code before a future release. It uses the existing upload certificate and Play signing identity. It does not read WebView cookies: the first native launch requires sign-in and notification consent again. Existing server accounts and groups are reused.
+The package remains `com.divzplit.app`. The migration candidate reserves version code 9; confirm the latest Play code before a future release. It uses the existing upload certificate and Play signing identity. It does not read WebView cookies: the first native launch requires sign-in and notification consent again. Existing server accounts and groups are reused.
 
 ## Current coverage and release gates
 
@@ -20,11 +20,17 @@ The package remains `com.divzplit.app`. The migration candidate reserves version
 | Groups | List/create/select, copy existing invitation link, consume invitation | Complete group settings/member/permission/destructive-action parity |
 | Expenses | Add/edit/delete, currency minor units and splits; camera/photo picker, local OCR confirmation, private receipts; weekly/monthly/yearly recurrence and stop | Physical camera/OCR/upload validation, crop/manual rotation controls, full permission UX and regression against web workflows |
 | Balances | Existing balance and settlement calculation, payment request/response | FX conversion, pending-request reservation presentation, advanced settlement parity |
-| Collaboration | Basic tasks, votes, shopping checks, activity and inbox | Full editing/deletion, reminders, shopping checkout, history pagination/details and notification destination presentation |
+| Collaboration | Task/poll create/edit/delete, immutable poll options/votes, deadlines and scheduled/manual reminders; shopping add/edit/delete/check/clear and atomic expense checkout; basic activity/inbox | Physical picker/reminder/multi-account concurrency validation, history pagination/details and notification destination presentation |
 | Account | Language, data export, deletion, logout | Full lifecycle and accessibility validation |
 | Notifications | Existing Firebase project and backend, session-bound native delivery, opt-in/out | Real device foreground/background/killed-app, permission denial, token rotation and logout/account-switch checks |
 | Startup/design | Existing launcher assets, purple/white native screens, native port of intro timeline | Side-by-side intro/design/typography parity on devices; native intro is not yet visually certified |
 | Fluidity | Native scrolling and native-driver animation, no fixed 60 FPS interval | Real 60/120 Hz phones, reduced motion, large fonts, keyboard/insets, TalkBack |
+
+### Collaboration and shopping
+
+Task/poll forms reuse `planning.js` validation and the existing planning RPCs. Dates and times use Android dialogs and are converted from local wall time to UTC with the original validator; existing seconds are preserved when the displayed minute is unchanged. Editing a poll keeps its original options and votes. Creator/owner checks guard editing/deletion/manual reminders, list clearing is owner-only, and closed polls reject voting. Server permission checks, scheduling capability checks, throttles and notification preferences remain authoritative.
+
+Shopping mutations use the existing item versions and permission policy. Products already linked to an expense cannot be checked or edited. Checkout opens the normal native expense form for explicit amount/payer/split review, pins its group and selected product IDs, and calls `Cloud.saveGroup` with the existing atomic checkout RPC. The stable form expense ID is reused after network failures; no client-side optimistic expense or product link is created. Failed list refreshes after a confirmed checkout show a notice without treating the financial write as failed. Late shopping replies cannot overwrite another group/account. Pull-to-refresh and foreground refresh reload shared state. No backend/schema changes or new dependencies are required.
 
 ### Receipts and recurring expenses
 
