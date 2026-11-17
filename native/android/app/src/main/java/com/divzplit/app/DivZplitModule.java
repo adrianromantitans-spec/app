@@ -2,6 +2,7 @@ package com.divzplit.app;
 import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ClipData;
@@ -60,6 +61,14 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
  @ReactMethod public void pickDate(String iso,Promise reply){Activity activity=context.getCurrentActivity();if(activity==null){reply.resolve(null);return;}activity.runOnUiThread(()->{try{
   String[] parts=iso.split("-");DatePickerDialog dialog=new DatePickerDialog(activity,(picker,y,m,d)->reply.resolve(String.format(Locale.ROOT,"%04d-%02d-%02d",y,m+1,d)),Integer.parseInt(parts[0]),Integer.parseInt(parts[1])-1,Integer.parseInt(parts[2]));dialog.setOnCancelListener(v->reply.resolve(null));dialog.show();
  }catch(Exception error){reply.reject("DATE","Invalid date");}});}
+ @ReactMethod public void pickTime(String value,Promise reply){
+  Activity activity=context.getCurrentActivity();if(activity==null){reply.resolve(null);return;}
+  activity.runOnUiThread(()->{try{
+   if(!value.matches("(?:[01][0-9]|2[0-3]):[0-5][0-9]"))throw new IllegalArgumentException();
+   String[] parts=value.split(":");TimePickerDialog dialog=new TimePickerDialog(activity,(picker,h,m)->reply.resolve(String.format(Locale.ROOT,"%02d:%02d",h,m)),Integer.parseInt(parts[0]),Integer.parseInt(parts[1]),android.text.format.DateFormat.is24HourFormat(activity));
+   dialog.setOnCancelListener(v->reply.resolve(null));dialog.show();
+  }catch(Exception error){reply.reject("TIME","Invalid time");}});
+ }
  @ReactMethod public void copy(String text,Promise reply){if(text.length()>65536){reply.reject("COPY","Text too long");return;}((ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("DivZplit",text));reply.resolve(true);}
  @ReactMethod public void exportJSON(String json,String name,Promise reply){
   if(savePromise!=null||json.length()>20*1024*1024){reply.reject("EXPORT","Export unavailable");return;}
