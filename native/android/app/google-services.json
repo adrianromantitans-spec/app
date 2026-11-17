@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "641796053452",
+    "project_id": "divzplit-1ce52",
+    "storage_bucket": "divzplit-1ce52.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641796053452:android:0bc368dd2a2bb22df9a569",
+        "android_client_info": {
+          "package_name": "com.divzplit.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJXVxpY8QF-GOqsph1HorMUAA6GGaUb_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
