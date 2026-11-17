@@ -1,12 +1,12 @@
 {
   "status": "experimental-not-for-production",
-  "sourceBaseCommit": "d29a4ca3a160608463bf5948c86ad65c8252a4b9",
+  "sourceBaseCommit": "8fe11c336cf484f6eab8204a96a98d4a2ed2c8b2",
   "bundles": {
     "webview": {
-      "version": "1.1.0-webview.1",
-      "code": 4,
-      "sha256": "2a871df83feaddd92016c59c4f1b4540d8dd2830c137e8892b00ee42128f1266",
-      "bytes": 1903770,
+      "version": "1.1.0-webview.2",
+      "code": 5,
+      "sha256": "276db88ce0408a7004e20e7403ab1110da36b49b662a289bacf052ab569e7978",
+      "bytes": 1909463,
       "launcher": "com.divzplit.app.WebViewActivity",
       "validated": true
     },
@@ -28,17 +28,23 @@
     "existingWebsiteFiles": "unchanged",
     "physicalAndroid": "not run",
     "realGoogleAppleOAuth": "not run",
-    "nativePush": "not implemented"
+    "nativePush": "not implemented",
+    "chromiumRealUiAdapter": "passed es/en/ro: Back, JSON export under existing CSP, image selection and real OCR",
+    "simulatedGooglePkce": "passed real application challenge/exchange against fictional transport",
+    "cameraImplementation": "compiled and scoped FileProvider policy checked; not tested on Android",
+    "emulatorAttempt": "failed during SDK image extraction due to disk capacity; temporary downloads removed",
+    "legacyBrowserSuites": "auth/privacy/account-language/receipt-photo fail existing UI expectations; unchanged web files; not counted as passing"
   },
   "nativeSourcesSha256": {
-    "android/app/src/webview/AndroidManifest.xml": "18f2714d29907c3b64507656107d7cd26f221daebeaf2cd51af27754a8c11f80",
-    "android/app/src/webview/assets/native-webview.js": "58eda402f2e26af05bc4d904bbd267d8dba458796b1d3a5a2803a6f43446785b",
-    "android/app/src/webview/java/com/divzplit/app/WebViewActivity.java": "7c7a963241822c860d3fd05c526fb98c057c65b5e1a3ca0bed792996bb971c17",
+    "android/app/src/webview/AndroidManifest.xml": "d91fe3ad9dc8fcd758f5766fff92b39430acd2f33be0c04fd6d6b79a837ed4ea",
+    "android/app/src/webview/assets/native-webview.js": "24c14a7132a0c1215917731161a7fdb4cba54e2a4094b23c7f61bea95208670c",
+    "android/app/src/webview/java/com/divzplit/app/WebViewActivity.java": "46e6582aaf22d6edf9a106835e543e4e00de9bf7593bb9a550a44f80e916582f",
     "android/app/src/webview/java/com/divzplit/app/WebViewPolicy.java": "4b423cb2ad74148435f5b6078f75f818b68e5780ed7d9e276e35bb61417002a5",
     "android/app/src/webview/res/values/strings.xml": "dd561737e7de3b5daa21b1180ca2646821d19795e5c4af7e525b0d08c34b32de",
     "android/app/src/webview/res/values/styles.xml": "ffa2aa13f8f7e906682d8f4ef3747ba0ea15346df2226f8b5d57a2bbc33527d4",
     "android/app/src/webview/res/values-es/strings.xml": "40c87a7686b8faf85d835c7fb626ef699076066aa6ce1b99a5e2b65f8ab83e06",
     "android/app/src/webview/res/values-ro/strings.xml": "95e047e2c218b1717160c31342742e6613d7857c3a311364f6d8e3b99cdd4758",
-    "android/app/src/webview/res/values-v31/styles.xml": "184e43fe7e1e3c96dcc66fab2b64ee34d78edd78e0b235380b3c27e04ebd7360"
+    "android/app/src/webview/res/values-v31/styles.xml": "184e43fe7e1e3c96dcc66fab2b64ee34d78edd78e0b235380b3c27e04ebd7360",
+    "android/app/src/webview/res/xml/webview_filepaths.xml": "81424c1875be083201a4e5396ed089a6d0d38e9fe20e7b9b8b640027cf230d32"
   }
 }

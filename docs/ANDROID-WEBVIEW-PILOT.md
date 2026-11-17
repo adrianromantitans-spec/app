@@ -9,7 +9,7 @@ Se reutilizan el proyecto Android, SDK 36, la clave de subida, `com.divzplit.app
 - **Push en segundo plano pendiente.** WebView no soporta la suscripción Web Push de la TWA. La bandeja y su actualización con la app abierta siguen utilizando el código web existente; no equivalen a avisos con la app cerrada. Hace falta implementar un transporte push nativo (por ejemplo FCM), asociar dispositivos a la cuenta y adaptar el envío del backend. No se han creado proyectos Firebase ni cambiado servicios externos. No solicitar permisos de notificación sin una implementación real.
 - **Pruebas en dispositivos pendientes.** Compilar y pasar lint no demuestra que Google vuelva correctamente a WebView, que un fabricante gestione igual el teclado o que la cámara/OCR funcione en su dispositivo.
 - El almacenamiento de Chrome y WebView es independiente. Los usuarios deberán volver a entrar al cambiar desde la TWA; los datos remotos de su cuenta permanecen en Supabase. Datos exclusivamente locales de la demo y preferencias de Chrome no se migran. Al volver a TWA tampoco se comparten sesiones.
-- El piloto selecciona fotos existentes mediante el selector de documentos de Android, sin permisos amplios de almacenamiento. **Captura directa de cámara pendiente**; no se anuncia como implementada. Comprobar HEIC y OCR reales.
+- El piloto permite elegir fotos y tomar una nueva mediante la cámara de Android, sin permisos amplios de almacenamiento ni permiso de cámara propio. La foto se guarda en caché privada; FileProvider comparte sólo esa carpeta con un permiso temporal. La captura está implementada, pero su comprobación en Android físico, HEIC y OCR del dispositivo sigue pendiente.
 - Cambiar de orientación o matar el proceso mientras hay un selector/descarga/OAuth abierto puede cancelar la operación. El usuario debe repetirla. No se persisten verificadores OAuth, exportaciones ni contraseñas en almacenamiento nativo. Rotación, muerte de proceso y cancelación necesitan prueba física.
 - No se añade modo sin conexión. Un error de red/TLS muestra una pantalla nativa con reintento; no se aceptan certificados inválidos. WebView moderno sigue siendo necesario para las capacidades de la web.
 
@@ -20,10 +20,11 @@ Con el JDK/SDK y las variables de firma explicadas en `android/README.md`:
 ```sh
 python3 android/scripts/test-webview.py
 python3 tests/webview_bridge_browser.py
+NEXO_URL=http://127.0.0.1:3003/app/ python3 tests/webview_flows_browser.py
 python3 android/scripts/build-release.py --wrapper webview --keystore /ruta/privada/divzplit-upload.jks
 ```
 
-Salida: `android/app/build/outputs/play/divzplit-1.1.0-webview.1.aab`, código **4**, firmado con la misma clave de subida. La versión experimental está en `android/webview-pilot.json`; comprobar en Play que el código no se haya utilizado y aumentarlo si es necesario. No regenerar ninguna clave.
+Salida: `android/app/build/outputs/play/divzplit-1.1.0-webview.2.aab`, código **5**, firmado con la misma clave de subida. La versión experimental está en `android/webview-pilot.json`; comprobar en Play que el código no se haya utilizado y aumentarlo si es necesario. No regenerar ninguna clave.
 
 La compilación normal conserva TWA 1.0.2 (3):
 
@@ -46,14 +47,14 @@ El script valida identidad, certificado esperado y configuración, ejecuta lint 
 - WebView acelerado, HTTPS de DivZplit únicamente para páginas internas; contenido mixto, acceso a archivos/content URL, cookies de terceros y depuración de producción desactivados. Certificados inválidos se rechazan.
 - Páginas externas, Google/Apple y WhatsApp se abren en Custom Tabs; correo y teléfono usan la aplicación correspondiente. Se bloquean esquemas `intent:`, `javascript:`, `file:`, `content:` y HTTP para navegación externa.
 - Selección de imágenes, exportación JSON con el selector Guardar de Android y copia de enlaces. El canal usa puertos WebMessage dirigidos al origen exacto del documento principal, sin `addJavascriptInterface`. No da acceso al sistema de archivos ni permite leer el portapapeles. Exportaciones limitadas a JSON y 20 MB, mantenidas sólo en memoria hasta que el usuario elige dónde guardar.
-- Atrás cierra primero el modal web; luego usa el historial de WebView o cierra la actividad. Revisar los recorridos SPA de las pestañas, que no necesariamente añaden historial de navegador.
+- Atrás cierra primero el modal web, luego vuelve desde una sección SPA al Inicio mediante el botón original de la app. En Inicio usa el historial de WebView o cierra la actividad. Se comprueba también con la UI actual y datos ficticios.
 - Insets del sistema/teclado, almacenamiento web persistente y gestión de reintento. El splash obligatorio de Android permanece y la animación web se carga sin alteraciones.
 
 ## Prueba antes de considerar publicar
 
 La PR es un borrador de migración. Revisarla **no requiere desplegar cambios a la web**. Se puede generar un AAB desde su rama para un grupo pequeño. No promocionar esta versión a producción ni sustituir las pruebas de todos los usuarios hasta completar los bloqueos.
 
-En Google Play Console → DivZplit → Prueba interna, crear una versión, subir el AAB de código 4 y comprobar paquete y versión. Leer los avisos y distribuir sólo al grupo informado del piloto. Un usuario inscrito en varias pistas suele recibir la versión compatible con código superior; no usar la pista interna para probar con personas que necesiten las notificaciones actuales. El AAB no se instala directamente como un APK. Una APK firmada con la clave de subida tampoco actualiza una instalación firmada por Google Play.
+En Google Play Console → DivZplit → Prueba interna, crear una versión, subir el AAB de código 5 y comprobar paquete y versión. Leer los avisos y distribuir sólo al grupo informado del piloto. Un usuario inscrito en varias pistas suele recibir la versión compatible con código superior; no usar la pista interna para probar con personas que necesiten las notificaciones actuales. El AAB no se instala directamente como un APK. Una APK firmada con la clave de subida tampoco actualiza una instalación firmada por Google Play.
 
 Probar en Android reciente y en el dispositivo de 60 Hz:
 
@@ -64,8 +65,16 @@ Probar en Android reciente y en el dispositivo de 60 Hz:
 - Gastos, reparto, pagos, listas, votaciones y tareas; revisar la bandeja de notificaciones. El push con la app cerrada **aún no está implementado**.
 - Sin red, error TLS, cancelar selectores, Atrás y enlaces externos. Verificar que nunca aparece Google Login dentro de WebView.
 
-Para volver a TWA después de distribuir código 4 hace falta otro AAB TWA con **código mayor que 4**; Play no permite actualizar hacia una versión de código inferior. No asumir que basta volver a subir el AAB de código 3.
+Para volver a TWA después de distribuir código 5 hace falta otro AAB TWA con **código mayor que 5**; Play no permite actualizar hacia una versión de código inferior. No asumir que basta volver a subir el AAB de código 3.
 
 ## Comprobaciones automáticas
 
 `check-project.py` sigue verificando la TWA predeterminada. `test-webview.py` compila y ejecuta la política Java real con URLs válidas y hostiles y revisa los límites del manifiesto. `webview_bridge_browser.py` verifica con datos ficticios el canal JS, portapapeles, exportaciones, inyección idempotente y aislamiento de origen/iframes en Chromium. El build release y lint verifican compilación/configuración Android. **Ninguna de estas pruebas ejecuta un Android real ni confirma un acceso Google completo o entrega de push.**
+
+## Ampliación de la comprobación del piloto
+
+Se intentó instalar un emulador Android 30 sin aceleración KVM. El SDK no pudo extraer la imagen por falta de espacio en este entorno; se retiraron los archivos temporales de esa instalación. `adb devices` no detecta ningún Android conectado. Por tanto **no se ha ejecutado el AAB en Android**.
+
+Las pruebas de navegador y PKCE usan transporte, cuentas y exportaciones ficticias; no acceden a cuentas Google reales. `webview_flows_browser.py` carga la UI existente en es/en/ro e inyecta el adaptador nativo, modelando el canal y el DownloadListener de Android. Esto comprueba sus puntos de integración JS, no ejecuta la actividad Java ni un proveedor de cámara.
+
+También se ejecutaron pruebas antiguas del repositorio: `auth_browser.py`, `privacy_browser.py`, `account_language_browser.py` y `receipt_photo_browser.py` fallan en expectativas anteriores de la interfaz (entrada de acceso directa, número de filas, gesto de cajón y botón demo retirado). Esos archivos y todos los archivos servidos de la web permanecen sin cambios. No se contabilizan como cobertura superada ni se cambian pantallas para ajustarlas a esos tests. La entrada actual con Google tiene su propio test en tres idiomas.

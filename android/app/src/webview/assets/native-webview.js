@@ -3,8 +3,25 @@
 (() => {
  if (location.origin !== 'https://divzplit.com' || window !== window.top || window.__divzplitWebViewInstalled) return;
  Object.defineProperty(window,'__divzplitWebViewInstalled',{value:true});
+ Object.defineProperty(window,'__divzplitBack',{value:()=>{
+  const modal=document.querySelector('#modal-root');
+  if(modal?.firstElementChild){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true;}
+  const shell=document.querySelector('.main-shell');
+  const home=document.querySelector('.reference-dock [data-route="home"],.workspace-sidebar [data-route="home"]');
+  if(shell?.dataset.currentPage&&shell.dataset.currentPage!=='home'&&home){home.click();return true;}
+  return false;
+ }});
  let port, serial=0;
  const pending=new Map();
+ // Keep JSON blobs created by this page: CSP can forbid fetch(blob:) even for
+ // same-origin exports. Read their bytes directly without relaxing website CSP.
+ const exportBlobs=new Map(),createBlobURL=URL.createObjectURL.bind(URL),revokeBlobURL=URL.revokeObjectURL.bind(URL);
+ URL.createObjectURL=blob=>{
+  const url=createBlobURL(blob);
+  if(blob.type==='application/json'&&blob.size<=20*1024*1024)exportBlobs.set(url,blob);
+  return url;
+ };
+ URL.revokeObjectURL=url=>{exportBlobs.delete(String(url));revokeBlobURL(url);};
  window.addEventListener('message', event => {
   if((event.source!==null&&event.source!==window)||event.data !== 'divzplit-native-ready' || !event.ports[0])return;
   port?.close();port=event.ports[0];
@@ -22,7 +39,8 @@
  Object.defineProperty(window,'__divzplitDownload',{configurable:true,value:async url=>{
   try{
    if(!url.startsWith('blob:https://divzplit.com/'))return;
-   const response=await fetch(url),blob=await response.blob();
+   const blob=exportBlobs.get(url);
+   if(!blob)throw new Error('Export unavailable');
    if(blob.type!=='application/json'||blob.size>20*1024*1024)throw new Error('Invalid export');
    const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=reject;reader.readAsDataURL(blob);});
    await send({type:'export',base64});
