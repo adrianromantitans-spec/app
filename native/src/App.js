@@ -1,5 +1,5 @@
 import React,{useCallback,useEffect,useRef,useState,useSyncExternalStore} from 'react';
-import {AccessibilityInfo,ActivityIndicator,Alert,AppState,BackHandler,FlatList,KeyboardAvoidingView,Linking,Modal,Platform,Pressable,RefreshControl,ScrollView,StatusBar,StyleSheet,Text,TextInput,View} from 'react-native';
+import {AccessibilityInfo,ActivityIndicator,Alert,AppState,BackHandler,FlatList,Image,KeyboardAvoidingView,Linking,Modal,Platform,Pressable,RefreshControl,ScrollView,StatusBar,StyleSheet,Text,TextInput,View} from 'react-native';
 import {SafeAreaProvider,SafeAreaView} from 'react-native-safe-area-context';
 import Svg,{Defs,LinearGradient,Stop,Rect} from 'react-native-svg';
 import {createRuntime} from './runtime';
@@ -24,7 +24,7 @@ function Application({controller:c,reduced}){
  const state=useSyncExternalStore(c.subscribe,c.snapshot),[intro,setIntro]=useState(!reduced),[anchor,setAnchor]=useState(null),[sheet,setSheet]=useState(null);
  const finishIntro=useCallback(()=>setIntro(false),[]),t=text=>c.t(text),call=fn=>Promise.resolve().then(fn).catch(error=>c.update({error:error.message}));
  useEffect(()=>{Linking.getInitialURL().then(url=>c.start(url));const link=Linking.addEventListener('url',event=>call(()=>c.handleURL(event.url)));const app=AppState.addEventListener('change',status=>{if(status==='active'&&c.cloud.user)call(()=>c.refresh());else if(status==='background')c.platform.flush().catch(()=>{});});return()=>{link.remove();app.remove();};},[c]);
- useEffect(()=>{const back=BackHandler.addEventListener('hardwareBackPress',()=>{if(intro){finishIntro();return true;}if(sheet){setSheet(null);return true;}if(state.page!=='home'){c.navigate('home');return true;}return false;});return()=>back.remove();},[intro,sheet,state.page]);
+ useEffect(()=>{const back=BackHandler.addEventListener('hardwareBackPress',()=>{if(intro){finishIntro();return true;}if(sheet){if(!state.busy)setSheet(null);return true;}if(state.page!=='home'){c.navigate('home');return true;}return false;});return()=>back.remove();},[intro,sheet,state.page,state.busy]);
  const g=c.group,money=(amount)=>c.model.money(amount,g?.currency||'EUR');
  const openExpense=id=>{if(!g){setSheet({kind:'group'});return;}setSheet({kind:'expense',expense:g.expenses.find(e=>e.id===id)||null});};
  const navigate=page=>call(()=>c.navigate(page));
@@ -51,7 +51,7 @@ function Application({controller:c,reduced}){
   {state.user&&<View style={s.dock}>{[['home','home','Inicio'],['groups','groups','Planes'],['plus','plus','Añadir'],['activity','activity','Actividad'],['profile','profile','Cuenta']].map(([route,icon,label])=><Pressable key={route} accessibilityRole="button" accessibilityLabel={t(label)} accessibilityState={{selected:state.page===route}} onPress={()=>route==='plus'?setSheet({kind:'add'}):navigate(route)} style={({pressed})=>[s.dockItem,state.page===route&&s.dockActive,route==='plus'&&s.plus,pressed&&{opacity:.7}]}><Icon name={icon} color={state.page===route||route==='plus'?'#FFF':colors.muted}/>{route!=='plus'&&<Label style={[s.dockText,{color:state.page===route?'#FFF':colors.muted}]}>{t(label)}</Label>}</Pressable>)}</View>}
   {state.busy&&!intro&&<View pointerEvents="none" style={s.busy}><ActivityIndicator color={colors.purple}/></View>}
  </SafeAreaView>
- {sheet&&<Sheet error={state.error} title={t({expense:sheet.expense?'Editar gasto':'Añadir gasto',group:'Crear grupo',add:'Añadir',shopping:'Añadir producto',tasks:'Nueva tarea',polls:'Nueva votación',delete:'Eliminar cuenta'}[sheet.kind])} onClose={()=>setSheet(null)}>
+ {sheet&&<Sheet error={state.error} title={t({expense:sheet.expense?'Editar gasto':'Añadir gasto',group:'Crear grupo',add:'Añadir',shopping:'Añadir producto',tasks:'Nueva tarea',polls:'Nueva votación',delete:'Eliminar cuenta'}[sheet.kind])} onClose={()=>{if(!state.busy)setSheet(null);}}>
   {sheet.kind==='expense'?<ExpenseForm c={c} existing={sheet.expense} onDone={()=>setSheet(null)}/>:sheet.kind==='group'?<GroupForm c={c} onDone={()=>setSheet(null)}/>:sheet.kind==='add'?<View style={{gap:14}}><Button onPress={()=>openExpense()}>{t('Añadir gasto')}</Button><Button secondary onPress={()=>setSheet({kind:'group'})}>{t('Crear grupo')}</Button>{g&&<Button secondary onPress={()=>call(()=>c.invite())}>{t('Invitar al grupo')}</Button>}</View>:sheet.kind==='delete'?<DeleteForm c={c} onDone={()=>setSheet(null)}/>:<ItemForm c={c} kind={sheet.kind} onDone={()=>setSheet(null)}/>}
  </Sheet>}
  {intro&&<Opening ready={state.ready} anchor={anchor} reduced={reduced} onFinish={finishIntro}/>}
@@ -75,11 +75,68 @@ function Auth({c}){
 }
 function Consent({c,accepted,setAccepted,age,setAge}){return <View style={{gap:12,marginBottom:20}}><Choice selected={age} onPress={()=>setAge(!age)}>{c.t('Tengo 16 años o más')}</Choice><Choice selected={accepted} onPress={()=>setAccepted(!accepted)}>{c.t('Acepto las')} {c.t('Condiciones de uso')}</Choice><Pressable onPress={()=>c.native.external('https://divzplit.com/terms/')}><Label style={s.small}>{c.t('Condiciones de uso')}</Label></Pressable></View>;}
 function ExpenseForm({c,existing,onDone}){
- const g=c.group,model=c.model,state=useSyncExternalStore(c.subscribe,c.snapshot),t=v=>c.t(v);
- const [requestId]=useState(()=>c.model.uid());
- const [title,setTitle]=useState(existing?.title||''),[amount,setAmount]=useState(existing?String(existing.amount/model.currencyScale(g.currency)):''),[payer,setPayer]=useState(existing?.payer||'you'),[participants,setParticipants]=useState(existing?.participants||g.members.map(m=>m.id)),[category,setCategory]=useState(existing?.category||'Comida'),[date,setDate]=useState(existing?.date||dateISO()),[mode,setMode]=useState(existing?.split?.mode||'equal'),[values,setValues]=useState(Object.fromEntries(g.members.map(m=>[m.id,existing?.split?.values?.[m.id]!==undefined?String(existing.split.values[m.id]/(existing.split.mode==='percent'?100:existing.split.mode==='amounts'?model.currencyScale(g.currency):1)):'' ])));
- const save=async()=>{try{const split=mode==='equal'?undefined:{mode,values:Object.fromEntries(participants.map(id=>[id,mode==='shares'?Number(values[id]):model.decimalUnits(values[id],mode==='percent'?'EUR':g.currency)]))};await c.saveExpense({title,amount:model.decimalUnits(amount,g.currency),payer,participants,category,date,split},existing?.id,requestId);onDone();}catch(error){c.update({error:error.message});}};
- return <View><Field label={t('Importe')+' · '+g.currency} value={amount} onChangeText={setAmount} keyboardType="decimal-pad"/><Field label={t('Concepto')} value={title} onChangeText={setTitle} maxLength={100}/><Label style={s.fieldLabel}>{t('Pagado por')}</Label><View style={s.wrap}>{g.members.map(m=><Choice key={m.id} selected={payer===m.id} onPress={()=>setPayer(m.id)}>{t(m.name)}</Choice>)}</View><Label style={s.fieldLabel}>{t('Repartir entre')}</Label><View style={s.wrap}>{g.members.map(m=><Choice key={m.id} selected={participants.includes(m.id)} onPress={()=>setParticipants(prev=>prev.includes(m.id)?prev.filter(id=>id!==m.id):[...prev,m.id])}>{t(m.name)}</Choice>)}</View><Label style={s.fieldLabel}>{t('Tipo de reparto')}</Label><View style={s.wrap}>{[['equal','Partes iguales'],['amounts','Importes individuales'],['percent','Porcentajes'],['shares','Por partes']].map(([value,label])=><Choice key={value} selected={mode===value} onPress={()=>setMode(value)}>{t(label)}</Choice>)}</View>{mode!=='equal'&&participants.map(id=><Field key={id} label={g.members.find(m=>m.id===id)?.name} value={values[id]} onChangeText={value=>setValues({...values,[id]:value})} keyboardType="decimal-pad"/>)}<Label style={s.fieldLabel}>{t('Categoría')}</Label><View style={s.wrap}>{model.expenseCategories.map(([id,emoji])=><Choice key={id} selected={category===id} onPress={()=>setCategory(id)}>{emoji} {t(id)}</Choice>)}</View><Button secondary onPress={()=>c.native.pickDate(date).then(value=>value&&setDate(value))}>{date}</Button><Button disabled={state.busy} style={{marginTop:20}} onPress={save}>{t('Guardar gasto')}</Button></View>;
+ const [g]=useState(()=>structuredClone(c.group)),[requestId]=useState(()=>c.model.uid());
+ const model=c.model,state=useSyncExternalStore(c.subscribe,c.snapshot),t=v=>c.t(v);
+ const [title,setTitle]=useState(existing?.title||''),[amount,setAmount]=useState(existing?String(existing.amount/model.currencyScale(g.currency)):''),[payer,setPayer]=useState(existing?.payer||'you');
+ const [participants,setParticipants]=useState(existing?.participants||g.members.map(m=>m.id)),[category,setCategory]=useState(existing?.category||'Comida'),[date,setDate]=useState(existing?.date||dateISO());
+ const [mode,setMode]=useState(existing?.split?.mode||'equal'),[frequency,setFrequency]=useState('');
+ const [values,setValues]=useState(Object.fromEntries(g.members.map(m=>[m.id,existing?.split?.values?.[m.id]!==undefined?String(existing.split.values[m.id]/(existing.split.mode==='percent'?100:existing.split.mode==='amounts'?model.currencyScale(g.currency):1)):'' ])));
+ const [photo,setPhoto]=useState(null),[loading,setLoading]=useState(false),[reading,setReading]=useState(false),[details,setDetails]=useState(null),[removeReceipt,setRemoveReceipt]=useState(false),[receiptURL,setReceiptURL]=useState(null);
+ const [apply,setApply]=useState({amount:!amount,title:!title,date:!existing});
+ const mounted=useRef(true),chosen=useRef(null);
+ useEffect(()=>()=>{mounted.current=false;if(chosen.current)c.photos.release(chosen.current.id).catch(()=>{});},[]);
+ const failure=error=>{if(mounted.current)c.update({error:error.message});};
+ const choose=async source=>{
+  setLoading(true);try{const result=await c.photos.choose(source);if(!result)return;
+   if(!mounted.current){await c.photos.release(result.id);return;}
+   if(chosen.current)await c.photos.release(chosen.current.id);
+   chosen.current=result;setPhoto(result);setDetails(null);setRemoveReceipt(false);
+  }catch(error){failure(error);}finally{if(mounted.current)setLoading(false);}
+ };
+ const removePhoto=()=>{const old=chosen.current;chosen.current=null;setPhoto(null);setDetails(null);if(old)c.photos.release(old.id).catch(failure);};
+ const read=async()=>{setReading(true);try{const result=await c.photos.read(photo.id);if(mounted.current)setDetails(c.receipt.parseReceipt(result.text));}catch(error){failure(error);}finally{if(mounted.current)setReading(false);}};
+ const mismatch=details&&(details.currencyAmbiguous||(details.currency&&details.currency!==g.currency));
+ const applyRead=()=>{
+  if(apply.amount&&details.amount!==null&&!mismatch)setAmount(String(details.amount/100));
+  if(apply.title&&details.title)setTitle(details.title);
+  if(apply.date&&details.date&&!existing?.recurrence?.active)setDate(details.date);
+  setDetails(null);
+ };
+ const save=async()=>{try{
+  const split=mode==='equal'?undefined:{mode,values:Object.fromEntries(participants.map(id=>[id,mode==='shares'?Number(values[id]):model.decimalUnits(values[id],mode==='percent'?'EUR':g.currency)]))};
+  await c.saveExpense({title,amount:model.decimalUnits(amount,g.currency),payer,participants,category,date,split},existing?.id,requestId,{groupId:g.id,frequency,photo,removeReceipt});onDone();
+ }catch(error){failure(error);}};
+ const change=action=>Alert.alert(t(action==='delete'?'¿Eliminar este gasto?':'Detener repetición'),t(action==='delete'?'El reparto y los saldos del grupo se volverán a calcular. Esta acción no se puede deshacer.':'Los gastos anteriores se conservan.'),[{text:t('Cancelar'),style:'cancel'},{text:t('Confirmar'),style:action==='delete'?'destructive':'default',onPress:()=>c.changeExpense(existing.id,action,g.id).then(onDone).catch(failure)}]);
+ const locked=state.busy||loading||reading,editable=!existing||existing.createdBy===state.user?.id||g.remote.ownerId===state.user?.id;
+ return <View>
+  <Field label={t('Importe')+' · '+g.currency} value={amount} onChangeText={setAmount} keyboardType="decimal-pad"/>
+  <Field label={t('Concepto')} value={title} onChangeText={setTitle} maxLength={100}/>
+  <Label style={s.fieldLabel}>{t('Pagado por')}</Label><View style={s.wrap}>{g.members.map(m=><Choice key={m.id} selected={payer===m.id} onPress={()=>setPayer(m.id)}>{t(m.name)}</Choice>)}</View>
+  <Label style={s.fieldLabel}>{t('Repartir entre')}</Label><View style={s.wrap}>{g.members.map(m=><Choice key={m.id} selected={participants.includes(m.id)} onPress={()=>setParticipants(prev=>prev.includes(m.id)?prev.filter(id=>id!==m.id):[...prev,m.id])}>{t(m.name)}</Choice>)}</View>
+  <Label style={s.fieldLabel}>{t('Tipo de reparto')}</Label><View style={s.wrap}>{[['equal','Partes iguales'],['amounts','Importes individuales'],['percent','Porcentajes'],['shares','Por partes']].map(([value,label])=><Choice key={value} selected={mode===value} onPress={()=>setMode(value)}>{t(label)}</Choice>)}</View>
+  {mode!=='equal'&&participants.map(id=><Field key={id} label={g.members.find(m=>m.id===id)?.name} value={values[id]} onChangeText={value=>setValues({...values,[id]:value})} keyboardType="decimal-pad"/>)}
+  <Label style={s.fieldLabel}>{t('Categoría')}</Label><View style={s.wrap}>{model.expenseCategories.map(([id,emoji])=><Choice key={id} selected={category===id} onPress={()=>setCategory(id)}>{emoji} {t(id)}</Choice>)}</View>
+  <Button secondary disabled={existing?.recurrence?.active||locked} onPress={()=>c.native.pickDate(date).then(value=>value&&setDate(value)).catch(failure)}>{date}</Button>
+  <Label style={s.fieldLabel}>{t('Repetir')}</Label>
+  {!existing?<View style={s.wrap}>{[['','No repetir'],['weekly','Cada semana'],['monthly','Cada mes'],['yearly','Cada año']].map(([value,label])=><Choice key={value} selected={frequency===value} onPress={()=>setFrequency(value)}>{t(label)}</Choice>)}</View>:<View style={{gap:10,marginVertical:14}}>
+   <Label style={s.small}>{t(existing.recurrence?.active?'Los cambios se aplicarán al gasto original y a sus futuras repeticiones. Las cuotas ya creadas no cambian.':existing.seriesId?'Solo se modificará esta cuota; la repetición original no cambia.':existing.recurrence?'La repetición está detenida. Editar no la reactivará.':'Los cambios solo afectan a este gasto.')}</Label>
+   {existing.recurrence?.active&&<><Label>{t('Próximo gasto: ')}{existing.recurrence.nextDate}</Label>{editable&&<Button secondary disabled={locked} onPress={()=>change('stop')}>{t('Detener repetición')}</Button>}</>}
+  </View>}
+  <Label style={s.fieldLabel}>{t('Foto del ticket (opcional)')}</Label>
+  <View style={[s.wrap,{marginBottom:12}]}><Button secondary disabled={locked||!editable} onPress={()=>choose('library')}>{t('Elegir foto')}</Button><Button secondary disabled={locked||!editable} onPress={()=>choose('camera')}>{t('Usar la cámara')}</Button></View>
+  {loading&&<ActivityIndicator color={colors.purple}/>}
+  {photo&&<View style={{gap:12,marginBottom:18}}><Image source={{uri:'data:image/jpeg;base64,'+photo.base64}} accessibilityLabel={t('Foto del ticket')} resizeMode="contain" style={{width:'100%',height:250,borderRadius:12}}/><Button secondary disabled={locked} onPress={removePhoto}>{t('Quitar foto')}</Button><Button secondary disabled={locked} onPress={read}>{t('Leer ticket')}</Button>{reading&&<ActivityIndicator color={colors.purple}/>}</View>}
+  {details&&<Card style={{gap:10,marginBottom:18}}><Label style={s.small}>{t('Lectura terminada. Revisa los datos y elige cuáles usar.')}</Label>
+   {mismatch&&<Label style={s.small}>{t('La moneda del ticket no coincide con la del grupo. Introduce el importe en la moneda del grupo.')}</Label>}
+   {details.amount!==null&&!mismatch?<Choice selected={apply.amount} onPress={()=>setApply({...apply,amount:!apply.amount})}>{t('Importe')}: {String(details.amount/100)} {details.currency||g.currency}</Choice>:details.amount===null?<Label style={s.small}>{t('No se ha detectado el total. Puedes escribirlo o recortar la foto del ticket.')}</Label>:null}
+   {details.title&&<Choice selected={apply.title} onPress={()=>setApply({...apply,title:!apply.title})}>{t('Concepto')}: {details.title}</Choice>}
+   {details.date&&!existing?.recurrence?.active&&<Choice selected={apply.date} onPress={()=>setApply({...apply,date:!apply.date})}>{t('Fecha')}: {details.date}</Choice>}
+   <Button secondary onPress={applyRead}>{t('Usar datos seleccionados')}</Button>
+  </Card>}
+  {existing?.receipt&&!photo&&<View style={{gap:12,marginBottom:16}}><Button secondary disabled={locked} onPress={async()=>{try{const actor=c.cloud.user?.id,url=await c.cloud.receiptURL(g.id,existing.receipt.path);if(mounted.current&&c.cloud.user?.id===actor)setReceiptURL(url);}catch(error){failure(error);}}}>{t('Ver foto del ticket')}</Button>{receiptURL&&<Image source={{uri:receiptURL}} resizeMode="contain" accessibilityLabel={t('Foto del ticket')} style={{width:'100%',height:280}}/>}{editable&&<Choice selected={removeReceipt} onPress={()=>setRemoveReceipt(!removeReceipt)}>{t('Quitar la foto actual')}</Choice>}</View>}
+  <Button disabled={locked||!editable} style={{marginTop:20}} onPress={save}>{t('Guardar gasto')}</Button>
+  {existing&&editable&&<Button danger disabled={locked} style={{marginTop:14}} onPress={()=>change('delete')}>{t('Eliminar gasto')}</Button>}
+ </View>;
 }
 function GroupForm({c,onDone}){
  const [name,setName]=useState(''),[place,setPlace]=useState(''),[type,setType]=useState('Viaje'),[currency,setCurrency]=useState('EUR');const t=v=>c.t(v);
