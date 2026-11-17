@@ -29,7 +29,7 @@ with sync_playwright() as p:
   page.evaluate(SCRIPT)
   # Model WebView's DownloadListener for programmatic, detached anchor clicks.
   page.on('download',lambda download:page.evaluate('(url)=>window.__divzplitDownload(url)',download.url))
-  page.evaluate('''() => {window.nativeMessages=[];const c=new MessageChannel();window.fakeNative=c.port1;c.port1.onmessage=e=>{const m=JSON.parse(e.data);nativeMessages.push(m);fakeNative.postMessage(JSON.stringify({id:m.id,ok:true}));};window.postMessage('divzplit-native-ready',location.origin,[c.port2]);}''')
+  page.evaluate('''() => {window.nativeMessages=[];const c=new MessageChannel();window.fakeNative=c.port1;c.port1.onmessage=e=>{const m=JSON.parse(e.data);if(m.type.startsWith('push')){fakeNative.postMessage(JSON.stringify({id:m.id,ok:true,value:{permission:'default',userId:'',enabled:false,token:''}}));return;}nativeMessages.push(m);fakeNative.postMessage(JSON.stringify({id:m.id,ok:true}));};window.postMessage('divzplit-native-ready',location.origin,[c.port2]);}''')
   page.locator('.reference-dock [data-route=profile]').click();expect(page.locator('.account-page')).to_be_visible()
   page.locator('[data-action=language-settings]').click();expect(page.locator('.language-options')).to_be_visible()
   assert page.evaluate('window.__divzplitBack()') is True

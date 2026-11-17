@@ -8,9 +8,14 @@ ns='{http://schemas.android.com/apk/res/android}'
 config=json.loads((A/'webview-pilot.json').read_text())
 twa=json.loads((A/'twa-manifest.json').read_text())
 assert config['status']=='experimental-not-for-production' and config['productionBlockers']
+firebase=json.loads((A/'app/google-services.json').read_text())
+assert firebase['project_info']['project_id']=='divzplit-1ce52'
+assert firebase['project_info']['project_number']=='641796053452'
+assert [c['client_info']['android_client_info']['package_name'] for c in firebase['client']]==['com.divzplit.app']
+assert 'private_key' not in (A/'app/google-services.json').read_text()
 assert config['appVersionCode']>twa['appVersionCode']
 root=ET.parse(P/'AndroidManifest.xml').getroot()
-assert {e.get(ns+'name') for e in root.findall('uses-permission')}=={'android.permission.INTERNET'}
+assert {e.get(ns+'name') for e in root.findall('uses-permission')}=={'android.permission.INTERNET','android.permission.POST_NOTIFICATIONS'}
 app=root.find('application');assert app.get(ns+'usesCleartextTraffic')=='false'
 assert app.get(ns+'allowBackup')=='false' and app.get(ns+'hardwareAccelerated')=='true'
 activity=app.find('activity');assert activity.get(ns+'launchMode')=='singleTask'
@@ -18,7 +23,7 @@ assert activity.get(ns+'name')=='.WebViewActivity'
 links=activity.findall('.//data');assert len(links)==2
 assert all(e.get(ns+'scheme')=='https' and e.get(ns+'host')=='divzplit.com' for e in links)
 assert {e.get(ns+'path') or e.get(ns+'pathPrefix') for e in links}=={'/','/app/'}
-assert not app.findall('service')
+service=app.find('service');assert service.get(ns+'exported')=='false' and service.get(ns+'name')=='.DivZplitMessagingService'
 provider=app.find('provider');assert provider is not None and provider.get(ns+'exported')=='false'
 paths=ET.parse(P/'res/xml/webview_filepaths.xml').getroot();assert len(paths)==1 and paths[0].tag=='cache-path' and paths[0].get('path')=='receipt_camera/'
 styles=ET.parse(P/'res/values-v31/styles.xml').getroot()

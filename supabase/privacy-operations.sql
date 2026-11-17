@@ -3,7 +3,7 @@
 begin;
 create or replace function public.divzplit_privacy_export() returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare actor uuid:=auth.uid(); account_data jsonb; result jsonb;
+declare actor uuid:=auth.uid(); account_data jsonb; result jsonb; native_data jsonb;
 begin
  if actor is null then raise exception 'NEXO_FORBIDDEN';end if;
  select jsonb_build_object('id',u.id,'email',to_jsonb(u)->'email','created_at',to_jsonb(u)->'created_at',
@@ -26,6 +26,11 @@ begin
     from public.divzplit_push_subscriptions p where p.user_id=actor),'[]'::jsonb),
   'scope',jsonb_build_object('shared_group_data',true,'receipt_images','References included; request the image files from support.',
    'provider_logs_and_backups','Not included; contact support for a full access request.'));
+ if to_regclass('public.divzplit_native_subscriptions') is not null then
+  select coalesce(jsonb_agg(jsonb_build_object('id',p.id,'language',p.language,'enabled',p.enabled,'updated_at',p.updated_at) order by p.id),'[]'::jsonb)
+   into native_data from public.divzplit_native_subscriptions p where p.user_id=actor;
+  result:=result||jsonb_build_object('native_push_subscriptions',native_data);
+ end if;
  return result;
 end;
 $$;
@@ -34,6 +39,10 @@ language plpgsql security definer set search_path='' as $$
 declare notices bigint; jobs bigint; subscriptions bigint; quotes bigint; invites bigint;
 begin
  -- Internal-only, scheduled below. No user-controlled identifiers or SQL.
+ if to_regclass('public.divzplit_native_jobs') is not null then
+  delete from public.divzplit_native_jobs where status in ('sent','discarded') and next_attempt_at<clock_timestamp()-interval '7 days';
+  delete from public.divzplit_native_subscriptions where not enabled and updated_at<clock_timestamp()-interval '30 days';
+ end if;
  delete from public.divzplit_push_jobs where status in ('sent','discarded') and next_attempt_at<clock_timestamp()-interval '7 days';get diagnostics jobs=row_count;
  delete from public.divzplit_notifications where created_at<clock_timestamp()-interval '90 days';get diagnostics notices=row_count;
  delete from public.divzplit_push_subscriptions where not enabled and updated_at<clock_timestamp()-interval '30 days';get diagnostics subscriptions=row_count;

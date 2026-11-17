@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=legal-review-20261116';
+import {translations} from './translations.js?v=native-push-1';
 
 export {detectLanguage} from './language.js?v=language-78';
 import {detectLanguage,languagePreferences,rememberLanguage,supportedLanguages} from './language.js?v=language-78';

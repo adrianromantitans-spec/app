@@ -72,6 +72,9 @@ begin
     end if;
   end if;
 
+  if to_regclass('public.divzplit_native_subscriptions') is not null then
+    delete from public.divzplit_native_subscriptions where user_id=actor;
+  end if;
   if to_regclass('public.divzplit_push_subscriptions') is not null then
     delete from public.divzplit_push_subscriptions where user_id=actor;
   end if;

@@ -13,7 +13,7 @@ import {money as formatMoney,currencies,currencyDigits,currencyScale,currencySte
 import {Cloud} from './cloud.js?v=legal-review-20261116';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=activity-102';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=activity-103';
-import {NotificationCentre} from './notifications.js?v=loading-92';
+import {NotificationCentre} from './notifications.js?v=native-push-1';
 import {cloudConfig} from './config.js';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-90';
 
