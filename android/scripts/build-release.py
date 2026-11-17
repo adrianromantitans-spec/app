@@ -45,7 +45,7 @@ def main():
                  '-keypass:env','DIVZPLIT_UPLOAD_KEY_PASSWORD','-sigalg','SHA256withRSA','-digestalg','SHA-256',
                  '-signedjar',str(target),str(bundle),env['DIVZPLIT_UPLOAD_KEY_ALIAS']],check=True,env=env)
  subprocess.run([str(verifier),'-verify',str(target)],check=True,env=env)
- if args.wrapper=='webview':print('EXPERIMENTAL: comprobar docs/ANDROID-WEBVIEW-PILOT.md antes de distribuir; push nativo pendiente.')
+ if args.wrapper=='webview':print('EXPERIMENTAL: Firebase integrado; configurar servidor y verificar entrega real/Android. Ver docs/ANDROID-FIREBASE-PUSH.md.')
  print('\nAAB firmado:',target)
  print('Comprueba en Play Console que el certificado de subida coincide. Nunca subas el .jks ni su contraseña.')
 

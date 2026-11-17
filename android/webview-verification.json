@@ -1,22 +1,22 @@
 {
   "status": "experimental-not-for-production",
-  "sourceBaseCommit": "8fe11c336cf484f6eab8204a96a98d4a2ed2c8b2",
+  "sourceBaseCommit": "e197b3de758ab3965a388d89b844d0aac20ce324",
   "bundles": {
     "webview": {
-      "version": "1.1.0-webview.2",
-      "code": 5,
-      "sha256": "276db88ce0408a7004e20e7403ab1110da36b49b662a289bacf052ab569e7978",
-      "bytes": 1909463,
-      "launcher": "com.divzplit.app.WebViewActivity",
-      "validated": true
+      "version": "1.1.0-webview.3",
+      "code": 6,
+      "sha256": "4161af264ace86d2359af3a6014e8706458cd3ca2ff6cf01da76bb9e0bd5778e",
+      "bytes": 2502922,
+      "validated": true,
+      "firebase": true
     },
     "twa": {
       "version": "1.0.2",
       "code": 3,
-      "sha256": "e6581d8bca33f6339578080a0297967388508438fde0e44d52db715b4e498699",
-      "bytes": 1915839,
-      "launcher": "com.divzplit.app.LauncherActivity",
-      "validated": true
+      "sha256": "e4aededb9d66db3eaa0262f7235d613fe21a64c416f9fc38155a9fe5a7fa731b",
+      "bytes": 1915845,
+      "validated": true,
+      "firebase": false
     }
   },
   "checks": {
@@ -27,18 +27,25 @@
     "npmCheckAndTests": "passed",
     "existingWebsiteFiles": "unchanged",
     "physicalAndroid": "not run",
-    "realGoogleAppleOAuth": "not run",
-    "nativePush": "not implemented",
+    "realGoogleAppleOAuth": "simulated PKCE passed; real Android pending",
+    "nativePush": "implemented; server configuration/deployment and real-device delivery pending",
     "chromiumRealUiAdapter": "passed es/en/ro: Back, JSON export under existing CSP, image selection and real OCR",
     "simulatedGooglePkce": "passed real application challenge/exchange against fictional transport",
     "cameraImplementation": "compiled and scoped FileProvider policy checked; not tested on Android",
     "emulatorAttempt": "failed during SDK image extraction due to disk capacity; temporary downloads removed",
-    "legacyBrowserSuites": "auth/privacy/account-language/receipt-photo fail existing UI expectations; unchanged web files; not counted as passing"
+    "legacyBrowserSuites": "auth/privacy/account-language/receipt-photo fail existing UI expectations; unchanged web files; not counted as passing",
+    "firebaseNativeBuild": "passed; matching app ID in resources; Messaging auto-init false",
+    "nativePushUnitTests": "passed consent/account isolation/expiration/retry/signed OAuth and fixed endpoints",
+    "nativePushDatabase": "passed on real disposable PostgreSQL 17; full existing DB suite also passed",
+    "nativePushBrowser": "passed default/denied permission flows in es/en/ro with modeled Android ports",
+    "productionDeployment": "not performed"
   },
   "nativeSourcesSha256": {
-    "android/app/src/webview/AndroidManifest.xml": "d91fe3ad9dc8fcd758f5766fff92b39430acd2f33be0c04fd6d6b79a837ed4ea",
-    "android/app/src/webview/assets/native-webview.js": "24c14a7132a0c1215917731161a7fdb4cba54e2a4094b23c7f61bea95208670c",
-    "android/app/src/webview/java/com/divzplit/app/WebViewActivity.java": "46e6582aaf22d6edf9a106835e543e4e00de9bf7593bb9a550a44f80e916582f",
+    "android/app/src/webview/AndroidManifest.xml": "2b276fb6af85255e681fae7a192ec5783523252a3a0d9fe93c76f1502cefe7ff",
+    "android/app/src/webview/assets/native-webview.js": "f63ccb41a97b81b52f7c82964163e9c2dbf2b654122fc070dbb36faaa548958d",
+    "android/app/src/webview/java/com/divzplit/app/DivZplitMessagingService.java": "e1d7030c876d40509ed45df7a18441c9091d8950cacfc4e9f484b72f33983090",
+    "android/app/src/webview/java/com/divzplit/app/NativePush.java": "11c91d8ad5fd45edd18b153138c4b2e552adbd3f8ed93937c3e16b66213498dc",
+    "android/app/src/webview/java/com/divzplit/app/WebViewActivity.java": "bb95fd0fd84878394d38c4e500f3835dc3ffadc2964fbdc9c5a989386856ddd9",
     "android/app/src/webview/java/com/divzplit/app/WebViewPolicy.java": "4b423cb2ad74148435f5b6078f75f818b68e5780ed7d9e276e35bb61417002a5",
     "android/app/src/webview/res/values/strings.xml": "dd561737e7de3b5daa21b1180ca2646821d19795e5c4af7e525b0d08c34b32de",
     "android/app/src/webview/res/values/styles.xml": "ffa2aa13f8f7e906682d8f4ef3747ba0ea15346df2226f8b5d57a2bbc33527d4",
@@ -46,5 +53,11 @@
     "android/app/src/webview/res/values-ro/strings.xml": "95e047e2c218b1717160c31342742e6613d7857c3a311364f6d8e3b99cdd4758",
     "android/app/src/webview/res/values-v31/styles.xml": "184e43fe7e1e3c96dcc66fab2b64ee34d78edd78e0b235380b3c27e04ebd7360",
     "android/app/src/webview/res/xml/webview_filepaths.xml": "81424c1875be083201a4e5396ed089a6d0d38e9fe20e7b9b8b640027cf230d32"
+  },
+  "firebase": {
+    "projectId": "divzplit-1ce52",
+    "projectNumber": "641796053452",
+    "clientConfigSha256": "977c158871b108a8480d75bfe8cd0577dab2fe055b5352786d6f3a8f87ac513a",
+    "privateServerCredential": "not available; not bundled"
   }
 }

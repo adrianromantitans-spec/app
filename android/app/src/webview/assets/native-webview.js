@@ -25,15 +25,28 @@
  window.addEventListener('message', event => {
   if((event.source!==null&&event.source!==window)||event.data !== 'divzplit-native-ready' || !event.ports[0])return;
   port?.close();port=event.ports[0];
-  port.onmessage=event=>{try{const result=JSON.parse(event.data),job=pending.get(result.id);if(!job)return;clearTimeout(job.timer);pending.delete(result.id);result.ok?job.resolve():job.reject(new Error('Native action unavailable'));}catch{}};
+  port.onmessage=event=>{try{const result=JSON.parse(event.data),job=pending.get(result.id);if(!job)return;clearTimeout(job.timer);pending.delete(result.id);result.ok?job.resolve(result.value):job.reject(new Error('Native action unavailable'));}catch{}};
+  refreshPush().catch(()=>{});
  });
  function send(message){
   if(!port)return Promise.reject(new Error('Native channel unavailable'));
   return new Promise((resolve,reject)=>{
-   const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(new Error('Native action timed out'));},10000);
+   const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(new Error('Native action timed out'));},message.type==='pushPermission'?120000:30000);
    pending.set(id,{resolve,reject,timer});port.postMessage(JSON.stringify({...message,id}));
   });
  }
+ let permission='default';
+ const nativePush={
+  get permission(){return permission;},
+  state:async()=>{const state=await send({type:'pushState'});permission=state.permission;return state;},
+  requestPermission:async()=>{permission=await send({type:'pushPermission'});return permission;},
+  token:()=>send({type:'pushToken'}),
+  bind:userId=>send({type:'pushBind',userId}),
+  clear:()=>send({type:'pushClear'})
+ };
+ Object.defineProperty(window,'divzplitNativePush',{value:nativePush});
+ async function refreshPush(){await nativePush.state();window.dispatchEvent(new Event('divzplit-native-push-ready'));}
+ window.addEventListener('divzplit-native-resume',()=>{if(port)refreshPush().catch(()=>{});});
  // Native clipboard writes only; no access to clipboard contents.
  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:text=>send({type:'clipboard',text:String(text)})}});
  Object.defineProperty(window,'__divzplitDownload',{configurable:true,value:async url=>{

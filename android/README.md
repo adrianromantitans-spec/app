@@ -16,7 +16,7 @@ Proyecto Android **compilable**, basado en Trusted Web Activity (TWA). Abre la a
 
 ## Piloto opcional de WebView
 
-La TWA sigue siendo la compilación predeterminada. La migración experimental se selecciona con `--wrapper webview`; consulta [el alcance, los bloqueos y las pruebas del piloto](../docs/ANDROID-WEBVIEW-PILOT.md). No distribuirla como sustitución completa hasta resolver el push nativo y comprobarla en Android real.
+La TWA sigue siendo la compilación predeterminada. La migración experimental se selecciona con `--wrapper webview`; consulta [el alcance, los bloqueos y las pruebas del piloto](../docs/ANDROID-WEBVIEW-PILOT.md). Firebase Messaging se integra sólo en WebView. Consultar [la configuración del envío nativo](../docs/ANDROID-FIREBASE-PUSH.md); no distribuir como sustitución completa hasta desplegar el backend y comprobarla en Android real.
 
 ## Compilar y firmar
 

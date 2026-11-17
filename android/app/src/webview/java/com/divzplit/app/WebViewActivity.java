@@ -50,6 +50,7 @@ public final class WebViewActivity extends Activity {
     private static final String ORIGIN = "https://divzplit.com";
     private static final int PICK_FILE = 10, SAVE_JSON = 11, MAX_EXPORT = 20 * 1024 * 1024;
     private WebView web;
+    private NativePush push;
     private FrameLayout surface;
     private View errorView;
     private ValueCallback<Uri[]> fileResult;
@@ -63,6 +64,7 @@ public final class WebViewActivity extends Activity {
     @SuppressLint("SetJavaScriptEnabled")
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        push = new NativePush(this);
         surface = new FrameLayout(this);
         surface.setBackgroundColor(Color.rgb(248, 245, 253));
         surface.setFitsSystemWindows(true);
@@ -253,6 +255,7 @@ public final class WebViewActivity extends Activity {
         int id = 0;
         try {
             JSONObject message = new JSONObject(data); id = message.getInt("id");
+            if (push.handle(port, message)) return;
             if ("clipboard".equals(message.getString("type"))) {
                 String text = message.getString("text");
                 if (text.length() > 65536) throw new IllegalArgumentException();
@@ -275,6 +278,9 @@ public final class WebViewActivity extends Activity {
         }
     }
 
+    @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] grants) {
+        super.onRequestPermissionsResult(request, permissions, grants); push.permissionResult(request);
+    }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request == PICK_FILE && fileResult != null) {
@@ -318,10 +324,10 @@ public final class WebViewActivity extends Activity {
     }
     @Override protected void onSaveInstanceState(Bundle state) { if (web != null) web.saveState(state); super.onSaveInstanceState(state); }
     @Override protected void onPause() { if (web != null) web.onPause(); CookieManager.getInstance().flush(); super.onPause(); }
-    @Override protected void onResume() { super.onResume(); if (web != null) web.onResume(); }
+    @Override protected void onResume() { super.onResume(); if (web != null) { web.onResume(); web.evaluateJavascript("window.dispatchEvent(new Event(\"divzplit-native-resume\"))", null); } }
     private void closePort() { if (nativePort != null) { nativePort.close(); nativePort = null; } }
     @Override protected void onDestroy() {
-        closePort(); pendingExport = null; clearCamera(true);
+        closePort(); if (push != null) push.close(); pendingExport = null; clearCamera(true);
         if (fileResult != null) { fileResult.onReceiveValue(null); fileResult = null; }
         if (web != null) { surface.removeView(web); web.destroy(); web = null; }
         super.onDestroy();

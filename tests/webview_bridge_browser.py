@@ -10,7 +10,7 @@ with sync_playwright() as p:
  page.evaluate(SCRIPT)
  page.evaluate('''() => {
   window.messages=[];const channel=new MessageChannel();window.nativeTestPort=channel.port1;
-  nativeTestPort.onmessage=e=>{const value=JSON.parse(e.data);messages.push(value);nativeTestPort.postMessage(JSON.stringify({id:value.id,ok:true}));};
+  nativeTestPort.onmessage=e=>{const value=JSON.parse(e.data);if(value.type.startsWith('push')){nativeTestPort.postMessage(JSON.stringify({id:value.id,ok:true,value:{permission:'default',userId:'',enabled:false,token:''}}));return;}messages.push(value);nativeTestPort.postMessage(JSON.stringify({id:value.id,ok:true}));};
   window.postMessage('divzplit-native-ready',location.origin,[channel.port2]);
  }''')
  page.evaluate("navigator.clipboard.writeText('https://divzplit.com/app/#invite=fictional')")

@@ -9,3 +9,5 @@
 Upstream: https://github.com/GoogleChromeLabs/bubblewrap and https://github.com/GoogleChrome/android-browser-helper.
 
 Custom changes after generation: one version source (`twa-manifest.json`), explicit private environment-based release signing, release lint enabled, fail if a release has no upload signing configuration, no cleartext traffic, no shell backup/transfer, monochrome notification/themed icon derived from the existing DZ mark, official verified wrapper, Maven Central instead of JCenter. Do not run `bubblewrap update` over these files without reviewing and preserving these changes. Normal builds need Gradle/JDK/SDK/Python, not Bubblewrap or npm.
+
+Opt-in WebView/Firebase pilot: Firebase Messaging **24.1.2** (https://github.com/firebase/firebase-android-sdk) and Google Services Gradle plugin **4.4.2** (https://github.com/google/play-services-plugins). The Gradle plugin reads the public Android client configuration; no Firebase administrator credential is bundled. Messaging is a WebView-only dependency; Firebase Auth, Firestore and Analytics SDKs are not added. The existing Browser Helper supplies Custom Tabs for external OAuth.

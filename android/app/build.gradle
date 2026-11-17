@@ -32,6 +32,7 @@ def wrapperMode = providers.gradleProperty('divzplitWrapper').getOrElse('twa')
 if (!(wrapperMode in ['twa', 'webview'])) throw new GradleException('Unknown DivZplit wrapper')
 def webViewPilot = wrapperMode == 'webview'
 if (webViewPilot) {
+    apply plugin: 'com.google.gms.google-services'
     def pilot = new JsonSlurper().parse(rootProject.file('webview-pilot.json'))
     twaManifest.appVersionCode = pilot.appVersionCode
     twaManifest.appVersionName = pilot.appVersionName
@@ -223,6 +224,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
         implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+        if (webViewPilot) implementation 'com.google.firebase:firebase-messaging:24.1.2'
 
 }
 

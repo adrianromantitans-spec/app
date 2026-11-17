@@ -2,11 +2,11 @@
 
 La compilación habitual sigue siendo la TWA actual. La opción `--wrapper webview` selecciona un manifiesto, código Java, recursos de tema y un pequeño script **incluidos únicamente en ese AAB**. No se sirve JavaScript nuevo a la web y no se modifica ninguna animación, duración, componente, autenticación web ni tabla de Supabase.
 
-Se reutilizan el proyecto Android, SDK 36, la clave de subida, `com.divzplit.app`, iconos y splash vectorial existentes. No se añade Capacitor ni otra dependencia. El Android Browser Helper existente aporta Custom Tabs para las páginas externas; el contenido de DivZplit se renderiza en Android System WebView. No aparece la interfaz ni el traductor de Chrome dentro de DivZplit. El proveedor de identidad **sí** se abre en el navegador seguro del sistema, como exige Google para OAuth; no se oculta esa interfaz ni se falsifica el user-agent.
+Se reutilizan el proyecto Android, SDK 36, la clave de subida, `com.divzplit.app`, iconos y splash vectorial existentes. No se añade Capacitor; se incorpora Firebase Messaging únicamente al build WebView para conservar los avisos del móvil. El Android Browser Helper existente aporta Custom Tabs para las páginas externas; el contenido de DivZplit se renderiza en Android System WebView. No aparece la interfaz ni el traductor de Chrome dentro de DivZplit. El proveedor de identidad **sí** se abre en el navegador seguro del sistema, como exige Google para OAuth; no se oculta esa interfaz ni se falsifica el user-agent.
 
 ## Estado y límites que impiden una publicación general
 
-- **Push en segundo plano pendiente.** WebView no soporta la suscripción Web Push de la TWA. La bandeja y su actualización con la app abierta siguen utilizando el código web existente; no equivalen a avisos con la app cerrada. Hace falta implementar un transporte push nativo (por ejemplo FCM), asociar dispositivos a la cuenta y adaptar el envío del backend. No se han creado proyectos Firebase ni cambiado servicios externos. No solicitar permisos de notificación sin una implementación real.
+- **Firebase Messaging integrado, entrega real pendiente.** El cliente Android, las RPC, la cola y el emisor FCM HTTP v1 están preparados. Falta configurar credenciales privadas del servidor y desplegar SQL/Edge/cron; consultar [ANDROID-FIREBASE-PUSH.md](ANDROID-FIREBASE-PUSH.md). El SDK por sí solo no activa el envío. La bandeja dentro de la app se conserva.
 - **Pruebas en dispositivos pendientes.** Compilar y pasar lint no demuestra que Google vuelva correctamente a WebView, que un fabricante gestione igual el teclado o que la cámara/OCR funcione en su dispositivo.
 - El almacenamiento de Chrome y WebView es independiente. Los usuarios deberán volver a entrar al cambiar desde la TWA; los datos remotos de su cuenta permanecen en Supabase. Datos exclusivamente locales de la demo y preferencias de Chrome no se migran. Al volver a TWA tampoco se comparten sesiones.
 - El piloto permite elegir fotos y tomar una nueva mediante la cámara de Android, sin permisos amplios de almacenamiento ni permiso de cámara propio. La foto se guarda en caché privada; FileProvider comparte sólo esa carpeta con un permiso temporal. La captura está implementada, pero su comprobación en Android físico, HEIC y OCR del dispositivo sigue pendiente.
@@ -24,7 +24,7 @@ NEXO_URL=http://127.0.0.1:3003/app/ python3 tests/webview_flows_browser.py
 python3 android/scripts/build-release.py --wrapper webview --keystore /ruta/privada/divzplit-upload.jks
 ```
 
-Salida: `android/app/build/outputs/play/divzplit-1.1.0-webview.2.aab`, código **5**, firmado con la misma clave de subida. La versión experimental está en `android/webview-pilot.json`; comprobar en Play que el código no se haya utilizado y aumentarlo si es necesario. No regenerar ninguna clave.
+Salida: `android/app/build/outputs/play/divzplit-1.1.0-webview.3.aab`, código **6**, firmado con la misma clave de subida. La versión experimental está en `android/webview-pilot.json`; comprobar en Play que el código no se haya utilizado y aumentarlo si es necesario. No regenerar ninguna clave.
 
 La compilación normal conserva TWA 1.0.2 (3):
 
@@ -54,7 +54,7 @@ El script valida identidad, certificado esperado y configuración, ejecuta lint 
 
 La PR es un borrador de migración. Revisarla **no requiere desplegar cambios a la web**. Se puede generar un AAB desde su rama para un grupo pequeño. No promocionar esta versión a producción ni sustituir las pruebas de todos los usuarios hasta completar los bloqueos.
 
-En Google Play Console → DivZplit → Prueba interna, crear una versión, subir el AAB de código 5 y comprobar paquete y versión. Leer los avisos y distribuir sólo al grupo informado del piloto. Un usuario inscrito en varias pistas suele recibir la versión compatible con código superior; no usar la pista interna para probar con personas que necesiten las notificaciones actuales. El AAB no se instala directamente como un APK. Una APK firmada con la clave de subida tampoco actualiza una instalación firmada por Google Play.
+En Google Play Console → DivZplit → Prueba interna, crear una versión, subir el AAB de código 6 y comprobar paquete y versión. Leer los avisos y distribuir sólo al grupo informado del piloto. Un usuario inscrito en varias pistas suele recibir la versión compatible con código superior; no usar la pista interna para probar con personas que necesiten las notificaciones actuales. El AAB no se instala directamente como un APK. Una APK firmada con la clave de subida tampoco actualiza una instalación firmada por Google Play.
 
 Probar en Android reciente y en el dispositivo de 60 Hz:
 
@@ -62,10 +62,10 @@ Probar en Android reciente y en el dispositivo de 60 Hz:
 - Enlaces de invitación, correo de confirmación, recuperación de contraseña y retorno del navegador; repetir con proceso cerrado y proceso eliminado por Android.
 - Animación original, idioma es/en/ro, teclado y botones del sistema; rotación, segundo plano/reanudación y 60/120 Hz si hay dispositivos.
 - Foto de ticket, OCR, carga a Supabase y vista de la imagen. Exportar ambos JSON, comprobar su contenido, copiar y compartir invitaciones.
-- Gastos, reparto, pagos, listas, votaciones y tareas; revisar la bandeja de notificaciones. El push con la app cerrada **aún no está implementado**.
+- Gastos, reparto, pagos, listas, votaciones y tareas; revisar la bandeja de notificaciones. El push con la app cerrada **requiere activar el backend Firebase y verificar entrega real**.
 - Sin red, error TLS, cancelar selectores, Atrás y enlaces externos. Verificar que nunca aparece Google Login dentro de WebView.
 
-Para volver a TWA después de distribuir código 5 hace falta otro AAB TWA con **código mayor que 5**; Play no permite actualizar hacia una versión de código inferior. No asumir que basta volver a subir el AAB de código 3.
+Para volver a TWA después de distribuir código 6 hace falta otro AAB TWA con **código mayor que 6**; Play no permite actualizar hacia una versión de código inferior. No asumir que basta volver a subir el AAB de código 3.
 
 ## Comprobaciones automáticas
 
