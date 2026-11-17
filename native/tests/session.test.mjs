@@ -10,7 +10,7 @@ import * as planning from '../../planning.js';
 function fixture(){
  const group=structuredClone(model.seed().groups[0]);group.expenses=[];group.remote={ownerId:'owner',version:1};
  const storage=new Map();
- const cloud={user:{id:'owner',email:'test@example.invalid'},storageKey:'test',async saveGroup(g){return g;}};
+ const cloud={user:{id:'owner',email:'test@example.invalid'},storageKey:'test',async saveGroup(g){return g;},async paymentArchives(){return [];}};
  const c=new NativeController({cloud,model,extras,planning,i18n:{tr:v=>v},native:{},platform:{storage:{getItem:k=>storage.get(k)||null},temporaryStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},flush:async()=>{}}});
  c.update({user:cloud.user,groups:[group],groupId:group.id});return {c,cloud,group,storage};
 }
@@ -66,7 +66,7 @@ test('native expense submission uses the existing Cloud identity and version con
   return new Response(JSON.stringify({document:payload.p_document,version:2,owner_id:actor}),{headers:{'Content-Type':'application/json'}});
  }});
  cloud.user={id:actor};cloud.persistSession({access_token:'fixture',refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600});
- const {c,group}=fixture();c.cloud=cloud;group.remote={ownerId:actor,version:1};
+ const {c,group}=fixture();c.cloud=cloud;c.update({user:cloud.user});group.remote={ownerId:actor,version:1};
  await c.saveExpense(fields,null,'stable-id');
  assert.equal(payload.p_version,1);assert.equal(payload.p_document.expenses[0].payer,actor);
  assert.equal(payload.p_document.expenses[0].createdBy,actor);assert.equal(c.group.expenses[0].payer,'you');
@@ -134,7 +134,7 @@ test('refresh materializes authorized recurring charges once and never inherits 
 test('deleting a source leaves previously generated charges and enforces creator/owner permissions',async()=>{
  const {c,cloud}=fixture();await c.saveExpense(fields,null,'series');c.group.expenses.push({...fields,id:'past',seriesId:'series',createdBy:'owner'});
  await c.changeExpense('series','delete',c.group.id);assert.deepEqual(c.group.expenses.map(e=>e.id),['past']);
- c.group.remote.ownerId='another';cloud.user={id:'outsider'};
+ c.group.remote.ownerId='another';cloud.user={id:'outsider'};c.update({user:cloud.user});
  await assert.rejects(c.changeExpense('past','delete',c.group.id),/permiso/);assert.equal(c.group.expenses.length,1);
 });
 test('simultaneous refreshes share one recurring save and unauthorized sources stay untouched',async()=>{
@@ -151,7 +151,7 @@ test('planning edits preserve poll options and votes and reject nonowner changes
  let payload;cloud.planningAction=async(g,kind,action,item)=>{payload=item;const draft=structuredClone(g);draft.polls[0]={...draft.polls[0],...item};return draft;};
  await c.plan('polls','save',{id:'poll',title:'Dinner',options:['Replacement','Wrong'],description:'Tonight'},group.id,true);
  assert.deepEqual(payload.options,poll.options);assert.equal(payload.votes,undefined);assert.deepEqual(c.group.polls[0].votes,{marta:'a'});
- cloud.user={id:'outsider'};payload=null;
+ cloud.user={id:'outsider'};c.update({user:cloud.user});payload=null;
  await assert.rejects(c.plan('polls','save',{id:'poll',title:'Unauthorized'},group.id,true),/permiso/);assert.equal(payload,null);
  await assert.rejects(c.plan('polls','clear',{},group.id),/permiso/);
 });
@@ -187,7 +187,7 @@ test('shopping applies versioned edits and ignores late replies after group or a
  c.update({groups:[],groupId:null,shopping:[],shoppingGroupId:null});finish([{...row,title:'Old group'}]);await pending;assert.deepEqual(c.state.shopping,[]);
  c.update({groups:[group],groupId:group.id,shopping:[row],shoppingGroupId:group.id});
  const pendingAccount=c.shoppingAction('edit',{id:'milk',version:2,title:'Milk 3'},group.id);
- cloud.user={id:'new-account'};finish([{...row,title:'Old account'}]);await pendingAccount;assert.equal(c.state.shopping[0].title,'Milk');
+ cloud.user={id:'new-account'};finish([{...row,title:'Old account'}]);await pendingAccount;assert.deepEqual(c.state.shopping,[]);assert.equal(c.state.user.id,'new-account');
 });
 test('shopping permissions, stale versions and linked-item locks reject before mutation',async()=>{
  const {c,cloud,group}=fixture();const row={id:'milk',version:3,created_by:'other',expense_id:'expense',bought:true};c.update({shopping:[row],shoppingGroupId:group.id});let requests=0;
@@ -235,7 +235,7 @@ test('native checkout reaches the existing atomic RPC with canonical identity an
   endpoint=url;payload=JSON.parse(options.body);return new Response(JSON.stringify({document:payload.p_document,version:2,owner_id:actor}),{headers:{'Content-Type':'application/json'}});
  }});
  cloud.user={id:actor};cloud.persistSession({access_token:'fixture',refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600});
- const {c,group}=fixture();c.cloud=cloud;group.remote={ownerId:actor,version:1};c.update({shopping:[{id:product,bought:true}],shoppingGroupId:group.id});c.shopping=async()=>{};
+ const {c,group}=fixture();c.cloud=cloud;c.update({user:cloud.user});group.remote={ownerId:actor,version:1};c.update({shopping:[{id:product,bought:true}],shoppingGroupId:group.id});c.shopping=async()=>{};
  await c.saveExpense(fields,null,'stable-checkout',{groupId:group.id,checkout:[product]});
  assert.ok(endpoint.endsWith('/rpc/divzplit_shopping_checkout'));assert.equal(payload.p_version,1);assert.equal(payload.p_expense_id,'stable-checkout');assert.deepEqual(payload.p_items,[product]);
  assert.equal(payload.p_document.expenses[0].payer,actor);assert.equal(payload.p_document.expenses[0].createdBy,actor);assert.equal(c.group.remote.version,2);
