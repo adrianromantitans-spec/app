@@ -13,7 +13,7 @@ function renderDock(reduced){
  const source=readFileSync(new URL('../src/Dock.js',import.meta.url),'utf8');new Function('require','module','exports',babel.transformSync(source,{filename:'Dock.js',babelrc:false,configFile:false,presets:[preset]}).code)(localRequire,mod,mod.exports);
  const tree=mod.exports.default({c:{t:v=>v},ui:{Label:'Label'},page:'activity',bottom:12,onNavigate:noop,onAdd:noop,motion:{collapse,compact:false,expand:noop},reduced});
  function attach(node){if(!node||typeof node!=='object')return;if(String(node.type).startsWith('Animated.')){const props=Object.fromEntries(Object.entries(node.props).filter(([key,value])=>key!=='children'&&typeof value!=='function'));const graph=new Props(props,noop);graph.__attach();graphs.push({node,graph});}const children=node.props?.children;for(const child of Array.isArray(children)?children:[children])Array.isArray(child)?child.forEach(attach):attach(child);}
- attach(tree);for(const effect of effects)effect();return {collapse,animations,graphs};
+ attach(tree);for(const effect of effects)effect();return {collapse,animations,graphs,tree};
 }
 test('actual dock selector native animation cannot promote layout/fade/SVG collapse nodes to native',()=>{
  const result=renderDock(false);assert.equal(result.animations.length,1);assert.equal(result.collapse.__isNative,false);
@@ -30,4 +30,9 @@ test('tracked native lists forward every user scroll phase and keep modal/horizo
  const input=Object.fromEntries(phases.map(name=>[name,e=>calls.push(['owner',name,e])])),event={nativeEvent:{contentOffset:{y:50}}},ref={current:null};
  const list=mod.exports.TrackedFlatList(input,ref);for(const phase of phases)list.props[phase](event);assert.equal(calls.length,10);for(let i=0;i<phases.length;i++){assert.deepEqual(calls[i*2],['dock',phases[i],event]);assert.deepEqual(calls[i*2+1],['owner',phases[i],event]);}assert.equal(list.props.ref,ref);assert.equal(list.props.scrollEventThrottle,16);
  const horizontal=mod.exports.TrackedScrollView({...input,horizontal:true},ref);assert.equal(horizontal.props.onScroll,input.onScroll);events=null;const modal=mod.exports.TrackedScrollView(input,ref);assert.equal(modal.props.onScroll,input.onScroll);
+});
+
+test('actual dock and plus use opaque gradient stops and a solid selection fill',()=>{
+ const r=renderDock(false),nodes=[];function visit(n){if(!n||typeof n!=='object')return;nodes.push(n);for(const c of Array.isArray(n.props?.children)?n.props.children:[n.props?.children])Array.isArray(c)?c.forEach(visit):visit(c);}visit(r.tree);
+ const stops=nodes.filter(n=>n.type==='Stop');assert.ok(stops.length>=5);for(const n of stops)assert.equal(n.props.stopOpacity,1);for(const n of nodes.filter(n=>n.type==='Circle'))assert.ok(!/^#[a-f0-9]{8}$/i.test(n.props.fill));for(const {graph} of r.graphs)graph.__detach();
 });
