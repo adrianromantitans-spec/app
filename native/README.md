@@ -80,3 +80,7 @@ The current shared backend owns member identities and names. Its website exposes
 ## Final implementation pass
 
 `FeatureScreens.js` and `features.mjs` finish group settings/budget/date validation, reserved settlement suggestions, server-verified conversion quotes, history pagination/detail/cleanup, notification preferences/inbox/detail routing and recovery lifecycle. `ReceiptEditor.js` and the native receipt bridge provide private-cache crop/rotation without new dependencies. The original website and Android wrapper remain unchanged. All implementation work is reviewable in the native source; only device acceptance and release verification remain for the coverage matrix above.
+
+## Restored mobile website design
+
+Candidate `1.2.0-native.5` / code `11` restores the approved website design while keeping React Native. See [DESIGN-REFERENCE.md](DESIGN-REFERENCE.md) for scope, original timing measurements, bundled font faces and preview limitations. Upload this new AAB to the existing Play test track; merging source alone does not update an installed native app. No new Firebase, Supabase or signing configuration is required for this visual update.

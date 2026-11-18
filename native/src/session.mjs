@@ -3,8 +3,8 @@ import {canManage,planFields,checkoutFields,nativeCopy} from './collaboration.mj
 const ROOT='https://divzplit.com/';
 const day=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 export class NativeController{
- constructor({cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools}){
-  Object.assign(this,{cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools});this.listeners=new Set();this.handled=new Set();this.pendingNotice=null;this.receiptUploads=new Map();
+ constructor({cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools}){
+  Object.assign(this,{cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools});this.listeners=new Set();this.handled=new Set();this.pendingNotice=null;this.receiptUploads=new Map();
   this.state={ready:false,busy:false,user:null,groups:[],groupId:null,page:'home',error:'',notice:'',notices:[],history:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[],pushEnabled:false,pushReady:false,...structuredClone(featureState)};
  }
  snapshot=()=>this.state;

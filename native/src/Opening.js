@@ -1,32 +1,34 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {AccessibilityInfo,Animated,Easing,StyleSheet,Text,useWindowDimensions,View} from 'react-native';
-// Same assembly durations/keyframes and 1539 + 1161 ms handoff as the existing web intro.
+import {Animated,Easing,Pressable,StyleSheet,useWindowDimensions,View} from 'react-native';
+import Svg,{Defs,RadialGradient,Stop,Rect} from 'react-native-svg';
+import {introSize,referenceIntro as reference} from './design.mjs';
+// Preserve the web's assembly keyframes, 57% hold and 1161ms handoff.
 export default function Opening({ready,anchor,onFinish,reduced}){
  const {width,height}=useWindowDimensions(),initialWidth=useRef(width),[held,setHeld]=useState(false);
  const left=useRef(new Animated.Value(0)).current,zY=useRef(new Animated.Value(45)).current,zR=useRef(new Animated.Value(85)).current,zS=useRef(new Animated.Value(.8)).current,zA=useRef(new Animated.Value(0)).current,wordA=useRef(new Animated.Value(0)).current,flight=useRef(new Animated.Value(0)).current;
- const [size,setSize]=useState({width:250,height:70});const font=Math.min(60,width*.13),side=Math.min(28,Math.max(0,(width-size.width)/2-12));
+ const [size,setSize]=useState({width:145,height:48}),font=introSize(width),side=Math.min(28,Math.max(0,(width-size.width)/2-12));
  const ease=Easing.bezier(.22,1,.36,1),assembly=Easing.bezier(.16,1,.3,1);
  useEffect(()=>{
   if(reduced){onFinish();return;}
   const tick=(value,toValue,duration,easing=ease)=>Animated.timing(value,{toValue,duration,easing,useNativeDriver:true});
   const animation=Animated.parallel([
-   tick(left,1,1350,assembly),tick(wordA,1,405,assembly),
+   tick(left,1,reference.assembly,assembly),tick(wordA,1,reference.opacityEnd,assembly),
    Animated.sequence([Animated.delay(387.5),tick(zA,1,201.5)]),
    Animated.sequence([Animated.delay(387.5),tick(zY,34,201.5),tick(zY,-5,589),tick(zY,1,217),tick(zY,0,155)]),
    Animated.sequence([Animated.delay(387.5),tick(zR,75,201.5),tick(zR,-9,589),tick(zR,3,217),tick(zR,0,155)]),
-   Animated.sequence([Animated.delay(387.5),tick(zS,.9,201.5),tick(zS,1,961)])
-  ]);animation.start();const timer=setTimeout(()=>setHeld(true),1539);
+   Animated.sequence([Animated.delay(387.5),tick(zS,.9,201.5),tick(zS,1,589)])
+  ]);animation.start();const timer=setTimeout(()=>setHeld(true),reference.hold);
   return()=>{clearTimeout(timer);animation.stop();};
  },[]);
- useEffect(()=>{if(reduced||Math.abs(width-initialWidth.current)>40){onFinish();return;}if(ready&&held&&anchor){const a=Animated.timing(flight,{toValue:1,duration:1161,easing:ease,useNativeDriver:true});a.start(({finished})=>{if(finished)onFinish();});return()=>a.stop();}},[ready,held,anchor?.x,anchor?.y,width,reduced]);
- const targetScale=22/font,tx=anchor?anchor.x+anchor.width/2-width/2:0,ty=anchor?anchor.y+anchor.height/2-height/2:0;
- const text={fontFamily:'Manrope',fontWeight:'800',fontSize:font,color:'#19161d',letterSpacing:-font*.045};
- return <View pointerEvents="auto" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
-  <Animated.View style={[StyleSheet.absoluteFill,{backgroundColor:'#F8F5FD',opacity:flight.interpolate({inputRange:[0,1],outputRange:[1,0]})}]}/>
-  <Animated.View onLayout={event=>setSize(event.nativeEvent.layout)} style={{position:'absolute',left:(width-size.width)/2,top:(height-size.height)/2,flexDirection:'row',transform:[{translateX:flight.interpolate({inputRange:[0,1],outputRange:[0,tx]})},{translateY:flight.interpolate({inputRange:[0,1],outputRange:[0,ty]})},{scale:flight.interpolate({inputRange:[0,1],outputRange:[1,targetScale]})}]}}>
+ useEffect(()=>{if(reduced||Math.abs(width-initialWidth.current)>40){onFinish();return;}if(ready&&held&&anchor){const a=Animated.timing(flight,{toValue:1,duration:reference.flight,easing:ease,useNativeDriver:false});a.start(({finished})=>{if(finished)onFinish();});return()=>a.stop();}},[ready,held,anchor?.x,anchor?.y,anchor?.width,width,reduced]);
+ const tx=anchor?anchor.x+anchor.width/2-width/2:0,ty=anchor?anchor.y+anchor.height/2-height/2:0;
+ const text={fontFamily:'ManropeExtraBold',fontWeight:'normal',fontSize:flight.interpolate({inputRange:[0,1],outputRange:[font,anchor?.fontSize||font]}),lineHeight:flight.interpolate({inputRange:[0,1],outputRange:[font*1.2,(anchor?.fontSize||font)*1.2]}),includeFontPadding:false,color:reference.ink,letterSpacing:flight.interpolate({inputRange:[0,1],outputRange:[-2.5,anchor?.letterSpacing??-2.5]})};
+ return <Pressable onPress={onFinish} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
+  <Animated.View style={[StyleSheet.absoluteFill,{opacity:flight.interpolate({inputRange:[0,1],outputRange:[1,0]})}]}><Svg width="100%" height="100%"><Defs><RadialGradient id="intro-curtain" cx="50%" cy="42%" rx="70%" ry="70%"><Stop offset="0" stopColor={reference.curtain[0]}/><Stop offset=".48" stopColor={reference.curtain[1]}/><Stop offset="1" stopColor={reference.curtain[2]}/></RadialGradient></Defs><Rect width="100%" height="100%" fill="url(#intro-curtain)"/></Svg></Animated.View>
+  <Animated.View onLayout={event=>setSize(event.nativeEvent.layout)} style={{position:'absolute',left:(width-size.width)/2,top:(height-size.height)/2,flexDirection:'row',transform:[{translateX:flight.interpolate({inputRange:[0,1],outputRange:[0,tx]})},{translateY:flight.interpolate({inputRange:[0,1],outputRange:[0,ty]})}]}}>
    <Animated.Text style={[text,{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[-side,0]})}]}]}>Div</Animated.Text>
-   <Animated.Text style={[text,{color:'#5C7043',opacity:zA,transform:[{translateY:zY},{rotate:zR.interpolate({inputRange:[-360,360],outputRange:['-360deg','360deg']})},{scale:zS}]}]}>Z</Animated.Text>
-   <Animated.Text style={[text,{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[side,0]})}]}]}>plit.</Animated.Text>
+   <Animated.Text style={[text,{color:reference.accent,opacity:zA,transform:[{translateY:zY},{rotate:zR.interpolate({inputRange:[-360,360],outputRange:['-360deg','360deg']})},{scale:zS}]}]}>Z</Animated.Text>
+   <Animated.Text style={[text,{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[side,0]})}]}]}>plit<Animated.Text style={{color:reference.accent}}>.</Animated.Text></Animated.Text>
   </Animated.View>
- </View>;
+ </Pressable>;
 }

@@ -1,50 +1,29 @@
-# Migration candidate validation — 17 November 2026
+# Design restoration candidate — 18 November 2026
 
-Base repository commit: `b72aa4eb01f4245d4aae17c965dabdce860fcb8c`.
+Base: `d8d72ac8b337c36e340c6eab26f2cc860312ecaa` (main after PR 14). Scope and file-by-file changes: [DESIGN-REFERENCE.md](DESIGN-REFERENCE.md).
 
 ## Passed automatically
 
-- Existing repository `npm run check` and complete `npm test` command.
-- `npm test --prefix native`: 54 tests, including real shared Cloud/model integration through a fixture HTTP transport, canonical identity/version mapping, registration consent, financial failure/retry/concurrency, permissions, stale activity response, callback origins, binary encoding, persisted PKCE state and SHA-256.
-- Receipt tests cover exact binary uploads through the existing Cloud transport, private storage/session headers, input limits, failed-save retry reuse, account/group changes, safe old-photo cleanup, monthly calendar anchors, stopped series, deletion permissions and concurrent refreshes. They do not call the production backend.
-- Collaboration tests cover immutable poll options/votes, deadline validation with preserved seconds, assignment/owner permissions, closed polls, failed completion, item versions and linked-item locks, stale shopping replies, manual reminder guards, stable checkout IDs after lost responses, an actual shared Cloud atomic-checkout request, and confirmed-save/list-refresh separation. No production backend writes are performed.
-- Final implementation tests add group ownership/version/confirmation and calendar/currency validation; invitation origin checks; real shared FX request payloads; pending-payment reservations and response roles; history/inbox pagination and stale-account guards; notification preferences; email confirmation without URL session adoption; separate password recovery and same-account recovery races. The 20 feature tests also pass with `TZ=Europe/Bucharest`.
-- Metro production Android bundle; Gradle release compilation (Kotlin, Java, C++ and Hermes), R8 and AAB generation for ARM64 and ARMv7.
-- Android `lintRelease`: 0 errors, 19 warnings. Warnings concern the pinned Gradle version, Android framework ExifInterface, private AppCompat resources referenced by the inherited React Native text-input drawable, and unused resources inherited from the existing Android wrapper. No lint baseline or error suppression was added.
-- Existing upload certificate comparison and `jarsigner -verify`.
-- Bundletool 1.18.3 `validate` on the final signed candidate. Manifest: package `com.divzplit.app`, version code `10`, name `1.2.0-native.4`, minimum API 24 / target API 36, native `MainActivity` launcher.
-- Final bundle contains the offline Hermes application bundle, bundled Latin-script ML Kit OCR models, Manrope font and its OFL license. All 13 packaged ARM64 libraries, including the OCR pipeline, have ELF LOAD alignment of at least 16 KB. This static check does not replace an installation test on a 16 KB device.
-- Final manifest contains a nonexported receipt FileProvider with temporary grants, and no broad camera, media-library or storage permission.
-- The application screens use React Native views, with no WebView activity or browser-based application shell in this candidate.
-- Source scope scan: all existing website, domain/backend and legacy Android wrapper files unchanged. This follow-up changes only files under `native/`. No private signing key or service-account private key is included.
+- Full existing repository `npm run check` and `npm test`.
+- `npm test --prefix native`: 56 passing tests. The existing 54 tests cover shared Cloud/model transport, financial concurrency/idempotence, permissions, account/group isolation, receipts, collaboration/checkout, groups, FX, history/inbox, preferences and recovery. Two new tests compare native opening timings/keyframes with the actual original website sources and validate static Manrope font tables.
+- Development-only browser rendering of the native JSX with fictional local fixtures: home, plans, activity, account, tasks, polls, shopping, expenses and settlements at 320/393/430 px, without horizontal document overflow or uncaught rendering errors. Additional ES/EN/RO checks cover navigation, notifications, group details, expense detail/edit, and help; welcome/email login displays the Google mark. This is a composition/JavaScript check, not an Android runtime test. Preview tooling/dependencies are outside the repository and are not bundled in Android.
+- Final Metro production bundle, Hermes compilation, Java/Kotlin/C++ release compilation, R8 and ARM64/ARMv7 AAB generation.
+- Android `lintRelease`: 0 errors, 19 warnings. These concern the pinned Gradle version, inherited resources and framework ExifInterface; no lint baseline or suppression added.
+- Build-time upload certificate comparison against `android/upload-certificate.pem`; `jarsigner -verify` passes with the existing key. The normal self-signed chain/no-timestamp notices remain.
+- Bundletool 1.18.3 `validate` passes on the final signed AAB. Dumped manifest: package `com.divzplit.app`, code `11`, name `1.2.0-native.5`, minimum API 24 / target API 36, native `MainActivity` launcher.
+- The bundle contains the offline Hermes application, all five Manrope faces/OFL license, existing website photos/welcome screenshots and bundled Latin-script OCR models. All 13 ARM64 shared libraries have ELF LOAD alignment of at least 16 KB.
+- Git scope: only `native/` sources, assets, version metadata, tests and documentation changed. Website animation/UI, Supabase integration/backend, legacy wrapper and signing identity remain unchanged. No private signing key or Firebase service-account key is committed.
 
-Final local review artifact (not published to Play):
+Final signed review artifact:
 
 ```
-divzplit-1.2.0-native.4.aab
-bytes: 32847029
-SHA-256: 9ecd3f7762cb60d32d962759d4520a4146be2c31420e83967f11f045b72f2683
+divzplit-1.2.0-native.5.aab
+bytes: 34728646
+SHA-256: f561c660f00c33988373d616f8476b08142ba22c8ad8ddb10c89efd8fd0f5bdd
 ```
 
-Android upload certificates are normally self-signed: jarsigner reports the untrusted certificate chain and absence of a timestamp while verifying the bundle signature. The build checks the certificate against the repository's existing upload certificate before signing.
+## Physical validation remains
 
-## Not verified and not production-ready
+No Android phone or emulator is connected. The build and browser preview do not establish Android visual/animation parity, font rasterization, keyboard/safe areas, selector behavior, 60/120 Hz performance, successful real OAuth callbacks, camera/OCR or FCM delivery. Follow [DEVICE-TESTS.md](DEVICE-TESTS.md), including the new design-restoration section, after installing through the existing Google Play test track. The original web animation sources and their durations are preserved; the separate native port still needs side-by-side acceptance on Android.
 
-No Android device is connected to this environment, and Android runtime/emulator validation was not completed. A compile or signing success does not prove the UI launches correctly, authentication returns correctly, notifications arrive, or features match the published app.
-
-The implementation coverage matrix is in [README.md](README.md); the previously listed native flows are implemented. Run [DEVICE-TESTS.md](DEVICE-TESTS.md) to test real Google/Apple sign-in, upgrades, Keystore/session lifecycle, permissions, native date/time dialogs, task/poll editing and reminder delivery, multi-user shopping/atomic checkout, camera/OCR, payments, Firebase delivery, TalkBack, introductory animation/design parity and 60/120 Hz devices before replacing the current Play version. Native opening timing has a separate port, but its visual equivalence has not been established. The original web animation is unchanged.
-
-This source addition does not merge itself, deploy the site, upload an AAB, or change the existing published Android release.
-
-## Source changes in this completion pass
-
-- `src/features.mjs`: group settings/deletion/invitations, reserved settlements/FX/payment guards, activity/inbox pagination, preferences, recovery lifecycle and native translations.
-- `src/FeatureScreens.js`: native group/expense/settlement/activity/history/notification/preferences views.
-- `src/ReceiptEditor.js`: native crop/rotation UI; `android/app/src/main/java/com/divzplit/app/ReceiptModule.java`: validated private-cache bitmap edits.
-- `src/App.js`: native routes/forms, provider-aware Apple/Google entry, recovery screens, split drafts/shares/category inference and foreground refresh.
-- `src/session.mjs` and `src/runtime.js`: connect shared domain modules, account/recovery isolation and extended workflows.
-- `tests/features.test.mjs` and `tests/session.test.mjs`: workflow/financial/account coverage and fixtures.
-- `native-config.json`, `package.json` and `package-lock.json`: candidate version 1.2.0-native.4/code 10; no dependency additions.
-- `README.md`, `VALIDATION.md` and `DEVICE-TESTS.md`: implementation coverage, validation evidence and the physical acceptance checklist.
-
-No private key, original web animation, shared web application module, backend schema or legacy Android wrapper source was changed. No production deployment or Play upload was performed.
+This change does not merge itself, deploy the website or upload/publish a Google Play release. The AAB is a signed test candidate, not a claim of production readiness. No new Google Play signing, Firebase or Supabase configuration is required for this visual update.
