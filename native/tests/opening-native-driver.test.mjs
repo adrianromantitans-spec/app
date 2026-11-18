@@ -22,7 +22,8 @@ function renderOpening({reduced=false}={}){
  const Animated={Value:class extends Value{constructor(v){super(v);values.push(this);}},View:'Animated.View',Text:'Animated.Text',delay:()=>({start:noop,stop:noop}),parallel:composite,sequence:composite,timing:(value,config)=>({start:callback=>{
   animations.push({value,config});
   if(config.useNativeDriver)value.__makeNative();
-  else {new Animation(config).start(value.__getValue(),noop,noop,null,value);value.setValue(config.toValue);callback?.({finished:true});}
+  else new Animation(config).start(value.__getValue(),noop,noop,null,value);
+  value.setValue(config.toValue);callback?.({finished:true});
  },stop:noop})};
  const platform={Animated,Easing:{bezier:()=>v=>v},Pressable:'Pressable',Text:'Text',View:'View',StyleSheet:{absoluteFill:{}},useWindowDimensions:()=>({width:393,height:852})};
  const source=readFileSync(new URL('../src/Opening.js',import.meta.url),'utf8'),compiled=babel.transformSync(source,{filename:'Opening.js',babelrc:false,configFile:false,presets:[preset]}).code;
@@ -33,10 +34,10 @@ function renderOpening({reduced=false}={}){
  attach(tree);for(const effect of effects)effect();
  return {animations,values,graphs,tree,stateWrites,get finished(){return finished;}};
 }
-test('actual Opening keeps the native assembly separate and completes the JS font handoff',()=>{
- const result=renderOpening(),native=result.animations.filter(a=>a.config.useNativeDriver),handoff=result.animations.filter(a=>!a.config.useNativeDriver);
- assert.ok(native.length>0);assert.ok(native.every(a=>a.value.__isNative));
- assert.equal(handoff.length,1);assert.equal(handoff[0].value.__isNative,false);assert.equal(handoff[0].config.duration,referenceIntro.flight);assert.equal(handoff[0].value.__getValue(),1);assert.equal(result.finished,1);
+test('actual Opening runs assembly, curtain and complete flight on the native driver with fixed glyph metrics',()=>{
+ const result=renderOpening(),handoff=result.animations.find(a=>a.config.duration===referenceIntro.flight);
+ assert.ok(result.animations.length>0);assert.ok(result.animations.every(a=>a.config.useNativeDriver&&a.value.__isNative));
+ assert.ok(handoff);assert.equal(handoff.value.__getValue(),1);assert.equal(result.finished,1);
  for(const graph of result.graphs)if(graph.__isNative)assert.ok(!Object.keys(graph.__getValue()).some(k=>['fontSize','lineHeight','letterSpacing'].includes(k)),'Native style graph must never include font metrics');
  result.tree.props.onPress();assert.equal(result.finished,2);
  for(const graph of result.graphs)graph.__detach();
@@ -50,6 +51,14 @@ test('opening handoff lands at the measured header and ignores per-frame text la
  const result=renderOpening(),word=result.tree.props.children.find(n=>n?.props?.onLayout);
  assert.ok(word);word.props.onLayout({nativeEvent:{layout:{width:120,height:40}}});assert.equal(result.stateWrites.length,0);
  const graph=result.graphs.find(g=>g.__getValue().position==='absolute'&&g.__getValue().left!==undefined);
- const style=graph.__getValue();assert.equal(style.left+style.transform[0].translateX,64);assert.equal(style.top+style.transform[1].translateY,20);
+ const style=graph.__getValue();const scale=style.transform[2].scale;assert.ok(Math.abs(style.left+style.transform[0].translateX+145*(1-scale)/2-64)<1e-6);assert.ok(Math.abs(style.top+style.transform[1].translateY+48*(1-scale)/2-20)<1e-6);
  for(const graph of result.graphs)graph.__detach();
+});
+
+test('flight blends into fixed, exact header metrics without another font animation',()=>{
+ const r=renderOpening(),target=r.tree.props.children.findLast(n=>n?.type==='Animated.View');
+ const text=target.props.children[0],style=text.props.style[1];
+ assert.equal(style.fontSize,25);assert.equal(style.lineHeight,30);assert.equal(style.letterSpacing,-1);
+ const targetGraph=r.graphs.find(g=>g.__getValue().left===64&&g.__getValue().top===20);assert.equal(targetGraph.__getValue().opacity,1);
+ for(const g of r.graphs)g.__detach();
 });

@@ -102,3 +102,10 @@ Candidate `1.2.0-native.8` fixes the clipped balance gradient with measured nume
 The native dock now draws an actual circular SVG selector that springs between sections. User-driven content scrolling compacts the plate into a central add circle; it expands after the gesture/momentum ends and 280 ms idle. Modal/auth/horizontal/programmatic scrolls do not compact it. Reduced motion and screen readers keep the navigation available. Layout morphs remain JS-driven; the native selector uses a separate graph, as verified with the pinned Animated classes.
 
 Startup uses a direct vector for Android's required system icon and a 160 ms supported system-exit fade, skipped when system animations are disabled. The opening keeps its original timing/motion and measures its window origin; it no longer schedules React state/layout renders on every font-animation frame. The system splash is not disabled. No dependencies, app identity, website or backend changes.
+
+
+## Add sheets and native handoff — code 15
+
+Candidate `1.2.0-native.9` / code `15` replaces the overflowing add sheet with a measured, bounded, keyboard-aware scrolling panel with bottom safe-area padding. Quick add uses the current mobile website’s icons, descriptions and expense/task/poll/shopping/group actions; join/invite remain available. Expense entry shows the inferred category emoji, payer avatar and checked save action, without changing financial payloads.
+
+The opening keeps its assembly, hold and flight durations but uses fixed font metrics and native scale/translation/opacity throughout. A short final blend lands on the exact header metrics. Page and sheet entrances also use native compositor properties and respect reduced motion. No web/backend/identity/dependency changes. Upload the new bundle to the same Play test track and update without clearing app data.

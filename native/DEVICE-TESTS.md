@@ -73,3 +73,11 @@ Only after acceptance should the tested native release replace the published wra
 - Tap Home → Activity → Account quickly: the selection marker must be circular and move smoothly without a jump or crash. Test both 60/120 Hz hardware, rapid interrupted transitions and rotation. No fixed frame-rate loop was introduced.
 - Enable TalkBack/reduced motion: keep all navigation controls reachable and honor reduced-motion selection behavior.
 - Cold/warm startup on Android 12+: compare direct-vector system-icon sharpness and the system exit fade → original opening → header. The OS system splash remains mandatory. Check tap/Back skip, reduced motion, window insets, rotation, background/resume and a slow initial data load. Android 24–30 retain the ordinary launch background.
+
+
+## Code 15 — add sheets and entrances
+
+- Upgrade from code 14 without clearing data. On a small phone with three-button navigation and on gesture navigation, open + and scroll to the final join/invite actions; all actions must remain reachable above the system bar. Repeat with larger Android font/display scale and ES/EN/RO.
+- Open expense entry, focus amount/concept with the real IME, scroll to More options, category/date/photo/repetition and Save. Verify currency and emoji visibility; rotate with unsaved text and confirm it survives. Save one test expense and verify its payer, participants, amount, category and group on the website.
+- From + open task, poll, shopping and group creation; confirm correct destinations and Android Back/close dismissal, including the no-group state. Existing camera/receipt/permission tests still apply.
+- Cold/warm launch and rapid page switches on 60/120 Hz devices: check logo assembly/hold/flight, final header alignment, page entrance and dock behavior. Repeat with Reduce motion/system animations disabled and TalkBack. Browser fixtures and host-free graph checks cannot establish physical frame pacing or actual IME/system-inset behavior.

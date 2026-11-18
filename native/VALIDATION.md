@@ -1,52 +1,45 @@
-# Balance card, navigation motion and startup — 18 November 2026
+# Add sheets and native entrances — 18 November 2026
 
-Base: `031a72f` (main after PR 19). Candidate `1.2.0-native.8`, code `14`.
+Base: `2598429` (main after merged PR 20). Candidate `1.2.0-native.9`, code `15`.
 
-## Changes and file scope
+## Changes and every modified file
 
-- `src/ReferenceScreens.js`: the balance card uses measured numeric SVG dimensions, a purple fallback and minimum/content height. This addresses percentage backgrounds being sized against a padded native content box, leaving the right/bottom unpainted. Preserve the original palette/amount/footer layout. Wire tracked scrolling and localized two-person balance copy.
-- `src/balance-copy.mjs`: for exactly two members, name the actual counterparty in debit/credit badges. Keep settled and larger-group count summaries. No financial calculations/writes changed; names remain opaque values.
-- `src/localization.mjs`: ES/EN/RO two-person templates.
-- `src/Dock.js`: numeric SVG capsule-to-circle plate, explicit circular SVG add/selection shapes, native-driven spring selection, JS-driven collapse layout/fades in separate node graphs. Screen readers/reduced motion keep navigation expanded. Fast navigation cancels the old selection spring safely.
-- `src/dock-motion.mjs`: user drag/momentum/idle controller, programmatic scroll rejection, disposal of old-page events and route-family slot mapping. Compact while scrolling; restore 280 ms after the gesture/momentum ends. No hard-coded refresh-rate animation loop.
-- `src/DockScroll.js`: tracked native FlatList/ScrollView props forward original callbacks/ref and native scroll phases. No tracking outside the signed-in page provider or on horizontal scrolls.
-- `src/App.js`: wire the page-only provider/dock, preserve sheets/auth, remove old static dock styles, fix the padded welcome-button gradient with numeric bounds and align the boot background with the curtain edge.
-- `src/FeatureScreens.js`: tracked scroll imports for the existing page components; modal content remains outside the provider.
-- `src/Opening.js`: measure the overlay window origin; freeze initial word metrics during flight so font-layout events do not drive React state renders every frame. Interpolate the actual top-left handoff. Existing assembly/keyframes/hold/flight times, colors, font face, native/JS graph separation, reduced motion and skip behavior remain.
-- `android/app/src/main/res/drawable/ic_native_splash.xml`: direct vector preserving the existing brand paths/composition, without the adaptive background/transparent-foreground indirection. No bitmap was substituted.
-- `android/app/src/main/res/values-v31/styles.xml`: use the dedicated vector for Android's mandatory system splash.
-- `android/app/src/main/java/com/divzplit/app/MainActivity.kt`: supported Android 12+ exit listener fades the system splash out for 160 ms, then removes its view; disabled system animations remove it directly. No system-splash bypass or added hold.
-- `android/app/build.gradle`: launch background matches the opening curtain edge, #FAF8FD.
-- `native-config.json`, `package.json`, `package-lock.json`: .8/code 14; existing com.divzplit.app/signing identity and dependency set retained.
-- `tests/dock-motion.test.mjs`: scroll/momentum/idle/reset/disposal, route slots, two-person/zero/larger-group summaries, and opaque names across languages.
-- `tests/dock-native-driver.test.mjs`: actual component AnimatedProps graph isolation and collapsed SVG geometry, reduced-motion selector, plus tracked scroll callback/ref forwarding and modal/horizontal isolation.
-- `tests/opening-native-driver.test.mjs`: extend the shipped-crash regression with exact measured handoff landing and ignored per-frame layout events.
-- `tests/helpers/native-animated.cjs`: expose the pinned AnimatedProps class to the host-free integration checks.
-- README, DESIGN-REFERENCE, DEVICE-TESTS and this validation report: scope/evidence/physical acceptance.
+- `src/Sheet.js` (new): reusable modal with an explicit measured panel height, a finite scrolling viewport, top safe-area cap and bottom padding of 22 px plus the system inset. KeyboardAvoidingView shrinks available space; the header/close control stays outside the scrolling content. Transparent system-bar configuration is paired with real safe padding. Wait for content measurement before starting the native 280 ms slide/fade entrance. Respect reduced motion and Android Back.
+- `src/sheet-layout.mjs` (new): finite height calculation for content/header measurement, small screens, expanded options and keyboard-resized viewports.
+- `src/QuickAdd.js` (new): mobile-web action hierarchy/icons/descriptions for expense, task, poll, shopping and new group; current group context/selection; existing join/invite entry points remain. Group/title content is not translated as UI copy.
+- `src/ScreenEntrance.js` (new): 220 ms native opacity/translation entrance for keyed pages and modal steps; no per-frame React/layout/font work; reduced-motion branch.
+- `src/App.js`: replace the old unconstrained Sheet; connect quick actions and keyed page entrances; remove full-screen Android blur beneath modals, retaining the dimmed backdrop. Expense entry shows an inferred category emoji, payer avatar and save check. Amount input can shrink beside the currency without overflow. Existing financial save/read/validation/auth/receipt logic and payloads remain unchanged.
+- `src/icons.js`: existing web receipt, vote and share/link outline paths, without an icon dependency.
+- `src/Opening.js`: keep the original font/colors, assembly, hold and 1161 ms flight. Animate the flight with native translation/scale/opacity and fixed glyph metrics instead of JavaScript font-size/line-height/letter-spacing changes. Compensate for the scale origin; blend to an exact fixed header wordmark during the final 15% of that same flight to avoid a spacing snap. No added timer or per-frame layout state. Skip/reduced-motion behavior remains.
+- `native-config.json`, `package.json`, `package-lock.json`: version .9/code 15, no dependency changes.
+- `tests/opening-native-driver.test.mjs`: retain the earlier mixed-driver crash reproduction; exercise actual Opening with pinned React Native Animated graphs, fixed metrics, native-only flight, measured landing, exact header blend, skip and reduced motion.
+- `tests/sheet-layout.test.mjs` (new): bounded long forms across short/tall/keyboard-sized screens, safe-area caps and content/header changes.
+- `tests/sheet-native-driver.test.mjs` (new): actual Sheet/ScreenEntrance native graph checks, finite scrolling body, bottom inset, Android keyboard behavior, bar settings, Back dismissal and reduced motion.
+- `README.md`, `DESIGN-REFERENCE.md`, `DEVICE-TESTS.md` and this report: current behavior, reference and validation/device checklist.
 
-All changes are under native/. Website/legacy wrapper sources, shared domain/backend, previous REST/language fixes, credentials and production data are unchanged. No dependencies added.
+All modifications are under native/. No website, legacy wrapper, backend, database, signing identity, financial calculations or dependency set changes. No phone/emulator was attached.
 
 ## Passed checks
 
-- `npm test --prefix native`: 84 passing tests, including all prior startup, REST-query, localization, financial, account/session, receipt, collaboration, recovery and feature coverage.
-- Host-free tests use the pinned React Native Value/Style/Props/Animation implementations with platform/bridge and host/hook boundaries stubbed. They verify the native selector cannot promote the JS SVG/layout collapse graph to native, and retain the prior mixed-driver crash regression. They are not an Android renderer or performance measurement.
-- Development-only actual native JSX/browser fixtures in ES/EN/RO: named pair badge, full numeric card bounds at 320/393/430 px and with larger text, intermediate moving selector, explicit circle marker, intermediate/compact/expanded plate geometry, no uncaught JS errors or horizontal document overflow. Native scroll callbacks were invoked through a development-only harness; a real Android scroll gesture still needs testing. Browser shims were adjusted for the RN global alias and RN Web's hard-coded screen-reader flag; those shims/instrumentation are outside the repository and never ship in Android.
-- Final Metro/Hermes release, Java/Kotlin/C++ compilation, R8, AAB generation and lint pass. `lintRelease`: 0 errors, 21 warnings (the previous 19 plus two inherited splash resources now unused by the native build). Shared legacy resources were preserved; no suppression/baseline added.
-- Existing upload certificate comparison and jarsigner verification pass. Normal self-signed/no-timestamp upload-certificate notices remain.
-- Bundletool 1.18.3 validates the signed AAB. Manifest: com.divzplit.app, code 14, version 1.2.0-native.8, minimum API 24 / target API 36, native MainActivity launcher.
-- The dedicated splash vector is packaged. Existing Hermes bundle/fonts/assets/OCR models remain; all 13 ARM64 libraries retain at least 16 KB ELF LOAD alignment.
-- Git diff/whitespace checks pass.
+- `npm --prefix native test`: **89 passing tests**, including previous group-query, localization, native graph, finance/session, receipt and feature regressions.
+- Host-free tests use the pinned React Native Animated Value/Style/Props/Animation classes with host/bridge/hooks mocked. They validate graph/configuration behavior, not Android rendering/frame pacing.
+- Inspected and captured the actual current local mobile website with fictional fixtures for quick-add and expense entry. No production account or live data writes.
+- Development-only actual native JSX browser fixtures in ES/EN/RO, 320×568, 393×852 and 430×780: bounded quick-add and expense panels, action icon rows, reachable scroll bottoms and a keyboard-sized 360 px viewport. Fixture actions open task/poll/group/shopping destinations, expand expense options, show the inferred emoji, and send the existing amount/category/participant/group save payload through a fixture-only interception. The no-group menu works. These browser shims/dependencies remain outside the repository and Android artifact.
+- Final `native/scripts/build-android.py`: release lint and Metro/Hermes/Java/Kotlin/native/R8/AAB build pass. **0 lint errors, 21 warnings**, unchanged from code 14 (including two legacy splash resources unused by this native configuration).
+- Signed using the existing upload key; build script verifies its certificate against `android/upload-certificate.pem`. `jarsigner -verify` passes. No new key, package or app identity.
+- Bundletool 1.18.3 validation passes; manifest com.divzplit.app / code 15 / version 1.2.0-native.9 / MainActivity. Fonts and Hermes bundle present. All 13 ARM64 ELF shared libraries have LOAD alignment of at least 16 KB.
 
-Final signed artifact:
+## Signed artifact
 
-```
-divzplit-1.2.0-native.8.aab
-bytes: 34741944
-SHA-256: bc29c6e6c3dff16c474c4f9212337cb229f4898df328581d37b43f5c0a8bc59b
-```
+`native/android/app/build/outputs/review/divzplit-1.2.0-native.9.aab`
 
-## Device acceptance remains
+- Bytes: `34746425`
+- SHA-256: `804845d3ff8846ee23b7b7695d44e6665fec174c4e7d0b8015e014dd9d96f2a8`
 
-No Android phone/emulator is attached. Browser fixtures and graph tests do not establish physical icon rasterization, native scroll dispatch/feel, safe-area behavior, animation smoothness/frame pacing or 60/120 Hz performance. Update code 13 to 14 through the same Play test track without uninstalling or clearing data; compare the reported card, couple/group badges, scroll/selection transitions and cold/warm system-icon handoff using DEVICE-TESTS.md. Android's initial system splash remains mandatory and has not been hidden. All earlier real-device OAuth/FCM/camera/financial gates remain.
+Upload the new AAB to the existing Google Play test track and update the installed app without clearing data. Source merge alone cannot update native UI/animation code. No additional Firebase/Supabase/Play signing configuration is required.
 
-This source change does not merge, deploy the site or publish a Google Play release.
+## Required real Android checks
+
+Confirm actual keyboard/IME focus and scrolling, three-button/gesture navigation insets, small/rotated/large-text layouts, all quick actions and one test expense, cold/warm logo handoff, reduced motion/TalkBack and 60/120 Hz frame pacing. Physical smoothness and system behavior cannot be established by the browser fixtures or host-free tests. Existing Google sign-in, camera/OCR and FCM device checks remain applicable.
+
+No automatic source merge, website deployment or Google Play upload has been performed.
