@@ -9,7 +9,7 @@ const day=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth
 export class NativeController{
  constructor({cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools}){
   Object.assign(this,{cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools});this.listeners=new Set();this.handled=new Set();this.pendingNotice=null;this.receiptUploads=new Map();
-  this.state={ready:false,busy:false,user:null,...groupLoadState,groups:[],groupId:null,page:'home',error:'',notice:'',notices:[],history:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[],pushEnabled:false,pushReady:false,...structuredClone(featureState)};
+  this.state={ready:false,busy:false,user:null,...groupLoadState,groups:[],groupId:null,page:'home',error:'',notice:'',notices:[],history:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[],pushEnabled:false,pushReady:false,pushPermission:'default',...structuredClone(featureState)};
  }
  snapshot=()=>this.state;
  subscribe=listener=>{this.listeners.add(listener);return ()=>this.listeners.delete(listener);};
@@ -198,15 +198,33 @@ export class NativeController{
   const user=this.cloud.user;if(!user||this.cloud.recovering)return;
   const [status,state]=await Promise.all([this.cloud.rpc('divzplit_native_push_status',{}).catch(()=>({enabled:false})),this.native.pushState()]);
   if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
-  this.update({pushReady:status.enabled===true,pushEnabled:false});
+  this.update({pushReady:status.enabled===true,pushEnabled:false,pushPermission:state.permission});
   if(state.userId&&state.userId!==user.id){await this.native.pushClear();return;}
   if(status.enabled&&state.enabled&&state.permission==='granted'){
    const token=await this.native.pushToken();await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});
    if(this.cloud.user?.id===user.id){await this.native.pushBind(user.id);this.update({pushEnabled:true});}
   }
  }
- async enablePush(){return this.run(async()=>{const user=this.cloud.user?.id;if(!this.state.pushReady)return;if(await this.native.pushPermission()!=='granted')return;const token=await this.native.pushToken();await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});if(this.cloud.user?.id!==user){await this.native.pushClear();return;}await this.native.pushBind(user);this.update({pushEnabled:true});});}
- async disablePush(){const state=await this.native.pushState();await this.native.pushClear();if(state.token)await this.cloud.rpc('divzplit_remove_native_push',{p_token:state.token}).catch(()=>{});this.update({pushEnabled:false});}
+ async shouldOfferPush(){
+  const actor=this.cloud.user?.id,seen=()=>this.platform.storage.getItem('native-push-offer-seen')==='1';
+  if(!actor||this.cloud.recovering||this.state.user?.id!==actor||!this.state.ready||!this.state.pushReady||this.state.pushEnabled||seen())return false;
+  const push=await this.native.pushState();
+  return this.cloud.user?.id===actor&&!this.cloud.recovering&&this.state.user?.id===actor&&this.state.pushReady&&!this.state.pushEnabled&&!seen()&&!push.enabled&&['default','granted'].includes(push.permission);
+ }
+ markPushOfferSeen(){this.platform.storage.setItem('native-push-offer-seen','1');this.platform.flush().catch(()=>{});}
+ async enablePush(){return this.run(async()=>{
+  const actor=this.cloud.user?.id,current=()=>!!actor&&this.cloud.user?.id===actor&&this.state.user?.id===actor&&!this.cloud.recovering;
+  if(!current()||!this.state.pushReady)return false;
+  this.markPushOfferSeen();
+  const permission=await this.native.pushPermission();if(!current())return false;
+  this.update({pushPermission:permission});if(permission!=='granted')return false;
+  const token=await this.native.pushToken();if(!current()){await this.native.pushClear();return false;}
+  await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});
+  if(!current()){await this.native.pushClear();return false;}
+  await this.native.pushBind(actor);if(!current()){await this.native.pushClear();return false;}
+  this.update({pushEnabled:true});return true;
+ });}
+ async disablePush(){this.markPushOfferSeen();const state=await this.native.pushState();await this.native.pushClear();if(state.token)await this.cloud.rpc('divzplit_remove_native_push',{p_token:state.token}).catch(()=>{});this.update({pushEnabled:false});}
  async logout(){return this.run(async()=>{await this.disablePush();await this.cloud.signOut();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[]});});}
  language(value){this.i18n.setLanguage(value);this.update({});return this.platform.flush();}
  async export(){return this.run(async()=>{const data=await this.cloud.personalExport();await this.native.exportJSON(JSON.stringify(data,null,2),'divzplit-cuenta.json');});}
