@@ -9,6 +9,7 @@ import {createRuntime} from './runtime';
 import {Icon} from './icons';
 import Opening from './Opening';
 import Sheet from './Sheet';
+import {navigationDirection} from './dock-motion.mjs';
 import ScreenEntrance from './ScreenEntrance';
 import QuickAdd from './QuickAdd';
 import {canManage} from './collaboration.mjs';
@@ -28,7 +29,7 @@ function Empty({title,description,action}){return <View style={s.empty}><Label s
 function Brand({hidden=false,onMeasure,size=25,spacing=-1}){const ref=useRef(),style=[s.brand,{fontSize:size,lineHeight:size*1.2,letterSpacing:spacing}];return <View ref={ref} onLayout={()=>ref.current?.measureInWindow((x,y,width,height)=>onMeasure?.({x,y,width,height,fontSize:size,letterSpacing:spacing}))} style={{opacity:hidden?0:1,flexDirection:'row'}}><Text style={style}>Div</Text><Text style={[style,{color:colors.purple}]}>Z</Text><Text style={style}>plit<Text style={{color:colors.purple}}>.</Text></Text></View>;}
 export default function App(){
  const [controller,setController]=useState(null),[error,setError]=useState(''),[reduced,setReduced]=useState(null);
- useEffect(()=>{let mounted=true;Promise.all([createRuntime(),AccessibilityInfo.isReduceMotionEnabled()]).then(([runtime,motion])=>{if(mounted){setController(runtime);setReduced(motion);}}).catch(e=>setError(e.message));return()=>{mounted=false;};},[]);
+ useEffect(()=>{let mounted=true;Promise.all([createRuntime(),AccessibilityInfo.isReduceMotionEnabled()]).then(([runtime,motion])=>{if(mounted){setController(runtime);setReduced(motion);}}).catch(e=>setError(e.message));const motion=AccessibilityInfo.addEventListener('reduceMotionChanged',value=>{if(mounted)setReduced(value);});return()=>{mounted=false;motion.remove();};},[]);
  return <SafeAreaProvider><StatusBar barStyle="dark-content" backgroundColor={controller?colors.background:referenceIntro.curtain[2]}/>{controller?<Application controller={controller} reduced={reduced}/>:<SafeAreaView style={[s.root,{backgroundColor:referenceIntro.curtain[2]}]}>{!!error&&<Empty title="DivZplit" description={error}/>}</SafeAreaView>}</SafeAreaProvider>;
 }
 function Application({controller:c,reduced}){
@@ -38,17 +39,19 @@ function Application({controller:c,reduced}){
  useEffect(()=>{const back=BackHandler.addEventListener('hardwareBackPress',()=>{if(intro){finishIntro();return true;}if(sheet){if(!state.busy)setSheet(null);return true;}if(state.page!=='home'){c.navigate('home');return true;}return false;});return()=>back.remove();},[intro,sheet,state.page,state.busy]);
  useEffect(()=>{const timer=setInterval(()=>{if(AppState.currentState!=='active'||!c.cloud.user||c.cloud.recovering||c.state.busy||sheet)return;call(async()=>{await c.refresh();if(c.state.page==='shopping')await c.shopping();if(['activity','settlements'].includes(c.state.page))await c.activity();if(c.state.page==='notifications')await c.inbox();});},30000);return()=>clearInterval(timer);},[c,sheet]);
  useEffect(()=>{if(sheet&&(!state.user||sheet.groupId&&!state.groups.some(g=>g.id===sheet.groupId)))setSheet(null);},[state.user,state.groups,sheet]);
+ const previousPage=useRef(state.page),entryDirection=navigationDirection(previousPage.current,state.page);
+ useEffect(()=>{previousPage.current=state.page;},[state.page]);
  const dock=useDockMotion({enabled:!!state.user&&state.ready&&!intro&&!sheet,reduced,page:state.page});
  const g=c.group,money=(amount)=>c.model.money(amount,g?.currency||'EUR');
  const openExpense=id=>{if(!g){setSheet({kind:'group'});return;}setSheet({kind:id?'expenseDetail':'expense',groupId:g.id,expense:g.expenses.find(e=>e.id===id)||null});};
  const navigate=page=>{if(page==='settlements'&&g){setSheet({kind:'settlements',groupId:g.id});call(()=>c.activity());}else call(()=>c.navigate(page));};
  return <View style={s.root}><SafeAreaView style={s.root} edges={['top']}>
-  {state.user&&<View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel={t(state.page==='home'?'Abrir menú':'Inicio')} onPress={()=>state.page==='home'?setSheet({kind:'menu'}):navigate('home')} style={{width:29,minHeight:44,justifyContent:'center'}}><Icon name={state.page==='home'?'menu':'back'} size={21} color={state.page==='home'?'transparent':'#9880AF'}/></Pressable><Brand hidden={intro} onMeasure={setAnchor}/><View style={{flex:1}}/><Pressable accessibilityRole="button" accessibilityLabel={t('Notificaciones')} hitSlop={14} onPress={()=>navigate('notifications')}><Icon name="bell" size={24} color={colors.ink}/>{state.unread>0&&<View style={s.notificationDot}/>}</Pressable></View>}
+  {state.user&&<View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel={t(state.page==='home'?'Abrir menú':'Inicio')} onPress={()=>state.page==='home'?setSheet({kind:'menu'}):navigate('home')} style={{width:32,minHeight:44,justifyContent:'center'}}><Icon name={['home','groups','activity','profile'].includes(state.page)?'menu':'back'} size={21} color={['home','groups','activity','profile'].includes(state.page)?'transparent':'#9880AF'}/></Pressable><Brand hidden={intro} onMeasure={setAnchor}/><View style={{flex:1}}/><Pressable accessibilityRole="button" accessibilityLabel={t('Notificaciones')} hitSlop={14} onPress={()=>navigate('notifications')}><Icon name="bell" size={24} color={colors.ink}/>{state.unread>0&&<View style={s.notificationDot}/>}</Pressable></View>}
 
   {!!state.error&&state.user&&c.t(state.error)!==c.t(state.groupsError)&&<Pressable onPress={()=>c.update({error:''})} style={s.error}><Label accessibilityRole="alert" accessibilityLiveRegion="polite" style={{color:'#8B2236'}}>{c.t(state.error)}</Label></Pressable>}
   {!!state.notice&&state.user&&<Pressable onPress={()=>c.update({notice:''})} style={s.notice}><Label accessibilityLiveRegion="polite">{c.t(state.notice)}</Label></Pressable>}
   {!!g&&!!(state.groupsError||state.groupSyncWarning)&&<View style={s.notice}><Label style={s.small}>{c.t(state.groupsError||state.groupSyncWarning)}</Label><View style={{flexDirection:'row',gap:16,marginTop:6}}><Pressable accessibilityRole="button" onPress={()=>call(()=>c.refresh())}><Label style={{fontSize:11,color:colors.purple}}>{t('Reintentar')}</Label></Pressable>{state.groupDiagnostic&&<Pressable accessibilityRole="button" onPress={()=>call(()=>c.copyGroupDiagnostic())}><Label style={{fontSize:11,color:colors.purple}}>{t('Copiar diagnóstico')}</Label></Pressable>}</View></View>}
-  {!state.ready?<View style={{flex:1}}/>:!state.user?<Auth key={state.recovering?'recovery':'auth'} c={c} intro={intro} onMeasure={setAnchor}/>:<DockScrollContext.Provider value={dock.events}><ScreenEntrance key={state.page} reduced={reduced||intro} style={{flex:1}}>
+  {!state.ready?<View style={{flex:1}}/>:!state.user?<Auth key={state.recovering?'recovery':'auth'} c={c} intro={intro} onMeasure={setAnchor}/>:<DockScrollContext.Provider value={dock.events}><ScreenEntrance key={state.page} direction={entryDirection} reduced={reduced||intro} style={{flex:1}}>
    {!g&&['home','groups'].includes(state.page)&&(!state.groupsLoaded||state.groupsLoading||state.groupsError)?<GroupLoadState c={c}/>:state.page==='home'?<ReferenceHome c={c} ui={sharedUI} onExpense={openExpense} onChoose={()=>setSheet({kind:'chooseGroup'})} onNavigate={navigate}/>
    :state.page==='groups'?<ReferenceGroups c={c} ui={sharedUI} onCreate={()=>setSheet({kind:'group'})} onJoin={()=>setSheet({kind:'join'})} onSettings={id=>{c.select(id);navigate('groupSettings');}}/>
    :state.page==='profile'?<ReferenceProfile c={c} ui={sharedUI} onLanguage={()=>setSheet({kind:'language'})} onNotifications={()=>{setSheet({kind:'deviceNotifications'});call(()=>c.notificationPreferences());}} onHelp={()=>setSheet({kind:'help'})} onDelete={()=>setSheet({kind:'delete'})}/>
@@ -61,7 +64,7 @@ function Application({controller:c,reduced}){
    :['tasks','polls'].includes(state.page)?<PlanningPage c={c} kind={state.page} onEdit={item=>setSheet({kind:state.page,item,groupId:g.id})}/>
    :null}
   </ScreenEntrance></DockScrollContext.Provider>}
-  {state.user&&<Dock c={c} ui={sharedUI} page={state.page} bottom={insets.bottom+12} motion={dock} reduced={reduced} onNavigate={navigate} onAdd={()=>setSheet({kind:'add'})}/>}
+  {state.user&&<Dock c={c} ui={sharedUI} page={state.page} bottom={insets.bottom+26} motion={dock} reduced={reduced} onNavigate={navigate} onAdd={()=>setSheet({kind:'add'})}/>}
 
   {state.busy&&!intro&&<View pointerEvents="none" style={s.busy}><ActivityIndicator color={colors.purple}/></View>}
  </SafeAreaView>

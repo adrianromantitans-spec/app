@@ -18,7 +18,7 @@ function renderDock(reduced){
 test('actual dock selector native animation cannot promote layout/fade/SVG collapse nodes to native',()=>{
  const result=renderDock(false);assert.equal(result.animations.length,1);assert.equal(result.collapse.__isNative,false);
  assert.doesNotThrow(()=>new Animation({useNativeDriver:false}).start(0,noop,noop,null,result.collapse));result.collapse.setValue(1);
- const plate=result.graphs.find(({node})=>node.type==='Animated.Rect').graph.__getValue();assert.equal(plate.width,62);assert.equal(plate.height,62);assert.equal(plate.rx,31);assert.equal(plate.x+plate.width/2,357/2);
+ const plate=result.graphs.find(({node})=>node.type==='Animated.Rect').graph.__getValue();assert.equal(plate.width,66);assert.equal(plate.height,58);assert.equal(plate.rx,29);assert.equal(plate.x+plate.width/2,357/2);
  for(const {graph} of result.graphs)graph.__detach();
 });
 test('dock reduced motion positions the selector without starting a native spring',()=>{const result=renderDock(true);assert.equal(result.animations.length,0);assert.equal(result.collapse.__isNative,false);for(const {graph} of result.graphs)graph.__detach();});

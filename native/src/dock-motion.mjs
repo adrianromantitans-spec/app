@@ -15,4 +15,8 @@ export function createDockScroll({onCompact,schedule=setTimeout,cancel=clearTime
  };
 }
 export function dockIndex(page){return page==='groups'||page==='groupSettings'?1:page==='activity'?3:page==='profile'||page==='notifications'?4:0;}
-export function dockSlotLeft(width,index){return 6+(width-12)/5*(index+.5)-20;}
+export function dockSlotLeft(width,index){return 5+(width-10)/5*(index+.5)-20;}
+export function navigationDirection(previous,next){
+ const routes=['home','groups','activity','profile'],from=routes.indexOf(previous),to=routes.indexOf(next);
+ return from<0||to<0||from===to?0:Math.sign(to-from);
+}
