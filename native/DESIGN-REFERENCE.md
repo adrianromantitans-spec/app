@@ -39,3 +39,12 @@ The balance gradient is sized from the actual card border box, with a purple fal
 The dock's visible plate is a numeric SVG capsule (72 px expanded height) that morphs into a 64 px circle. The 52 px add control and 40 px selection marker are SVG circles. Selection uses a native-driven spring; layout/opacity morphs use a separate JS graph. Scroll phases are provided only around signed-in page content. The 280 ms idle return follows the website's behavior without a custom frame-rate loop. Screen-reader/reduced-motion navigation stays expanded.
 
 A direct native vector and a supported Android 12+ exit fade improve the system handoff; mandatory system behavior remains. The custom opening assembly/hold/flight durations and branding are unchanged. Font layout is measured before flight, and the measured window origin is subtracted at the header handoff, avoiding per-frame React size updates.
+
+
+## Sheet and entrance correction — code 15
+
+Reference inspected: current `app.js` quickAddModal/expenseModal, `glass.css` quick-action styles and `liquid.css` mobile refinements, plus actual local mobile-web screenshots with fictional fixtures. The native add sheet now shares the icon/copy hierarchy and primary purple expense action. Task, poll, shopping and group actions are present, with existing native join/invite preserved. Expense entry includes the category emoji, payer avatar and save check.
+
+The modal uses an explicit measured height capped below the top safe area, a finite scrolling body and bottom padding of 22 px plus the navigation inset. The keyboard reduces the available viewport; the header/close control remains outside the scrolling body. There is no fixed content-height assumption or hidden final action. Native fade/translation sheet and page entrances avoid font/layout animation. The main app is dimmed beneath sheets, without Android’s expensive full-surface blur filter.
+
+The original custom logo assembly, palette, hold and 1161 ms flight remain. Fixed-size glyphs now move/scale/fade entirely through the native driver. A final 15%-of-flight blend into an exact fixed header wordmark avoids the spacing snap at handoff. No per-frame font size, line height, letter-spacing or React state changes.
