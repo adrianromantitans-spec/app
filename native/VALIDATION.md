@@ -1,29 +1,39 @@
-# Design restoration candidate — 18 November 2026
+# Startup hotfix — 18 November 2026
 
-Base: `d8d72ac8b337c36e340c6eab26f2cc860312ecaa` (main after PR 14). Scope and file-by-file changes: [DESIGN-REFERENCE.md](DESIGN-REFERENCE.md).
+Base: `903b29f` (main after PR 17). Candidate `1.2.0-native.6`, Android version code `12`.
 
-## Passed automatically
+## Reproduced defect and correction
 
-- Full existing repository `npm run check` and `npm test`.
-- `npm test --prefix native`: 56 passing tests. The existing 54 tests cover shared Cloud/model transport, financial concurrency/idempotence, permissions, account/group isolation, receipts, collaboration/checkout, groups, FX, history/inbox, preferences and recovery. Two new tests compare native opening timings/keyframes with the actual original website sources and validate static Manrope font tables.
-- Development-only browser rendering of the native JSX with fictional local fixtures: home, plans, activity, account, tasks, polls, shopping, expenses and settlements at 320/393/430 px, without horizontal document overflow or uncaught rendering errors. Additional ES/EN/RO checks cover navigation, notifications, group details, expense detail/edit, and help; welcome/email login displays the Google mark. This is a composition/JavaScript check, not an Android runtime test. Preview tooling/dependencies are outside the repository and are not bundled in Android.
-- Final Metro production bundle, Hermes compilation, Java/Kotlin/C++ release compilation, R8 and ARM64/ARMv7 AAB generation.
-- Android `lintRelease`: 0 errors, 19 warnings. These concern the pinned Gradle version, inherited resources and framework ExifInterface; no lint baseline or suppression added.
-- Build-time upload certificate comparison against `android/upload-certificate.pem`; `jarsigner -verify` passes with the existing key. The normal self-signed chain/no-timestamp notices remain.
-- Bundletool 1.18.3 `validate` passes on the final signed AAB. Dumped manifest: package `com.divzplit.app`, code `11`, name `1.2.0-native.5`, minimum API 24 / target API 36, native `MainActivity` launcher.
-- The bundle contains the offline Hermes application, all five Manrope faces/OFL license, existing website photos/welcome screenshots and bundled Latin-script OCR models. All 13 ARM64 shared libraries have ELF LOAD alignment of at least 16 KB.
-- Git scope: only `native/` sources, assets, version metadata, tests and documentation changed. Website animation/UI, Supabase integration/backend, legacy wrapper and signing identity remain unchanged. No private signing key or Firebase service-account key is committed.
-
-Final signed review artifact:
+The owner reported that code 11 closes after the opening animation. In that version, native-driven letter opacity/transforms and JavaScript-driven `fontSize`, `lineHeight` and `letterSpacing` shared the same Animated.Text style graph. Starting the assembly promotes that graph (including the flight value) to native. Starting the JavaScript font handoff then throws React Native's exception:
 
 ```
-divzplit-1.2.0-native.5.aab
-bytes: 34728646
-SHA-256: f561c660f00c33988373d616f8476b08142ba22c8ad8ddb10c89efd8fd0f5bdd
+Attempting to run JS driven animation on animated node that has been moved to "native" earlier by starting an animation with `useNativeDriver: true`
 ```
 
-## Physical validation remains
+This was reproduced with the project's pinned React Native Animated classes. The new component regression test fails with that exception when run against the shipped Opening.js and passes against the correction. No physical-device crash log was available, so this establishes a reproducible startup defect consistent with the report, not a claim that every device failure has been ruled out.
 
-No Android phone or emulator is connected. The build and browser preview do not establish Android visual/animation parity, font rasterization, keyboard/safe areas, selector behavior, 60/120 Hz performance, successful real OAuth callbacks, camera/OCR or FCM delivery. Follow [DEVICE-TESTS.md](DEVICE-TESTS.md), including the new design-restoration section, after installing through the existing Google Play test track. The original web animation sources and their durations are preserved; the separate native port still needs side-by-side acceptance on Android.
+`src/Opening.js` now puts native opacity/transforms on three wrapper views and JavaScript font metrics on their nested text views. Native and JavaScript drivers no longer share a style graph. The nested static period uses ordinary Text. Original colors, typeface, transforms, assembly/keyframe durations, hold, handoff, reduced-motion and tap-to-skip behavior are retained. Website sources and app/domain/auth/backend code are unchanged.
 
-This change does not merge itself, deploy the website or upload/publish a Google Play release. The AAB is a signed test candidate, not a claim of production readiness. No new Google Play signing, Firebase or Supabase configuration is required for this visual update.
+## Passed checks
+
+- `npm test --prefix native`: 59 passing tests. Existing financial/account/receipt/collaboration/feature coverage is retained. Three new tests reproduce the former exception, exercise the actual corrected component's style graphs through assembly and successful handoff, and check reduced-motion behavior; the component test also exercises skip. Existing design tests still compare timings/keyframe stops with the original web sources.
+- The new host-free harness transpiles the pinned React Native Value, Style and Animation implementations with the existing Babel dependency. Only Android bridge/platform boundaries, default feature flags, React hooks and host views are stubbed. It is not a browser Animated substitute, and it is not an Android renderer/device test. No dependencies added.
+- Final Metro/Hermes release bundle, Java/Kotlin/C++ release compilation, R8, AAB generation and `lintRelease`: 0 errors, 19 existing warnings. No new lint baseline or suppression.
+- Existing upload certificate comparison and `jarsigner -verify` pass. Self-signed/no-timestamp notices are expected for the existing Android upload certificate.
+- Bundletool 1.18.3 validates the signed artifact. Manifest: package `com.divzplit.app`, code `12`, version `1.2.0-native.6`, minimum API 24 / target API 36, native MainActivity launcher.
+- Offline Hermes bundle and existing assets/fonts are present. All 13 ARM64 shared libraries retain at least 16 KB ELF LOAD alignment.
+- Git diff/whitespace checks pass; source changes are confined to native startup, version metadata, tests and documentation. No website, Firebase/Supabase configuration, signing key or user data changes.
+
+Final signed artifact:
+
+```
+divzplit-1.2.0-native.6.aab
+bytes: 34728762
+SHA-256: 101280c28e4254a412d60a3ae0a587a076eab81da0a46fcaaea08e48e05f9a50
+```
+
+## Physical acceptance and delivery
+
+No Android phone/emulator is attached. Update from code 11 through the same Play test track with the existing signing identity; there is no need to uninstall or clear app data. Follow the code 12 section in [DEVICE-TESTS.md](DEVICE-TESTS.md): cold/warm launch, signed-in and signed-out handoff, skipping, reduced motion and background/resume, then verify the home page stays usable. If another close occurs, collect the device's fatal exception with Logcat or Android vitals.
+
+The visual reference remains documented in [DESIGN-REFERENCE.md](DESIGN-REFERENCE.md). All broader real-device feature/auth/camera/FCM/performance gates remain. This change does not itself merge, deploy or publish a Play release.
