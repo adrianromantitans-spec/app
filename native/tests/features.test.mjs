@@ -126,3 +126,19 @@ test('session loss clears account-specific groups, history and notices',async()=
 test('an in-flight group refresh cannot expose a same-account recovery session',async()=>{
  const f=fixture();let finish;f.cloud.listGroups=()=>new Promise(resolve=>finish=resolve);const pending=f.c.refresh();f.cloud.recovering=true;f.c.update({user:null,groups:[],groupId:null,recovering:true});finish([f.g]);await pending;assert.deepEqual(f.c.state.groups,[]);assert.equal(f.c.state.user,null);
 });
+
+test('invite generation is explicit, owner-only and returns the canonical link without copying',async()=>{
+ const {c,cloud,g}=fixture();let calls=0,copied=0;c.native.copy=async()=>copied++;cloud.invite=async id=>{assert.equal(id,g.id);calls++;return {token:'a'.repeat(64),expires_at:'2099-01-01T00:00:00Z'};};
+ g.remote.ownerId='someone-else';await assert.rejects(c.createInvite(g.id),/creó el grupo/);assert.equal(calls,0);
+ g.remote.ownerId='owner';const result=await c.createInvite(g.id);assert.deepEqual(result,{groupId:g.id,url:'https://divzplit.com/app/#invite='+'a'.repeat(64),expiresAt:'2099-01-01T00:00:00Z'});assert.equal(calls,1);assert.equal(copied,0);
+});
+test('malformed or expired invitation replies are rejected before exposing a link',async()=>{
+ const {c,cloud,g}=fixture();for(const result of [{token:'bad',expires_at:'2099-01-01T00:00:00Z'},{token:'a'.repeat(64),expires_at:'2000-01-01T00:00:00Z'}]){cloud.invite=async()=>result;await assert.rejects(c.createInvite(g.id),/crear el enlace/);assert.equal(c.state.busy,false);assert.equal(c.group.id,g.id);}
+});
+test('late invite replies cannot leak a previous account or group invitation',async()=>{
+ for(const change of ['account','group']){const {c,cloud,g}=fixture();let resolve;cloud.invite=()=>new Promise(r=>resolve=r);const pending=c.createInvite(g.id);
+  if(change==='account')cloud.user={id:'other'};else{const next={...structuredClone(g),id:'new-group'};c.update({groups:[g,next],groupId:next.id});}
+  resolve({token:'a'.repeat(64),expires_at:'2099-01-01T00:00:00Z'});await assert.rejects(pending,/ha cambiado/);assert.equal(c.state.busy,false);
+  if(change==='account')assert.deepEqual(c.state.groups,[]);else assert.equal(c.group.id,'new-group');
+ }
+});

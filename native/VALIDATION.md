@@ -1,44 +1,47 @@
-# Stable access screen, Google consent and opaque dock — 18 November 2026
+# Group selector/invitations and FX view — 18 November 2026
 
-Base: `c273091` (main after PR 22). Candidate `1.2.0-native.11`, Android code `17`.
+Base: `63fd3f9` (main after PR 23). Candidate `1.2.0-native.12`, Android code `18`.
 
-## Root causes and every modified file
+## Every modified file
 
-- `src/App.js`: Auth rendered the Google/Apple consent Sheet with `reduced={reduced}`, but `reduced` was absent from Auth's scope/props. Clicking the provider icon therefore raised `ReferenceError: reduced is not defined` before OAuth began. Pass the actual preference into Auth and its Sheet. Preserve age/legal consent, provider selection and OAuth/PKCE behavior.
-- `src/App.js`: guest welcome/login now uses a static wordmark instead of the custom opening flight. Resolve startup session readiness before mounting a signed-in opening/header/dock; mark the guest intro complete so later login/logout cannot replay it. Reveal guest welcome content only after the actual viewport measurement, avoiding a visible correction from estimated full-window height to safe-area height. Retain the custom opening for restored signed-in sessions, original timings and Android's mandatory system splash.
-- `src/Dock.js`: full-opacity gradient stops/stroke for the dock plate, full-opacity purple add gradient and solid selection color. Existing collapse/selection springs, geometry, idle and accessibility behavior stay unchanged. This overrides code 16 translucency at the owner's explicit request.
-- `src/design.mjs`: solid lavender selection reference color.
-- `src/Opening.js`: nonvisual test identifier for distinguishing the signed-in opening from guest entry; no keyframe/flight changes.
-- `tests/auth-entry.test.mjs` (new): compile the actual App component with host/hook/platform boundaries mocked. Reproduce the missing-prop ReferenceError, render welcome/login Google/Apple consent in both motion modes, assert guest entry is static, signed-in opening waits for readiness, and welcome wordmark waits for measured layout.
-- `tests/dock-native-driver.test.mjs`: inspect the actual Dock tree for opaque gradient stops/solid selection while retaining pinned Animated graph/motion regression coverage.
-- `native-config.json`, `package.json`, `package-lock.json`: .11/code 17; no dependency changes.
-- `README.md`, `DESIGN-REFERENCE.md`, `DEVICE-TESTS.md` and this report: scope and verification/device checklist.
+- `src/GroupSheets.js` (new): group photos, type/member detail, selection and owner-only Details/Invite footer. Invitation explanation, explicit generation, separate result title, selectable URL, expiry/use notices, Copy/WhatsApp/Close and existing revocation confirmation. No invite is created merely by opening a panel; copy/share reuse the same generated result. Current group/account/owner gates remain active while sharing.
+- `src/invitation-view.mjs` (new): validate the existing server token/expiry result and build the canonical divzplit.com/app/#invite URL; localize the share template with opaque user names/tokens.
+- `src/session.mjs`: explicit owner-only createInvite uses the existing nexo_create_invite RPC, checks account/group/owner before returning a late result and never copies automatically. Retain the prior invite API as a guarded compatibility wrapper. No backend policy change.
+- `android/app/src/main/java/com/divzplit/app/DivZplitModule.java`: user-triggered shareWhatsApp text/plain Intent, regular WhatsApp then Business, with a fixed HTTPS wa.me Custom Tabs fallback. Opens recipient/compose; never chooses a recipient or sends automatically. Existing OAuth external method is untouched; no SDK/permission changes.
+- `src/App.js`: picker/Invite result steps, current-group editor action, same invitation panel from quick add/group settings; reference settlement title and reset to original currency on opening. Stale opening requests cannot switch to another group.
+- `src/QuickAdd.js`: owner-only invitation entry routes to the shared panel, not immediate generation/copy.
+- `src/FeatureScreens.js`: group settings use that same invitation entry. Settlement summary/toggle/pending status, white transfer cards, converted and original values, disclosure and currency panel follow the reference. Continue using existing settlementData/paymentQuote/onPayment guards; handle a removed group safely.
+- `src/CurrencyPanel.js` (new): original-currency reset, localized target ISO/name options excluding base, loading/error/retry/refresh, source/date/rate detail and reference disclaimer. Keep newer quote selections when older reads fail. No monetary arithmetic/writes here.
+- `src/fx-view.mjs` (new): presentation-only valid cross-rate (1 target = rate base), quote dates/source and localized currency names. Monetary conversion remains in the existing integer routines.
+- `src/localization.mjs`: ES/EN/RO invitation template, original-currency label and new error copy; user values remain opaque.
+- `tests/features.test.mjs`: explicit invite generation, owner guard, malformed/expired result rejection, no implicit copy and late account/group rejection.
+- `tests/group-fx-view.test.mjs` (new): opaque/localized WhatsApp message, canonical link, cross-rate direction/date/mixed sources, unchanged monetary units and hidden invalid/pending/expired/foreign-group metadata.
+- `native-config.json`, `package.json`, `package-lock.json`: .12/code 18; unchanged dependency set and identity.
+- README, DESIGN-REFERENCE, DEVICE-TESTS and this report: reference/evidence/physical checklist.
 
-Only native/ changes. No website, backend, database, expense calculations, notification, OAuth endpoint/security, Android secure-browser, package or signing identity changes. No new dependencies.
+Only native/ changes. No website/database/schema/configuration changes, new dependencies or new Android permissions. Expense/balance arithmetic, quote validation and payment confirmation code remain unchanged.
 
-## Checks completed
+## Completed checks
 
-- **100 native tests pass**, including prior group/query/localization, financial/session, OAuth callback/PKCE, receipt and feature regressions. Host-free component/graph tests are not an Android renderer.
-- Reproduced the original provider-icon crash in development browser fixtures using the previous main App source: `reduced is not defined`. The fixture build remains outside the repository and Android artifact.
-- Actual corrected native JSX/browser fixture: welcome and login Google icon opens consent, Continue stays disabled until both acknowledgements are selected, then dispatches the unchanged provider/consent payload via a fixture-only controller interception. Both normal and reduced-motion modes pass without page errors. This does not perform a live Google account login.
-- Guest brand stays at the same measured bounding box across startup samples; no custom opening overlay is mounted. Restored signed-in fixture still runs and completes the custom Z/opening.
-- Actual dock screenshots with a red then blue test surface placed behind it: five interior samples have identical pixels, proving the interior opacity in this renderer. Native tree tests assert all plate/add stops have opacity 1 and no alpha selection fill.
-- ES/EN/RO card/dock-motion regressions pass: measured gradient bounds/large text, intermediate circular selector and compact/expanded geometry. Quick-action/expanded expense/save-payload/no-group fixture checks pass. No production writes.
-- Final source-frozen `native/scripts/build-android.py` release build and signing pass. Native src aggregate SHA-256: `4f92dc76bfc26ad92462feaa1e2dd4dc092820d105789ae8b1df36b000d9bb70`.
-- Lint: **0 errors, 21 unchanged warnings**. Upload certificate checked against `android/upload-certificate.pem`; jarsigner verification passes.
-- Bundletool 1.18.3 validates the final AAB; manifest com.divzplit.app / code 17 / 1.2.0-native.11 / MainActivity. Hermes bundle/fonts present. All 13 ARM64 ELF libraries have LOAD alignment at least 16 KB.
+- **106 native tests pass**, including all prior financial/session, FX expiry/replaced quote, pending reservation, group-loading, receipt, auth-crash and UI-motion regressions.
+- Current-main original mobile-web picker, invite/result/WhatsApp and FX views captured locally with matching fictional Casa/RON data. Compare to actual native JSX browser fixtures; this is not a physical iPhone/Android screenshot comparison.
+- ES/EN/RO actual JSX fixtures pass: picker -> explicit Invite -> one generation -> Copy and WhatsApp reuse the exact URL; generation does not occur on open. Currency selection displays 1 USD = 4 RON for the supplied test rates, converted plus original values, and original-currency reset. Balances are identical before/after conversion. Picker excludes the original currency. Fixture callbacks intercept all invitation, copy, share and quote operations; no live invitations/messages/payments are sent.
+- Edge fixtures pass: member cannot see Invite; small/keyboard-sized generated sheet stays bounded; secure WhatsApp URL fallback; FX failure disables payment, retry restores detail, stale previous-currency failure does not overwrite current results; removing the active group closes conversion without an error.
+- Final source-frozen release build, Android Java bridge compilation, lint and signing pass. Native src + Java aggregate SHA-256: `9be1e63fc33022098ddc8ccefbfea92a7e288aca839d5461485b1e3896586d5a`.
+- Lint: **0 errors, 21 unchanged warnings**. Original upload certificate verified against android/upload-certificate.pem; jarsigner verification passes. Existing com.divzplit.app preserved.
+- Bundletool 1.18.3 validation passes; manifest code 18/name 1.2.0-native.12/MainActivity, Hermes/fonts and all 13 ARM64 ELF libraries' LOAD alignment at least 16 KB confirmed.
 
-## Signed artifact
+## Signed AAB
 
-`native/android/app/build/outputs/review/divzplit-1.2.0-native.11.aab`
+`native/android/app/build/outputs/review/divzplit-1.2.0-native.12.aab`
 
-- Bytes: `34748136`
-- SHA-256: `693657b895e8c68db13b4ba40966e3072d85fc3950253462e744cb68cb52fa03`
+- Bytes: `34755538`
+- SHA-256: `d5f32a65947379e96c8d67c03837f45b5f054abbe11f18b3a15bb084d40502d9`
 
-Upload to the same Google Play testing track and update without clearing data. No new Firebase/Supabase/Google/Play signing configuration is required. Source merge alone does not update the installed app.
+Upload to the same Play testing track and update without clearing data. No Firebase/Supabase/Google/Play signing changes or backend deployment are required. Merging source alone does not update native UI/bridge code.
 
-## Remaining physical verification
+## Device acceptance still required
 
-No Android phone/emulator was attached. Confirm cold/warm guest entry, restored account opening, keyboard/insets, 60/120 Hz motion and the opaque bar on the device. Complete one real Google sign-in and return through the existing secure browser/App Links flow, plus cancel/retry; browser fixture dispatch and API contract tests cannot establish end-to-end provider/device success. Android's mandatory system splash remains.
+No Android phone/emulator is attached. Confirm actual WhatsApp/Business/no-app Intent routing, compose/cancel/back and clipboard, real owner/member invitation use/revocation and real quote/service/payment confirmation, small/large-font/keyboard/inset behavior. A native build and browser dispatch fixture do not prove those OS/provider interactions. Existing code 17 Google completion and startup checks remain applicable.
 
-No automatic source merge, website deployment or Google Play upload has been performed.
+No automatic source merge, website deployment or Play upload has been performed.

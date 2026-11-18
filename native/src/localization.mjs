@@ -3,6 +3,12 @@ import {nativeCopy} from './collaboration.mjs';
 import {featureCopy} from './features.mjs';
 
 export const nativeCopyExtra={
+ "Moneda original":{en:"Original currency",ro:"Moneda originală"},
+ "No se ha podido abrir WhatsApp. Copia el enlace de invitación.":{en:"Could not open WhatsApp. Copy the invitation link instead.",ro:"WhatsApp nu a putut fi deschis. Copiază linkul de invitație."},
+
+ "Únete a {0} en DivZplit para compartir los gastos: {1}":{en:"Join {0} on DivZplit to share expenses: {1}",ro:"Alătură-te grupului {0} în DivZplit pentru a împărți cheltuielile: {1}"},
+ "No se ha podido crear el enlace. Vuelve a intentarlo.":{en:"The invitation link could not be created. Please try again.",ro:"Linkul de invitație nu a putut fi creat. Încearcă din nou."},
+
  "{0} te debe":{"en":"{0} owes you","ro":"{0} îți datorează"},
  "Debes a {0}":{"en":"You owe {0}","ro":"Ai de plătit către {0}"},
  "Actualiza el grupo.": {

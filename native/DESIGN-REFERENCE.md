@@ -66,3 +66,9 @@ The owner requested a static access-screen wordmark and an opaque dock after tes
 Dock gradients now use full-opacity white/lavender stops, an opaque purple add gradient and solid lavender selection. This deliberately replaces the prior Safari-translucency approximation while preserving the reference geometry and all scroll/navigation springs. Body color behind the plate must not affect its interior pixels.
 
 Guest welcome content is first revealed after its actual viewport has been measured, rather than placing the wordmark using an estimated full-window height and correcting it on the first layout event. This prevents a second small vertical shift independently of removing the guest opening flight.
+
+## Group picker/invite and FX reference — code 18
+
+Inspect/capture `chooseGroup`, `inviteModal`, `generateInvite`, `fxPanel`, `fxDetails` and `renderSettlements` from current main in a local browser with fictional Casa/RON two-person data. Match the group photos/type/member count/active indicator, Create group button and owner-only Details/Invite footer. Invitation generation is a separate explicit action after the original warning; the result step uses the original title, selectable link, expiry, WhatsApp and Copy controls. Names and link tokens stay opaque. Use the existing bounded native Sheet rather than reproducing Safari system widgets.
+
+FX uses the original title/intro, summary/toggle, pending status, white rounded transfer cards, target amount with the original smaller amount beneath, disclosure and lavender panel. Keep the original base-currency button, localized ISO/name options excluding base, loading/retry/refresh, `1 target = rate base`, dated quote/source metadata and original-currency disclaimer. Rates shown in this detail are presentation only; money is still converted by the existing validated integer routines and revalidated at confirmation.

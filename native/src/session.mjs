@@ -1,3 +1,4 @@
+import {invitationResult} from './invitation-view.mjs';
 import {nativeText,nativeTemplate} from './localization.mjs';
 import {featureMethods,featureState} from './features.mjs';
 import {canManage,planFields,checkoutFields} from './collaboration.mjs';
@@ -122,7 +123,13 @@ export class NativeController{
   if(action==='delete'&&expense.receipt?.path)await this.cloud.deleteReceipt(current.id,expense.receipt.path).catch(()=>this.update({notice:this.t('El gasto se ha eliminado. No se ha podido borrar la foto anterior.')}));
  });}
  replace(group){this.update({groups:this.state.groups.some(g=>g.id===group.id)?this.state.groups.map(g=>g.id===group.id?group:g):[group,...this.state.groups],groupId:group.id});}
- async invite(){return this.run(async()=>{const result=await this.cloud.invite(this.group.id);const url=ROOT+'app/#invite='+result.token;await this.native.copy(url);this.update({notice:this.t('Enlace copiado. ¡Pásalo a tu gente!')});return url;});}
+ async createInvite(groupId=this.group?.id){return this.run(async()=>{
+  const g=this.currentGroup(groupId),actor=this.cloud.user.id;if(!canManage(g,this.cloud.user))throw new Error(this.t('Solo quien creó el grupo puede invitar a otras personas.'));
+  const result=await this.cloud.invite(g.id);
+  if(!this.activeReply(g.id,actor)||!canManage(this.group,this.cloud.user))throw new Error(this.t('El grupo ha cambiado. Vuelve a abrir el formulario.'));
+  return invitationResult(result,g.id);
+ });}
+ async invite(){const result=await this.createInvite();if(!canManage(this.currentGroup(result.groupId),this.cloud.user))throw new Error(this.t('El grupo ha cambiado. Vuelve a abrir el formulario.'));await this.native.copy(result.url);this.update({notice:this.t('Enlace copiado. ¡Pásalo a tu gente!')});return result.url;}
  currentGroup(id){const g=this.group;if(!g||g.id!==id||!this.cloud.user||this.cloud.recovering)throw new Error(this.t('El grupo ha cambiado. Vuelve a abrir el formulario.'));return g;}
  activeReply(groupId,actor){return !this.cloud.recovering&&this.cloud.user?.id===actor&&this.group?.id===groupId;}
  async shopping(){
