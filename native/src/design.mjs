@@ -5,7 +5,7 @@ export const fontFor=weight=>Number(weight||400)>=800?'ManropeExtraBold':Number(
 export const introSize=width=>width>760?52:Math.min(48,Math.max(37,width*.1));
 // Measured from the current iPhone web surface (refined.css/dock-effects.js).
 // Keep the explicitly requested circular native selector/add controls.
-export const referenceSurface={credit:['#C7F3DC','#12553C'],debt:['#FFE1E6','#A2213C'],hero:['#6536A3','#8752D7'],heroBorder:'#FFFFFF24',currencySize:17,currencyWeight:'600',caption:'#F8F4FF',paid:'#187552',dock:{height:72,compactWidth:68,compactHeight:60,bottom:26,plusDown:6,idle:280,stiffness:420,damping:36,ink:'#6C5C7C',selector:'#E9DDFA99'}};
+export const referenceSurface={credit:['#C7F3DC','#12553C'],debt:['#FFE1E6','#A2213C'],hero:['#6536A3','#8752D7'],heroBorder:'#FFFFFF24',currencySize:17,currencyWeight:'600',caption:'#F8F4FF',paid:'#187552',dock:{height:72,compactWidth:68,compactHeight:60,bottom:26,plusDown:6,idle:280,stiffness:420,damping:36,ink:'#6C5C7C',selector:'#E9DDFA'}};
 export function gradientBounds(width,height,degrees){
  const radians=degrees*Math.PI/180,dx=Math.sin(radians),dy=-Math.cos(radians),length=Math.abs(width*dx)+Math.abs(height*dy);
  return {x1:(width-dx*length)/2,y1:(height-dy*length)/2,x2:(width+dx*length)/2,y2:(height+dy*length)/2};

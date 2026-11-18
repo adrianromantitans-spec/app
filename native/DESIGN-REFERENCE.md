@@ -58,3 +58,11 @@ Dock: 357×72 at a 393 px viewport, 68×60 compact plate, 26 px bottom gap plus 
 Z: one native clock with the source CSS keyframe/easing samples (0/25/38/76/90/100%), native 50%/85% transform origin and no segment-completion JS callbacks. All custom opening durations and the measured final header blend remain. Opening ink matches #2D203E and lands on the actual #272133 header; the original radial curtain is retained. The explicit native font faces and OS text rendering may differ slightly from Safari.
 
 The native candidate must still be viewed on Android, with comparison to the owner's actual installed iPhone web app. Browser-rendered native JSX and computed-style contracts cannot prove physical glass optics, keyboard behavior or frame pacing. WebKit was not installed in the execution environment; this audit uses Chromium rendering of the same web source.
+
+## Explicit code 17 overrides
+
+The owner requested a static access-screen wordmark and an opaque dock after testing code 16. Guest welcome/login therefore no longer uses the custom opening/flight; the existing signed-in opening and Android system splash remain. Resolve the startup session before displaying signed-in chrome/opening so the header/dock do not flash before the animation. Once guest auth is shown, later login must not replay the opening.
+
+Dock gradients now use full-opacity white/lavender stops, an opaque purple add gradient and solid lavender selection. This deliberately replaces the prior Safari-translucency approximation while preserving the reference geometry and all scroll/navigation springs. Body color behind the plate must not affect its interior pixels.
+
+Guest welcome content is first revealed after its actual viewport has been measured, rather than placing the wordmark using an estimated full-window height and correcting it on the first layout event. This prevents a second small vertical shift independently of removing the guest opening flight.
