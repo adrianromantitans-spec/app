@@ -1,11 +1,28 @@
 package com.divzplit.app
 
+import android.animation.ValueAnimator
+import android.os.Build
+import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      splashScreen.setOnExitAnimationListener { splash ->
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+          splash.remove()
+        } else {
+          splash.animate().alpha(0f).setDuration(160L).withEndAction { splash.remove() }.start()
+        }
+      }
+    }
+  }
+
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule

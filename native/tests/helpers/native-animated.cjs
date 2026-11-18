@@ -15,5 +15,6 @@ const previous=Module._load;Module._load=function(request,parent,...args){
 const oldjs=Module._extensions['.js'];Module._extensions['.js']=function(mod,file){if(!file.startsWith(rn+'/'))return oldjs(mod,file);const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[requireNative.resolve('@react-native/babel-preset')]}).code;mod._compile(code,file);};
 const Value=requireNative(rn+'/Libraries/Animated/nodes/AnimatedValue').default,Style=requireNative(rn+'/Libraries/Animated/nodes/AnimatedStyle').default,Animation=requireNative(rn+'/Libraries/Animated/animations/Animation').default;
 const flattenStyle=requireNative(rn+'/Libraries/StyleSheet/flattenStyle').default;
+const Props=requireNative(rn+'/Libraries/Animated/nodes/AnimatedProps').default;
 Module._load=previous;Module._extensions['.js']=oldjs;
-module.exports={Value,Style,Animation,flattenStyle,babel,preset:requireNative.resolve('@react-native/babel-preset')};
+module.exports={Props,Value,Style,Animation,flattenStyle,babel,preset:requireNative.resolve('@react-native/babel-preset')};

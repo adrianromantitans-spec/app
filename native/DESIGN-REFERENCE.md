@@ -31,3 +31,11 @@ Development-only React Native Web rendering was used outside the repository to c
 ## Code 13 follow-up
 
 Following the owner's request for circular liquid-glass controls, the native dock uses half-height/half-width radii: capsule 72/36 px, add button 52/26 px, selection marker 34/17 px. SVG gradient bounds match the view clipping. This replaces the earlier squircle controls; the rest of the approved design and opening animation remain intact. UI text is now resolved through the shared catalog plus the native localization supplement, including examples, viewer labels and error re-localization. User-created content remains opaque.
+
+## Code 14 motion follow-up
+
+The balance gradient is sized from the actual card border box, with a purple fallback and minimum rather than fixed height. It does not use a percentage-sized background inside a padded native container. Two-member badges name the counterparty; larger groups retain person counts. User-authored names remain opaque template values.
+
+The dock's visible plate is a numeric SVG capsule (72 px expanded height) that morphs into a 64 px circle. The 52 px add control and 40 px selection marker are SVG circles. Selection uses a native-driven spring; layout/opacity morphs use a separate JS graph. Scroll phases are provided only around signed-in page content. The 280 ms idle return follows the website's behavior without a custom frame-rate loop. Screen-reader/reduced-motion navigation stays expanded.
+
+A direct native vector and a supported Android 12+ exit fade improve the system handoff; mandatory system behavior remains. The custom opening assembly/hold/flight durations and branding are unchanged. Font layout is measured before flight, and the measured window origin is subtracted at the header handoff, avoiding per-frame React size updates.
