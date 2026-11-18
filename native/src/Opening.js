@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {Animated,Easing,Pressable,StyleSheet,useWindowDimensions,View} from 'react-native';
+import {Animated,Easing,Pressable,StyleSheet,useWindowDimensions,View,Text} from 'react-native';
 import Svg,{Defs,RadialGradient,Stop,Rect} from 'react-native-svg';
 import {introSize,referenceIntro as reference} from './design.mjs';
 // Preserve the web's assembly keyframes, 57% hold and 1161ms handoff.
@@ -26,9 +26,10 @@ export default function Opening({ready,anchor,onFinish,reduced}){
  return <Pressable onPress={onFinish} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
   <Animated.View style={[StyleSheet.absoluteFill,{opacity:flight.interpolate({inputRange:[0,1],outputRange:[1,0]})}]}><Svg width="100%" height="100%"><Defs><RadialGradient id="intro-curtain" cx="50%" cy="42%" rx="70%" ry="70%"><Stop offset="0" stopColor={reference.curtain[0]}/><Stop offset=".48" stopColor={reference.curtain[1]}/><Stop offset="1" stopColor={reference.curtain[2]}/></RadialGradient></Defs><Rect width="100%" height="100%" fill="url(#intro-curtain)"/></Svg></Animated.View>
   <Animated.View onLayout={event=>setSize(event.nativeEvent.layout)} style={{position:'absolute',left:(width-size.width)/2,top:(height-size.height)/2,flexDirection:'row',transform:[{translateX:flight.interpolate({inputRange:[0,1],outputRange:[0,tx]})},{translateY:flight.interpolate({inputRange:[0,1],outputRange:[0,ty]})}]}}>
-   <Animated.Text style={[text,{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[-side,0]})}]}]}>Div</Animated.Text>
-   <Animated.Text style={[text,{color:reference.accent,opacity:zA,transform:[{translateY:zY},{rotate:zR.interpolate({inputRange:[-360,360],outputRange:['-360deg','360deg']})},{scale:zS}]}]}>Z</Animated.Text>
-   <Animated.Text style={[text,{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[side,0]})}]}]}>plit<Animated.Text style={{color:reference.accent}}>.</Animated.Text></Animated.Text>
+   {/* Native transforms/opacity must not share an AnimatedProps graph with JS-driven font metrics. */}
+   <Animated.View style={{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[-side,0]})}]}}><Animated.Text style={text}>Div</Animated.Text></Animated.View>
+   <Animated.View style={{opacity:zA,transform:[{translateY:zY},{rotate:zR.interpolate({inputRange:[-360,360],outputRange:['-360deg','360deg']})},{scale:zS}]}}><Animated.Text style={[text,{color:reference.accent}]}>Z</Animated.Text></Animated.View>
+   <Animated.View style={{opacity:wordA,transform:[{translateX:left.interpolate({inputRange:[0,1],outputRange:[side,0]})}]}}><Animated.Text style={text}>plit<Text style={{color:reference.accent}}>.</Text></Animated.Text></Animated.View>
   </Animated.View>
  </Pressable>;
 }

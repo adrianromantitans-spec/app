@@ -45,3 +45,12 @@ Only after acceptance should the tested native release replace the published wra
 - Open and cancel group/currency/payer/split/assignee choice dialogs. Change a selection and verify the form reflects it.
 - Check long group/member names, ES/EN/RO, 320–430 dp widths, large system text, keyboard input and system navigation bars. Verify sheets and the floating dock remain usable.
 - In tasks, tap the assignee/avatar for edit/reminder/delete actions; verify owner/creator permissions still apply. Test shop checkboxes and existing checkout confirmation.
+
+## Startup hotfix acceptance (code 12)
+
+- Update code 11 to code 12 through Google Play without uninstalling or clearing data. Verify existing sign-in/groups remain available.
+- Cold-start signed in: let the opening finish without touching the screen; verify the home page remains open and usable. Repeat after force-stop.
+- Cold-start signed out: verify the full opening reaches welcome and login remains usable.
+- Repeat with tap-to-skip, Back, reduced motion and a foreground/background transition during opening. Confirm no crash or frozen curtain.
+- Compare opening layout/motion with code 11/the website; opacity, transforms, font sizes, colors and original durations should remain the same.
+- If the device still closes the app, capture the fatal exception from Android Logcat or the corresponding Google Play Android vitals crash report; the host-free Animated test does not replace runtime diagnosis.
