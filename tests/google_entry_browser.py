@@ -1,4 +1,4 @@
-"""Google is an icon on the entry screen; email forms contain no duplicate provider UI.
+"""Google is available on the entry and email-login screens; consent remains mandatory.
 Run locally on port 3003. GOOGLE_ENTRY_ENGINES=chromium,webkit enables both engines.
 """
 from pathlib import Path
@@ -21,14 +21,15 @@ with sync_playwright() as p:
     if width==393 and locale=='es-ES':page.screenshot(path='work/google-entry-'+engine+'.png')
    google.click();expect(page.locator('#oauth-consent-form')).to_be_visible();assert not seen['oauth'];expect(page.locator('#oauth-consent-form [name="ageBand"]')).to_be_visible();page.locator('#modal-root [data-action="close-modal"]').first.click()
    page.locator('.welcome-entry [data-action="login"]').click();expect(page.locator('#account-form')).to_be_visible()
-   expect(page.locator('[data-action="oauth-google"],.auth-card .social-providers,.auth-card .auth-divider')).to_have_count(0)
+   expect(page.locator('[data-action="oauth-google"]')).to_be_enabled();expect(page.locator('[data-action="oauth-google"] svg')).to_be_visible()
    expect(page.locator('#account-form input')).to_have_count(2)
    page.set_viewport_size({'width':393,'height':852})
    if locale=='es-ES':page.screenshot(path='work/google-email-form-'+engine+'.png')
+   page.locator('[data-action="oauth-google"]').click();expect(page.locator('#oauth-consent-form')).to_be_visible();assert not seen['oauth'];page.locator('#modal-root [data-action="close-modal"]').first.click()
    page.locator('.signup-prompt [data-action="signup"]').click();expect(page.locator('[name="ageBand"]')).to_be_visible();expect(page.locator('[data-action="oauth-google"]')).to_have_count(0)
    page.set_viewport_size({'width':1440,'height':852});page.goto(ns['BASE'].removesuffix('app/'));page.locator('.nav-login').click()
-   expect(page.locator('[data-action="oauth-google"]')).to_have_count(0);expect(page.locator('#account-form input')).to_have_count(2)
+   expect(page.locator('[data-action="oauth-google"]')).to_be_enabled();expect(page.locator('#account-form input')).to_have_count(2)
    page.locator('[name="email"]').fill('ana@example.test');page.locator('[name="password"]').fill('fixture-password');page.locator('#account-form [type="submit"]').click();expect(page.locator('.account-empty')).to_be_visible();assert seen['tokens']==1
    c.close();assert not ns['errors'],ns['errors']
-   print('PASS:',engine,locale,'icon-only Google, 44px touch target, consent preserved, email-only login, signup intact and website login works',flush=True)
+   print('PASS:',engine,locale,'icon-only Google, 44px touch target, consent preserved, Google icon on email login, signup intact and website login works',flush=True)
   browser.close()

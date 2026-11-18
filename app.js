@@ -15,7 +15,7 @@ import {historyView,paymentRequestsView} from './activity-ui.js?v=activity-102';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=activity-103';
 import {NotificationCentre} from './notifications.js?v=native-push-1';
 import {cloudConfig} from './config.js';
-import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=language-90';
+import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=google-login-1';
 
 import {languageSelection} from './language.js?v=language-78';
 const languageLabels={es:'Español',en:'English',ro:'Română'};
