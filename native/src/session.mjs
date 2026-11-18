@@ -1,18 +1,24 @@
-import {featureMethods,featureState,featureCopy} from './features.mjs';
-import {canManage,planFields,checkoutFields,nativeCopy} from './collaboration.mjs';
+import {nativeText,nativeTemplate} from './localization.mjs';
+import {featureMethods,featureState} from './features.mjs';
+import {canManage,planFields,checkoutFields} from './collaboration.mjs';
+const groupLoadState={groupsLoading:false,groupsLoaded:false,groupsError:'',groupSyncWarning:'',groupDiagnostic:null};
+const groupDiagnostic=(stage,error)=>({stage,status:Number.isInteger(error?.status)?error.status:0,code:/^[A-Za-z0-9_]{1,64}$/.test(error?.code||'')?error.code:'unknown'});
 const ROOT='https://divzplit.com/';
 const day=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 export class NativeController{
  constructor({cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools}){
   Object.assign(this,{cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools});this.listeners=new Set();this.handled=new Set();this.pendingNotice=null;this.receiptUploads=new Map();
-  this.state={ready:false,busy:false,user:null,groups:[],groupId:null,page:'home',error:'',notice:'',notices:[],history:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[],pushEnabled:false,pushReady:false,...structuredClone(featureState)};
+  this.state={ready:false,busy:false,user:null,...groupLoadState,groups:[],groupId:null,page:'home',error:'',notice:'',notices:[],history:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[],pushEnabled:false,pushReady:false,...structuredClone(featureState)};
  }
  snapshot=()=>this.state;
  subscribe=listener=>{this.listeners.add(listener);return ()=>this.listeners.delete(listener);};
- update(fields){this.state={...this.state,...fields};for(const listener of this.listeners)listener();}
+ update(fields){const changed=Object.hasOwn(fields,'user')&&fields.user?.id!==this.state.user?.id;this.state={...this.state,...(changed?groupLoadState:{}),...fields};for(const listener of this.listeners)listener();}
  get group(){return this.state.groups.find(g=>g.id===this.state.groupId)||this.state.groups[0]||null;}
- t(text){return featureCopy[text]?.[this.i18n.language]??nativeCopy[text]?.[this.i18n.language]??this.i18n.tr(text);}
- async run(action){if(this.state.busy)throw new Error(this.t('Espera a que termine la operación actual.'));this.update({busy:true,error:''});try{return await action();}catch(error){error.message=this.t(error.message);this.update({error:error.message});throw error;}finally{if(this.state.user?.id!==this.cloud.user?.id){this.receiptUploads.clear();this.update({...structuredClone(featureState),user:this.cloud.recovering?null:this.cloud.user,recovering:!!this.cloud.recovering,groups:[],groupId:null,history:[],shopping:[],shoppingGroupId:null,notices:[],paymentRequests:[]});}this.update({busy:false});}}
+ t(text){return nativeText(text,this.i18n.language||'es');}
+ ui(strings,...values){return nativeTemplate(this.i18n.language||'es',strings,...values);}
+ memberName(value){const member=typeof value==='object'?value:this.group?.members.find(m=>m.id===value||value===this.cloud.user?.id&&m.id==='you');return member?.id==='you'||member?.id===this.cloud.user?.id?this.t('Tú'):member?.name||this.t('Miembro');}
+ async copyGroupDiagnostic(){if(!this.state.groupDiagnostic)return;await this.native.copy(JSON.stringify({app:'DivZplit Android',...this.state.groupDiagnostic}));this.update({notice:this.t('Diagnóstico copiado. Compártelo con soporte.')});}
+ async run(action){if(this.state.busy)throw new Error(this.t('Espera a que termine la operación actual.'));this.update({busy:true,error:''});try{return await action();}catch(error){error.message=this.t(error.message);this.update({error:error.message});throw error;}finally{if(this.state.user?.id!==this.cloud.user?.id){this.receiptUploads.clear();this.update({...structuredClone(featureState),user:this.cloud.recovering?null:this.cloud.user,recovering:!!this.cloud.recovering,...groupLoadState,groups:[],groupId:null,history:[],shopping:[],shoppingGroupId:null,notices:[],paymentRequests:[]});}this.update({busy:false});}}
  async start(url){try{if(url)await this.handleURL(url,false);if(!this.cloud.user)await this.cloud.restore();if(this.cloud.user)await this.refresh();}catch(error){this.update({error:error.message});}finally{this.update({ready:true,user:this.cloud.recovering?null:this.cloud.user,recovering:!!this.cloud.recovering});}}
  async handleURL(value,refresh=true){
   let url;try{url=new URL(value);}catch{return false;}
@@ -39,22 +45,34 @@ export class NativeController{
   if(this.refreshRequest?.actor===actor)return this.refreshRequest.promise;
   const request={actor,promise:null};this.refreshRequest=request;
   request.promise=this.refreshGroups();
-  try{return await request.promise;}finally{if(this.refreshRequest===request)this.refreshRequest=null;if(!this.cloud.user)this.update({...structuredClone(featureState),user:null,groups:[],groupId:null,history:[],shopping:[],shoppingGroupId:null,notices:[],paymentRequests:[]});}
+  try{return await request.promise;}finally{if(this.refreshRequest===request)this.refreshRequest=null;if(!this.cloud.user)this.update({...structuredClone(featureState),user:null,...groupLoadState,groups:[],groupId:null,history:[],shopping:[],shoppingGroupId:null,notices:[],paymentRequests:[]});}
  }
  async refreshGroups(){
   const user=this.cloud.user;if(!user||this.cloud.recovering)return;
-  const groups=await this.cloud.listGroups();if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
-  if(this.extras)for(let index=0;index<groups.length;index++){
-   const original=groups[index],draft=structuredClone(original),before=JSON.stringify(draft);
-   this.extras.materializeRecurring(draft,day(),e=>original.remote.ownerId===user.id||e.createdBy===user.id,user.id);
-   if(before!==JSON.stringify(draft)){
+  const sameUser=this.state.user?.id===user.id;
+  this.update({groupsLoading:true,groupsError:'',groupSyncWarning:'',groupDiagnostic:null,...(!sameUser?{...groupLoadState,groupsLoading:true,groups:[],groupId:null,user}:{} )});
+  let groups;
+  try{groups=await this.cloud.listGroups();}
+  catch(error){if(this.cloud.user?.id===user.id&&!this.cloud.recovering)this.update({groupsLoading:false,groupsError:this.t(error.message),groupDiagnostic:groupDiagnostic('groups',error)});throw error;}
+  if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
+  const remembered=this.platform.storage.getItem('native-active-group:'+user.id),groupId=groups.some(g=>g.id===this.state.groupId)?this.state.groupId:groups.find(g=>g.id===remembered)?.id||groups[0]?.id||null;
+  // A completed read is usable independently of optional follow-up writes.
+  this.update({groups,groupId,user,ready:true,groupsLoading:false,groupsLoaded:true,groupsError:'',error:''});
+  if(this.extras)for(const original of groups){
+   try{
+    const draft=structuredClone(original),before=JSON.stringify(draft);
+    this.extras.materializeRecurring(draft,day(),e=>original.remote.ownerId===user.id||e.createdBy===user.id,user.id);
+    if(before!==JSON.stringify(draft)){
+     if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
+     const saved=await this.cloud.saveGroup(draft);
+     if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
+     this.update({groups:this.state.groups.map(g=>g.id===saved.id&&g.remote.version<=saved.remote.version?saved:g)});
+    }
+   }catch(error){
     if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
-    groups[index]=await this.cloud.saveGroup(draft);
-    if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;
+    this.update({groupSyncWarning:'Tus grupos están cargados, pero no se han podido actualizar algunos gastos recurrentes.',groupDiagnostic:groupDiagnostic('recurring',error)});
    }
   }
-  const remembered=this.platform.storage.getItem('native-active-group:'+user.id),groupId=groups.some(g=>g.id===this.state.groupId)?this.state.groupId:groups.find(g=>g.id===remembered)?.id||groups[0]?.id||null;
-  this.update({groups,groupId,user,error:''});
   const invite=this.platform.temporaryStorage.getItem('native-invite');
   if(invite){const joined=await this.cloud.join(invite);if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;this.platform.temporaryStorage.removeItem('native-invite');const joinedGroups=await this.cloud.listGroups();if(this.cloud.user?.id!==user.id||this.cloud.recovering)return;this.update({groups:joinedGroups,groupId:joined.id});}
   await this.syncPush().catch(()=>{});
@@ -182,10 +200,10 @@ export class NativeController{
  }
  async enablePush(){return this.run(async()=>{const user=this.cloud.user?.id;if(!this.state.pushReady)return;if(await this.native.pushPermission()!=='granted')return;const token=await this.native.pushToken();await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});if(this.cloud.user?.id!==user){await this.native.pushClear();return;}await this.native.pushBind(user);this.update({pushEnabled:true});});}
  async disablePush(){const state=await this.native.pushState();await this.native.pushClear();if(state.token)await this.cloud.rpc('divzplit_remove_native_push',{p_token:state.token}).catch(()=>{});this.update({pushEnabled:false});}
- async logout(){return this.run(async()=>{await this.disablePush();await this.cloud.signOut();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),user:null,groups:[],groupId:null,page:'home',history:[],notices:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[]});});}
+ async logout(){return this.run(async()=>{await this.disablePush();await this.cloud.signOut();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[]});});}
  language(value){this.i18n.setLanguage(value);this.update({});return this.platform.flush();}
  async export(){return this.run(async()=>{const data=await this.cloud.personalExport();await this.native.exportJSON(JSON.stringify(data,null,2),'divzplit-cuenta.json');});}
- async deleteAccount(confirmation){return this.run(async()=>{if(confirmation.trim().toLowerCase()!==this.cloud.user.email.toLowerCase())throw new Error(this.t('Escribe el correo de esta cuenta para confirmar.'));await this.disablePush();await this.cloud.deleteAccount();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),shopping:[],shoppingGroupId:null,paymentRequests:[],user:null,groups:[],groupId:null,page:'home',history:[],notices:[]});});}
+ async deleteAccount(confirmation){return this.run(async()=>{if(confirmation.trim().toLowerCase()!==this.cloud.user.email.toLowerCase())throw new Error(this.t('Escribe el correo de esta cuenta para confirmar.'));await this.disablePush();await this.cloud.deleteAccount();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),shopping:[],shoppingGroupId:null,paymentRequests:[],user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[]});});}
 }
 
 Object.assign(NativeController.prototype,featureMethods);

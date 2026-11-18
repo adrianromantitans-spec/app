@@ -88,3 +88,9 @@ Candidate `1.2.0-native.5` / code `11` restores the approved website design whil
 ## Startup hotfix (code 12)
 
 Candidate `1.2.0-native.6` fixes the native/JavaScript Animated graph collision in the code 11 opening handoff. Native opacity/transforms now live on wrapper views; JavaScript font metrics stay on the nested text views. Design and durations are unchanged. Update through the same Play track with the existing signing key; uninstalling or clearing app data is unnecessary. Tests reproduce the previous React Native exception and exercise the actual corrected component graph; this is not a substitute for a physical launch/upgrade test.
+
+## Groups, languages and round dock (code 13)
+
+Candidate `1.2.0-native.7` corrects React Native fetch's `cache: 'no-store'` URL mutation: the native transport uses no-store HTTP headers without adding `_=` to PostgREST queries. Existing groups, history and other REST GET data can use their original server queries. Read/loading/failure/confirmed-empty states are distinct; failed background reads retain same-account data, and failed recurrence writes no longer hide successfully loaded groups or publish unconfirmed charges. Retry and a token-free support diagnostic are available on failure.
+
+Native-only localization supplements the shared catalog, translates known previously localized error strings into the current language, localizes the email example and viewer label, and preserves user-written names/titles. The dock has a 72 px capsule with 36 px corners, circular 52 px add control and circular 34 px selection marker. The opening animation and code 12 driver correction are unchanged. Update through the existing Play track; do not recreate groups, clear data or change backend permissions.

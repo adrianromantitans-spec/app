@@ -1,39 +1,52 @@
-# Startup hotfix — 18 November 2026
+# Groups, languages and circular dock — 18 November 2026
 
-Base: `903b29f` (main after PR 17). Candidate `1.2.0-native.6`, Android version code `12`.
+Base: `cf84457` (main after PR 18). Candidate `1.2.0-native.7`, Android version code `13`.
 
-## Reproduced defect and correction
+## Cause of the missing groups
 
-The owner reported that code 11 closes after the opening animation. In that version, native-driven letter opacity/transforms and JavaScript-driven `fontSize`, `lineHeight` and `letterSpacing` shared the same Animated.Text style graph. Starting the assembly promotes that graph (including the flight value) to native. Starting the JavaScript font handoff then throws React Native's exception:
+The shared browser Cloud client sends `cache: 'no-store'`. React Native's installed `whatwg-fetch` implementation turns that option into a synthetic `_=timestamp` query parameter on GET/HEAD. PostgREST interprets it as a filter and rejects the request with HTTP 400 / PGRST100. Auth endpoints can still work, while the groups/history REST queries fail. This explains why a signed-in account can show a generic connection error instead of its existing groups.
 
-```
-Attempting to run JS driven animation on animated node that has been moved to "native" earlier by starting an animation with `useNativeDriver: true`
-```
+The regression uses the actual installed whatwg-fetch Request implementation: the prior options mutate the URL, while the corrected adapter preserves the groups query, Authorization/apikey headers, cancellation, JSON and receipt bytes. A separate read-only public-key probe with the malformed query returned HTTP 400 / PGRST100 from the live service. Its Python-urllib log was explicitly identified to the owner as our diagnostic probe, not an Android-device trace. No production account/session was used, no private group data was fetched and no backend writes were performed.
 
-This was reproduced with the project's pinned React Native Animated classes. The new component regression test fails with that exception when run against the shipped Opening.js and passes against the correction. No physical-device crash log was available, so this establishes a reproducible startup defect consistent with the report, not a claim that every device failure has been ruled out.
+`src/receipt-transport.mjs` now removes the problematic native cache option and sends `Cache-Control: no-store` / `Pragma: no-cache` headers instead. The API URL and cache prevention are retained. Browser Cloud behavior, server permissions and database schema are unchanged.
 
-`src/Opening.js` now puts native opacity/transforms on three wrapper views and JavaScript font metrics on their nested text views. Native and JavaScript drivers no longer share a style graph. The nested static period uses ordinary Text. Original colors, typeface, transforms, assembly/keyframe durations, hold, handoff, reduced-motion and tap-to-skip behavior are retained. Website sources and app/domain/auth/backend code are unchanged.
+## File-by-file changes
+
+- `src/session.mjs`: distinct loading, confirmed-empty and failure states; Retry diagnostics without tokens/user data; same-account data retention on read failure; account-change isolation; server groups become usable before recurrence writes; failed optional recurrence saves retain the server snapshot and show a warning; no unconfirmed generated charges or selection changes. Connect native-only localization/member/template helpers.
+- `src/localization.mjs`: shared catalog plus native UI/error supplement for ES/EN/RO; known already-translated errors can follow a subsequent language change. Email examples and self labels adapt; user content is never looked up for translation.
+- `src/App.js`: localized email example, close controls, notices/errors, task/poll summaries and selections; explicit group load/retry/support states. Dock capsule 72/36 px, add button 52/26 px and active marker 34/17 px with matching SVG/view clipping.
+- `src/ReferenceScreens.js`: translated member labels/templates; group/home pull-to-refresh reflects the actual read state. Existing user titles/group/member names remain opaque.
+- `src/FeatureScreens.js`: localized viewer names and error/FX displays.
+- `src/receipt-transport.mjs`: native cache/URL fix described above; byte handling unchanged.
+- `tests/native-fetch.test.mjs`: actual RN Request mutation reproduction and corrected shared Cloud REST/headers/receipt contract.
+- `tests/group-loading.test.mjs`: initial/background failure and retry, confirmed empty, recurrence failure/early visibility, selection and account isolation, safe diagnostics, real shared Cloud group mapping.
+- `tests/localization.test.mjs`: source catalog completeness, placeholders, known error re-localization, opaque user names/template values and persisted language/auto-detection restart.
+- `tests/session.test.mjs`: keep the simulated server snapshot independent of client state, which is cleared on an account change; retain the original recurrence/coalescing/authorization assertions.
+- `native-config.json`, `package.json`, `package-lock.json`: version .7 / code 13, no dependency changes.
+- `README.md`, `DEVICE-TESTS.md`, `DESIGN-REFERENCE.md`, `VALIDATION.md`: current scope, evidence, circular dimensions and physical acceptance.
+
+The code 12 startup/driver correction and original opening animation source/timings remain unchanged. All changed source/assets are under native/. No website, backend, signing key, Firebase/Supabase settings or production data changes.
 
 ## Passed checks
 
-- `npm test --prefix native`: 59 passing tests. Existing financial/account/receipt/collaboration/feature coverage is retained. Three new tests reproduce the former exception, exercise the actual corrected component's style graphs through assembly and successful handoff, and check reduced-motion behavior; the component test also exercises skip. Existing design tests still compare timings/keyframe stops with the original web sources.
-- The new host-free harness transpiles the pinned React Native Value, Style and Animation implementations with the existing Babel dependency. Only Android bridge/platform boundaries, default feature flags, React hooks and host views are stubbed. It is not a browser Animated substitute, and it is not an Android renderer/device test. No dependencies added.
-- Final Metro/Hermes release bundle, Java/Kotlin/C++ release compilation, R8, AAB generation and `lintRelease`: 0 errors, 19 existing warnings. No new lint baseline or suppression.
-- Existing upload certificate comparison and `jarsigner -verify` pass. Self-signed/no-timestamp notices are expected for the existing Android upload certificate.
-- Bundletool 1.18.3 validates the signed artifact. Manifest: package `com.divzplit.app`, code `12`, version `1.2.0-native.6`, minimum API 24 / target API 36, native MainActivity launcher.
-- Offline Hermes bundle and existing assets/fonts are present. All 13 ARM64 shared libraries retain at least 16 KB ELF LOAD alignment.
-- Git diff/whitespace checks pass; source changes are confined to native startup, version metadata, tests and documentation. No website, Firebase/Supabase configuration, signing key or user data changes.
+- `npm test --prefix native`: 73 passing tests, including all previous startup, financial concurrency, permissions, account/session, receipts, collaboration, FX, recovery and feature checks.
+- Development-only actual native JSX/browser fixture checks: failed initial read shows Retry instead of Create, retry loads existing fixture groups, all ES/EN/RO variants, live language changes, localized email example, no uncaught JS errors or horizontal document overflow. At 320/393/430 px the rendered add control and dock have exactly half-width/half-height corner radii. Separate multi-route preview checks pass. This is not an Android renderer/device test; no preview dependency ships in the app.
+- Final Metro/Hermes production bundle, Java/Kotlin/C++ release compilation, R8 and AAB generation pass. `lintRelease`: 0 errors, 19 existing warnings; no new suppression/baseline.
+- Existing upload certificate comparison and jarsigner verification pass. Normal self-signed/no-timestamp upload-certificate notices remain.
+- Bundletool 1.18.3 validates the final signed AAB. Manifest: com.divzplit.app, code 13, version 1.2.0-native.7, minimum API 24 / target API 36, native MainActivity.
+- Offline Hermes bundle and existing fonts/assets are present. All 13 ARM64 shared libraries retain at least 16 KB ELF LOAD alignment.
+- Git diff/whitespace checks pass.
 
 Final signed artifact:
 
 ```
-divzplit-1.2.0-native.6.aab
-bytes: 34728762
-SHA-256: 101280c28e4254a412d60a3ae0a587a076eab81da0a46fcaaea08e48e05f9a50
+divzplit-1.2.0-native.7.aab
+bytes: 34734548
+SHA-256: 6ff30fdfb13e55b3e00eaf826fdf08e971f63c1c028e27574015d49875794533
 ```
 
-## Physical acceptance and delivery
+## Physical acceptance remains
 
-No Android phone/emulator is attached. Update from code 11 through the same Play test track with the existing signing identity; there is no need to uninstall or clear app data. Follow the code 12 section in [DEVICE-TESTS.md](DEVICE-TESTS.md): cold/warm launch, signed-in and signed-out handoff, skipping, reduced motion and background/resume, then verify the home page stays usable. If another close occurs, collect the device's fatal exception with Logcat or Android vitals.
+No phone/emulator is attached. Update code 12 to 13 through the existing Play testing track without uninstalling or clearing data. Compare real existing groups and balances with the website using the same account, exercise history/notifications/receipts, ES/EN/RO and round dock, then follow the code 13 section in DEVICE-TESTS.md. Tests establish the request and state-management fixes; the owner's real account/device load still requires confirmation after installation. All broader real-device startup, OAuth, camera, FCM and performance gates remain.
 
-The visual reference remains documented in [DESIGN-REFERENCE.md](DESIGN-REFERENCE.md). All broader real-device feature/auth/camera/FCM/performance gates remain. This change does not itself merge, deploy or publish a Play release.
+This change does not merge itself, deploy the website or publish a Google Play release. Do not recreate groups or change backend permissions for this client-side request defect.

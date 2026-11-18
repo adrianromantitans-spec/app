@@ -27,3 +27,7 @@ The original assembly is 1350 ms, Z movement 1550 ms, hold 1539 ms and handoff 1
 ## Validation limits
 
 Development-only React Native Web rendering was used outside the repository to compare the actual JSX against the local website with fictional fixtures at 320, 393 and 430 px. It ships neither browser shims nor preview dependencies in Android. This checks composition and catches JavaScript/rendering errors; it does not prove Android font rasterization, system dialogs, keyboard/safe areas, frame pacing or animation parity. Native release build/lint, the existing workflow tests and final bundle checks are separate checks. Run `DEVICE-TESTS.md` on an Android phone before wider release.
+
+## Code 13 follow-up
+
+Following the owner's request for circular liquid-glass controls, the native dock uses half-height/half-width radii: capsule 72/36 px, add button 52/26 px, selection marker 34/17 px. SVG gradient bounds match the view clipping. This replaces the earlier squircle controls; the rest of the approved design and opening animation remain intact. UI text is now resolved through the shared catalog plus the native localization supplement, including examples, viewer labels and error re-localization. User-created content remains opaque.

@@ -54,3 +54,12 @@ Only after acceptance should the tested native release replace the published wra
 - Repeat with tap-to-skip, Back, reduced motion and a foreground/background transition during opening. Confirm no crash or frozen curtain.
 - Compare opening layout/motion with code 11/the website; opacity, transforms, font sizes, colors and original durations should remain the same.
 - If the device still closes the app, capture the fatal exception from Android Logcat or the corresponding Google Play Android vitals crash report; the host-free Animated test does not replace runtime diagnosis.
+
+## Group/language/dock acceptance (code 13)
+
+- Upgrade from code 12 without uninstalling or clearing data. Enter the same account as the website and compare existing group IDs/names, members, expenses and balances; test a shared group too. Loading failure must offer Retry rather than saying the account has no groups.
+- Open history, notifications and receipts: REST GET queries must work without a synthetic `_=` filter. If another failure occurs, use Copy diagnostics and share only its stage/status/code; it excludes tokens, email and group data.
+- Disconnect temporarily: existing same-account groups remain visible; retry after reconnecting. Switch accounts while a load is pending: previous account data must not appear in the next account.
+- Check recurring expenses: an unsuccessful follow-up save leaves server-loaded expenses visible and shows a warning; unconfirmed generated expenses must not appear as saved.
+- Check ES/EN/RO on cold start and after changing language in Account: welcome, email example, forms, errors, group labels, activity, help, tasks, polls, shopping and sheets. A person's actual name or an expense/group title must not be translated. System-owned picker chrome follows the device's system localization.
+- Compare the dock on narrow/wide devices: capsule boundary, fully round add button/selection indicator and usable labels/touch areas. Keep all prior startup, financial and real-device OAuth/FCM/camera gates.

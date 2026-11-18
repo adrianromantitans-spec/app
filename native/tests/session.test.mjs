@@ -139,10 +139,11 @@ test('deleting a source leaves previously generated charges and enforces creator
 });
 test('simultaneous refreshes share one recurring save and unauthorized sources stay untouched',async()=>{
  const {c,cloud}=fixture();await c.saveExpense({...fields,date:'2020-01-31'},null,'series',{frequency:'monthly'});
- let reads=0,writes=0;c.syncPush=async()=>{};
- cloud.listGroups=async()=>{reads++;return [structuredClone(c.group)];};cloud.saveGroup=async draft=>{writes++;return draft;};
+ // The server snapshot is independent of client state, which is cleared on an account change.
+ let reads=0,writes=0,stored=structuredClone(c.group);c.syncPush=async()=>{};
+ cloud.listGroups=async()=>{reads++;return [structuredClone(stored)];};cloud.saveGroup=async draft=>{writes++;stored=structuredClone(draft);return draft;};
  await Promise.all([c.refresh(),c.refresh(),c.refresh()]);assert.equal(reads,1);assert.equal(writes,1);
- c.group.remote.ownerId='different';cloud.user={id:'another'};const before=structuredClone(c.group.expenses);
+ c.group.remote.ownerId='different';stored.remote.ownerId='different';cloud.user={id:'another'};const before=structuredClone(c.group.expenses);
  await c.refresh();assert.equal(writes,1);assert.deepEqual(c.group.expenses,before);
 });
 
