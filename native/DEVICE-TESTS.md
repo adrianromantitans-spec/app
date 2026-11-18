@@ -63,3 +63,13 @@ Only after acceptance should the tested native release replace the published wra
 - Check recurring expenses: an unsuccessful follow-up save leaves server-loaded expenses visible and shows a warning; unconfirmed generated expenses must not appear as saved.
 - Check ES/EN/RO on cold start and after changing language in Account: welcome, email example, forms, errors, group labels, activity, help, tasks, polls, shopping and sheets. A person's actual name or an expense/group title must not be translated. System-owned picker chrome follows the device's system localization.
 - Compare the dock on narrow/wide devices: capsule boundary, fully round add button/selection indicator and usable labels/touch areas. Keep all prior startup, financial and real-device OAuth/FCM/camera gates.
+
+## Card, dock and startup acceptance (code 14)
+
+- Update code 13 to 14 through the existing Play track, preserving the session and existing groups. Confirm all prior REST/language/startup fixes remain.
+- Compare the reported Casa/RON card: the purple gradient must fill the right/bottom edges and remain behind the amount, caption and settlement action. Try larger system text and narrow/landscape layouts.
+- Two members: verify a negative balance names the other person and a positive balance names who owes you, in ES/EN/RO. Zero balance remains settled. With three or more members retain the existing one-person/multiple-person summaries. Check actual names, not hard-coded Adrian.
+- On home, plans, expenses, activity, tasks, polls, shopping and account: scroll real content. The dock compacts during drag/momentum and returns after idle; tapping its add control opens the normal add sheet. Programmatic restoration, sheets, horizontal interactions and keyboard forms must retain their behavior.
+- Tap Home → Activity → Account quickly: the selection marker must be circular and move smoothly without a jump or crash. Test both 60/120 Hz hardware, rapid interrupted transitions and rotation. No fixed frame-rate loop was introduced.
+- Enable TalkBack/reduced motion: keep all navigation controls reachable and honor reduced-motion selection behavior.
+- Cold/warm startup on Android 12+: compare direct-vector system-icon sharpness and the system exit fade → original opening → header. The OS system splash remains mandatory. Check tap/Back skip, reduced motion, window insets, rotation, background/resume and a slow initial data load. Android 24–30 retain the ordinary launch background.

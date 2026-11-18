@@ -13,11 +13,11 @@ test('React Native rejects the previous mixed native-opacity / JS-font graph at 
  style.__detach();
 });
 function renderOpening({reduced=false}={}){
- const effects=[],animations=[],graphs=[],values=[],timers=[];let state=0,finished=0;
+ const effects=[],animations=[],graphs=[],values=[],timers=[],stateWrites=[];let state=0,finished=0;
  // Run the actual component at the held+ready handoff, with only hooks/platform views
  // replaced. Animated Value/Style/Animation are the pinned React Native classes.
  const element=(type,props,...children)=>({type,props:{...props,children:children.length?children:props?.children}});
- const react={createElement:element,useRef:v=>({current:v}),useState:v=>[state++===0?true:v,noop],useEffect:fn=>effects.push(fn)};
+ const react={createElement:element,useRef:v=>({current:v}),useState:v=>[state++===0?true:v,value=>stateWrites.push(value)],useEffect:fn=>effects.push(fn)};
  const composite=items=>({start:()=>items.forEach(item=>item.start()),stop:()=>items.forEach(item=>item.stop())});
  const Animated={Value:class extends Value{constructor(v){super(v);values.push(this);}},View:'Animated.View',Text:'Animated.Text',delay:()=>({start:noop,stop:noop}),parallel:composite,sequence:composite,timing:(value,config)=>({start:callback=>{
   animations.push({value,config});
@@ -31,7 +31,7 @@ function renderOpening({reduced=false}={}){
  const tree=mod.exports.default({ready:true,anchor:{x:64,y:20,width:97,height:30,fontSize:25,letterSpacing:-1},onFinish:()=>finished++,reduced});
  function attach(node){if(!node||typeof node!=='object')return;if(node.type==='Animated.View'||node.type==='Animated.Text'){const graph=Style.from(flattenStyle(node.props.style));if(graph){graph.__attach();graphs.push(graph);}}const children=node.props?.children;for(const child of Array.isArray(children)?children:[children])attach(child);}
  attach(tree);for(const effect of effects)effect();
- return {animations,values,graphs,tree,get finished(){return finished;}};
+ return {animations,values,graphs,tree,stateWrites,get finished(){return finished;}};
 }
 test('actual Opening keeps the native assembly separate and completes the JS font handoff',()=>{
  const result=renderOpening(),native=result.animations.filter(a=>a.config.useNativeDriver),handoff=result.animations.filter(a=>!a.config.useNativeDriver);
@@ -43,5 +43,13 @@ test('actual Opening keeps the native assembly separate and completes the JS fon
 });
 test('reduced motion finishes Opening without scheduling a font or native animation',()=>{
  const result=renderOpening({reduced:true});assert.equal(result.animations.length,0);assert.ok(result.finished>=1);
+ for(const graph of result.graphs)graph.__detach();
+});
+
+test('opening handoff lands at the measured header and ignores per-frame text layout events',()=>{
+ const result=renderOpening(),word=result.tree.props.children.find(n=>n?.props?.onLayout);
+ assert.ok(word);word.props.onLayout({nativeEvent:{layout:{width:120,height:40}}});assert.equal(result.stateWrites.length,0);
+ const graph=result.graphs.find(g=>g.__getValue().position==='absolute'&&g.__getValue().left!==undefined);
+ const style=graph.__getValue();assert.equal(style.left+style.transform[0].translateX,64);assert.equal(style.top+style.transform[1].translateY,20);
  for(const graph of result.graphs)graph.__detach();
 });

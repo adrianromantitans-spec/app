@@ -19,7 +19,7 @@ android {
   versionCode nativeConfig.versionCode
   versionName nativeConfig.versionName
   resValue 'string','appName','DivZplit'
-  resValue 'color','backgroundColor','#F9F7FD'
+  resValue 'color','backgroundColor','#FAF8FD'
  }
  sourceSets { main { res.srcDirs += ['../../../android/app/src/main/res']; java.srcDirs += [layout.buildDirectory.dir('generated/push').get().asFile] } }
  signingConfigs { if(signingReady){upload {storeFile file(signingValues.DIVZPLIT_UPLOAD_STORE_FILE);storePassword signingValues.DIVZPLIT_UPLOAD_STORE_PASSWORD;keyAlias signingValues.DIVZPLIT_UPLOAD_KEY_ALIAS;keyPassword signingValues.DIVZPLIT_UPLOAD_KEY_PASSWORD}} }

@@ -3,6 +3,8 @@ import {nativeCopy} from './collaboration.mjs';
 import {featureCopy} from './features.mjs';
 
 export const nativeCopyExtra={
+ "{0} te debe":{"en":"{0} owes you","ro":"{0} îți datorează"},
+ "Debes a {0}":{"en":"You owe {0}","ro":"Ai de plătit către {0}"},
  "Actualiza el grupo.": {
   "en": "Refresh the group.",
   "ro": "Actualizează grupul."
