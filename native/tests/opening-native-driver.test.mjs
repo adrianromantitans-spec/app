@@ -27,7 +27,7 @@ function renderOpening({reduced=false}={}){
  },stop:noop})};
  const platform={Animated,Easing:{bezier:()=>v=>v},Pressable:'Pressable',Text:'Text',View:'View',StyleSheet:{absoluteFill:{}},useWindowDimensions:()=>({width:393,height:852})};
  const source=readFileSync(new URL('../src/Opening.js',import.meta.url),'utf8'),compiled=babel.transformSync(source,{filename:'Opening.js',babelrc:false,configFile:false,presets:[preset]}).code;
- const mod={exports:{}},localRequire=name=>name.startsWith('@babel/runtime/')?require(name):name==='react'?react:name==='react/jsx-runtime'?{jsx:element,jsxs:element}:name==='react-native'?platform:name==='react-native-svg'?{__esModule:true,default:'Svg',Defs:'Defs',RadialGradient:'RadialGradient',Stop:'Stop',Rect:'Rect'}:name==='./design.mjs'?require('../src/design.mjs'):(()=>{throw Error('Unexpected import '+name)})();
+ const mod={exports:{}},localRequire=name=>name.startsWith('@babel/runtime/')?require(name):name==='react'?react:name==='react/jsx-runtime'?{jsx:element,jsxs:element}:name==='react-native'?platform:name==='react-native-svg'?{__esModule:true,default:'Svg',Defs:'Defs',RadialGradient:'RadialGradient',Stop:'Stop',Rect:'Rect'}:name.endsWith('.mjs')?require('../src/'+name.slice(2)):(()=>{throw Error('Unexpected import '+name)})();
  new Function('require','module','exports','setTimeout','clearTimeout',compiled)(localRequire,mod,mod.exports,fn=>{timers.push(fn);return timers.length;},noop);
  const tree=mod.exports.default({ready:true,anchor:{x:64,y:20,width:97,height:30,fontSize:25,letterSpacing:-1},onFinish:()=>finished++,reduced});
  function attach(node){if(!node||typeof node!=='object')return;if(node.type==='Animated.View'||node.type==='Animated.Text'){const graph=Style.from(flattenStyle(node.props.style));if(graph){graph.__attach();graphs.push(graph);}}const children=node.props?.children;for(const child of Array.isArray(children)?children:[children])attach(child);}
@@ -37,7 +37,7 @@ function renderOpening({reduced=false}={}){
 test('actual Opening runs assembly, curtain and complete flight on the native driver with fixed glyph metrics',()=>{
  const result=renderOpening(),handoff=result.animations.find(a=>a.config.duration===referenceIntro.flight);
  assert.ok(result.animations.length>0);assert.ok(result.animations.every(a=>a.config.useNativeDriver&&a.value.__isNative));
- assert.ok(handoff);assert.equal(handoff.value.__getValue(),1);assert.equal(result.finished,1);
+ assert.equal(result.animations.filter(a=>a.config.duration===referenceIntro.z).length,1);assert.ok(result.animations.every(a=>a.config.isInteraction===false));assert.ok(handoff);assert.equal(handoff.value.__getValue(),1);assert.equal(result.finished,1);
  for(const graph of result.graphs)if(graph.__isNative)assert.ok(!Object.keys(graph.__getValue()).some(k=>['fontSize','lineHeight','letterSpacing'].includes(k)),'Native style graph must never include font metrics');
  result.tree.props.onPress();assert.equal(result.finished,2);
  for(const graph of result.graphs)graph.__detach();
