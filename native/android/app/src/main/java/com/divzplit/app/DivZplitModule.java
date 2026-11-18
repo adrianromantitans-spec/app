@@ -59,6 +59,20 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
   Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
   activity.runOnUiThread(()->{try{new CustomTabsIntent.Builder().build().launchUrl(activity,uri);reply.resolve(true);}catch(Exception error){reply.reject("BROWSER","No secure browser available");}});
  }
+ @ReactMethod public void shareWhatsApp(String message,Promise reply){
+  if(message==null||message.trim().isEmpty()||message.length()>4000){reply.reject("SHARE","Invalid invitation message");return;}
+  Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
+  activity.runOnUiThread(()->{try{
+   // User-triggered compose only: never select a recipient or send automatically.
+   Intent send=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,message);
+   try{activity.startActivity(send.setPackage("com.whatsapp"));reply.resolve("whatsapp");return;}
+   catch(android.content.ActivityNotFoundException missing){
+    try{activity.startActivity(send.setPackage("com.whatsapp.w4b"));reply.resolve("whatsapp-business");return;}
+    catch(android.content.ActivityNotFoundException missingBusiness){/* Keep the existing secure-browser fallback. */}
+   }
+   new CustomTabsIntent.Builder().build().launchUrl(activity,Uri.parse("https://wa.me/?text="+Uri.encode(message)));reply.resolve("browser");
+  }catch(Exception error){reply.reject("SHARE","Could not open WhatsApp. Copy the invitation link instead.");}});
+ }
  @ReactMethod public void pickChoice(String title,ReadableArray values,ReadableArray labels,int selected,Promise reply){
   Activity activity=context.getCurrentActivity();if(activity==null){reply.resolve(null);return;}
   try{if(values.size()<1||values.size()>200||values.size()!=labels.size())throw new IllegalArgumentException();String[] items=new String[labels.size()],ids=new String[values.size()];for(int i=0;i<items.length;i++){items[i]=labels.getString(i);ids[i]=values.getString(i);if(items[i]==null||items[i].length()>200||ids[i]==null||ids[i].length()>160)throw new IllegalArgumentException();}

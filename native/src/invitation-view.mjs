@@ -1,0 +1,5 @@
+export function invitationResult(result,groupId,now=Date.now()){
+ if(!result||!/^[a-f0-9]{64}$/.test(result.token||'')||!Number.isFinite(Date.parse(result.expires_at))||Date.parse(result.expires_at)<=now)throw new Error('No se ha podido crear el enlace. Vuelve a intentarlo.');
+ return {groupId,url:'https://divzplit.com/app/#invite='+result.token,expiresAt:result.expires_at};
+}
+export function invitationMessage(c,name,url){return c.ui`Únete a ${name} en DivZplit para compartir los gastos: ${url}`;}

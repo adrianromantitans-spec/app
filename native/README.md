@@ -123,3 +123,11 @@ Candidate `1.2.0-native.11` / code `17` fixes the immediate Google-icon crash: A
 The dock plate, add gradient and selection now use opaque fills. Existing collapse/selection motion remains. This intentionally replaces code 16's translucent web-reference surface at the owner's request. A new UI regression reproduces the original missing-prop ReferenceError, tests welcome/login consent rendering, and verifies the dock interior does not change when the content behind it changes between red and blue.
 
 The guest welcome wordmark is also withheld until the actual viewport measurement is available, so safe-area/window-height correction cannot move an already-visible logo on the first layout frame.
+
+## Group invitations and currency view — code 18
+
+Candidate `1.2.0-native.12` / code `18` restores the mobile-web group selector's thumbnails, type/member details and owner management actions. Invite now opens the same explanation/generation flow instead of generating and copying immediately. A generated link is reused by Copy and WhatsApp; expiry/20-use/replacement notices are displayed. The existing server RPC remains authoritative; creation is owner-only and scoped to the current account/group. Quick add and group settings use the same invitation panel.
+
+The Android bridge adds user-triggered WhatsApp text sharing (WhatsApp, then WhatsApp Business, then a secure wa.me fallback). It opens a recipient/compose flow and never sends automatically. No SDK, manifest permission or new backend setup is required.
+
+Settlements/currency presentation now follows the mobile web summary, transfer cards, original-currency reset, localized target selector, converted/original amounts and cross-rate/date/source detail. Existing quote validation, integer conversion, pending reservations and payment confirmation remain authoritative and unchanged. Reload/failed/stale-currency reads are handled in the view; losing the active group closes safely.
