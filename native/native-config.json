@@ -1,7 +1,7 @@
 {
  "packageId":"com.divzplit.app",
- "versionName":"1.2.0-native.6",
- "versionCode":12,
+ "versionName":"1.2.0-native.7",
+ "versionCode":13,
  "status":"implemented-native-candidate-awaiting-device-validation",
  "releaseGates":["physical acceptance of implemented feature coverage against existing website","native opening animation parity","real Android Google/Apple App Links and camera/OCR","real FCM receipt/logout/account switching","60/120 Hz device visual and accessibility checks"]
 }
