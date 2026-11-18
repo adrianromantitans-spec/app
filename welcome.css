@@ -86,3 +86,24 @@
 .receipt-file-button{flex:none;padding:8px 11px;border-radius:9px;background:#f0e8fa;color:#7140b7;font-size:13px;font-weight:650}
 .receipt-file-control [data-receipt-filename]{min-width:0;overflow-wrap:anywhere;font-size:13px;color:#6c607a}
 .receipt-file-control:focus-within{outline:2px solid #8550d3;outline-offset:2px}
+
+/* Keep provider consent concise without changing the shared registration fields. */
+.modal.oauth-consent-dialog{max-width:440px;padding:24px;border-radius:24px}
+.oauth-consent-dialog .modal-heading{margin-bottom:20px;align-items:center;gap:12px}
+.oauth-consent-dialog .modal-heading .eyebrow{display:none}
+.oauth-consent-dialog .modal-heading h2{font-size:24px;line-height:1.25;letter-spacing:-.6px}
+.oauth-consent-dialog .modal-heading>.icon-button{flex:none;width:36px;height:36px}
+.oauth-consent-dialog .registration-legal{display:grid;gap:12px;margin:0}
+.oauth-consent-dialog .field{gap:6px;margin:0;font-size:12px}
+.oauth-consent-dialog .field select{min-height:44px;padding:10px 12px;font-size:14px;border-radius:11px}
+.oauth-consent-dialog .form-note{display:block;margin:0;padding:0;background:none;font-size:11px;line-height:1.65}
+.oauth-consent-dialog .form-note a{display:inline}
+.oauth-consent-dialog .legal-checkbox{min-height:44px;align-items:center;gap:9px;font-size:13px;line-height:1.5}
+.oauth-consent-dialog .legal-checkbox input{width:20px;height:20px;margin:0;flex:none}
+.oauth-consent-dialog .modal-actions{margin-top:18px;padding-top:16px;gap:10px}
+.oauth-consent-dialog .modal-actions .button{min-height:44px;padding:10px 16px;font-size:12px}
+@media(max-width:480px){
+ .modal.oauth-consent-dialog{padding:20px;border-radius:22px}
+ .oauth-consent-dialog .modal-heading h2{font-size:22px}
+ .oauth-consent-dialog .modal-actions .button{flex:1;justify-content:center}
+}

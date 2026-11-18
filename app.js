@@ -701,7 +701,7 @@ function applyLanguage(selection){
 }
 function oauthConsentModal(provider){
  if(!['google','apple'].includes(provider))return;
- openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`);
+ openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`,'','oauth-consent-dialog');
 }
 function minimumAgeModal(){
  openModal(tr('Registro a partir de 16 años'),ui`<p>Debes tener al menos 16 años para registrarte.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>${legalLinks()}`);
