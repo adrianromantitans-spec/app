@@ -1,6 +1,7 @@
 package com.divzplit.app;
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.app.NotificationChannel;
@@ -57,6 +58,12 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
   Uri uri=Uri.parse(url);if(!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null){reply.reject("URL","Invalid secure URL");return;}
   Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
   activity.runOnUiThread(()->{try{new CustomTabsIntent.Builder().build().launchUrl(activity,uri);reply.resolve(true);}catch(Exception error){reply.reject("BROWSER","No secure browser available");}});
+ }
+ @ReactMethod public void pickChoice(String title,ReadableArray values,ReadableArray labels,int selected,Promise reply){
+  Activity activity=context.getCurrentActivity();if(activity==null){reply.resolve(null);return;}
+  try{if(values.size()<1||values.size()>200||values.size()!=labels.size())throw new IllegalArgumentException();String[] items=new String[labels.size()],ids=new String[values.size()];for(int i=0;i<items.length;i++){items[i]=labels.getString(i);ids[i]=values.getString(i);if(items[i]==null||items[i].length()>200||ids[i]==null||ids[i].length()>160)throw new IllegalArgumentException();}
+   activity.runOnUiThread(()->{try{AlertDialog dialog=new AlertDialog.Builder(activity).setTitle(title).setSingleChoiceItems(items,Math.max(0,Math.min(selected,items.length-1)),(view,index)->{reply.resolve(ids[index]);view.dismiss();}).create();dialog.setOnCancelListener(view->reply.resolve(null));dialog.show();}catch(Exception error){reply.reject("CHOICE","No se ha podido abrir el selector.");}});
+  }catch(Exception error){reply.reject("CHOICE","Revisa las opciones del selector.");}
  }
  @ReactMethod public void pickDate(String iso,Promise reply){Activity activity=context.getCurrentActivity();if(activity==null){reply.resolve(null);return;}activity.runOnUiThread(()->{try{
   String[] parts=iso.split("-");DatePickerDialog dialog=new DatePickerDialog(activity,(picker,y,m,d)->reply.resolve(String.format(Locale.ROOT,"%04d-%02d-%02d",y,m+1,d)),Integer.parseInt(parts[0]),Integer.parseInt(parts[1])-1,Integer.parseInt(parts[2]));dialog.setOnCancelListener(v->reply.resolve(null));dialog.show();

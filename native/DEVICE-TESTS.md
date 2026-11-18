@@ -36,3 +36,12 @@ The implementation gaps listed in PRs #11–13 now have native flows. The checkl
 - Test physical 60 Hz and 120 Hz devices and a 16 KB page-size Android device. Static compilation/ELF checks do not establish runtime smoothness or compatibility.
 
 Only after acceptance should the tested native release replace the published wrapper. Record device models, Android/WebView/browser versions used for external authentication, scenario results and any failures. Keep sensitive tokens, receipt images and account data out of public issue reports.
+
+## Design restoration acceptance (code 11)
+
+- Upgrade from code 10 through the same Google Play test track; verify session and groups remain intact.
+- Compare with the current mobile website: purple Z/period, welcome scene, login/Google entry, compact home, photo-covered plans, expense detail/editor, activity, account, tasks, polls and shopping.
+- Check the system splash → unchanged-timing native opening port → header handoff on cold and warm launch, reduced motion, tap-to-skip and Back. Compare motion with the original website; browser previews are not Android acceptance.
+- Open and cancel group/currency/payer/split/assignee choice dialogs. Change a selection and verify the form reflects it.
+- Check long group/member names, ES/EN/RO, 320–430 dp widths, large system text, keyboard input and system navigation bars. Verify sheets and the floating dock remain usable.
+- In tasks, tap the assignee/avatar for edit/reminder/delete actions; verify owner/creator permissions still apply. Test shop checkboxes and existing checkout confirmation.
