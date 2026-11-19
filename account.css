@@ -22,3 +22,8 @@
 .oauth-verification:empty { display:none; }
 .oauth-verification { margin-top:12px; }
 .oauth-turnstile { display:flex;justify-content:center; }
+.auth-captcha-dialog{width:calc(100% - 32px);max-width:360px;padding:24px;border:1px solid #eadcf8;border-radius:24px;background:#fcfaff;color:#513b66;font-family:inherit;text-align:center;box-shadow:0 20px 80px #29133d33}
+.auth-captcha-dialog::backdrop{background:#25123566}
+.auth-captcha-dialog h2{margin:0 0 20px;font-size:20px}
+.auth-captcha-dialog>div{display:flex;justify-content:center;min-height:140px}
+.auth-captcha-dialog button{margin-top:20px}

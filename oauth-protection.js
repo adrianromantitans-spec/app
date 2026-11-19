@@ -19,7 +19,7 @@ export function loadTurnstile({document=globalThis.document,window=globalThis.wi
  }).catch(error=>{loading=null;throw error;});
  return loading;
 }
-export async function turnstileToken({host,siteKey,challenge,language,signal,load=loadTurnstile}){
+export async function turnstileToken({host,siteKey,challenge,language,signal,action='google_oauth',load=loadTurnstile}){
  if(signal?.aborted)throw abortError();
  const api=await new Promise((resolve,reject)=>{
   const cancel=()=>{signal?.removeEventListener('abort',cancel);reject(abortError());};signal?.addEventListener('abort',cancel,{once:true});
@@ -30,7 +30,7 @@ export async function turnstileToken({host,siteKey,challenge,language,signal,loa
   const finish=(error,token)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);if(widget!==undefined)api.remove(widget);host.replaceChildren();error?reject(error):resolve(token);};
   const cancel=()=>finish(abortError());const timer=setTimeout(()=>finish(Error('Widget timed out')),120000);
   signal?.addEventListener('abort',cancel,{once:true});
-  try{widget=api.render(host,{sitekey:siteKey,action:'google_oauth',cData:challenge,language:['es','en','ro'].includes(language)?language:'en',theme:'light',size:'compact',appearance:'interaction-only','response-field':false,
+  try{widget=api.render(host,{sitekey:siteKey,action,cData:challenge,language:['es','en','ro'].includes(language)?language:'en',theme:'light',size:'compact',appearance:'interaction-only','response-field':false,
    callback:token=>finish(null,token),'error-callback':()=>{finish(Error('Challenge failed'));return true;},'expired-callback':()=>finish(Error('Challenge expired')),'timeout-callback':()=>finish(Error('Challenge timed out'))});
    // Test adapters or a cached widget may complete synchronously.
    if(settled&&widget!==undefined)api.remove(widget);

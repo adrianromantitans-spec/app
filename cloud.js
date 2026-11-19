@@ -2,6 +2,7 @@ import {legalMetadata} from './legal.js?v=signup-locale-2';
 import {currencyOf} from './model.js?v=signup-locale-2';
 import {tr,language} from './i18n.js?v=signup-locale-2';
 import {receiptPath} from './extras.js?v=signup-locale-2';
+import {captchaText} from './auth-captcha-copy.js';
 // Small Supabase REST client: no third-party scripts or privileged browser keys.
 export function validateConfig(config) {
   if (!config?.url && !config?.publishableKey) return null;
@@ -32,6 +33,7 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status, auth=false) {
   const code = error?.error_code || error?.code;
+  if(code==='captcha_failed')return captchaText('rejected',language);
   if(typeof code==='string'&&code.startsWith('broker_'))return tr('No se ha podido completar el acceso con Google o Apple. Vuelve a intentarlo.');
   if(code==='NEXO_SHOPPING_REMINDER_WAIT')return tr('Espera 15 minutos entre recordatorios de compra del grupo.');
   if(code==='NEXO_SHOPPING_EMPTY')return tr('No quedan productos pendientes por comprar.');
@@ -85,11 +87,12 @@ export function mapGroup(document, viewerId, toRemote=false) {
 }
 
 export class Cloud {
-  constructor(config, {fetcher=globalThis.fetch, storage=browserStorage('localStorage'), temporaryStorage=browserStorage('sessionStorage')}={}) {
+  constructor(config, {fetcher=globalThis.fetch, storage=browserStorage('localStorage'), temporaryStorage=browserStorage('sessionStorage'),captcha=null}={}) {
     this.config=validateConfig(config); this.fetcher=fetcher.bind(globalThis); this.storage=storage;
     this.temporaryStorage=temporaryStorage;
     this.session=null; this.user=null; this.refreshing=null;
     this.googleBrokerEnabled=config?.googleBroker?.enabled===true;
+    this.captcha=captcha;
     this.storageKey=this.config ? `nexo-session-v1:${new URL(this.config.url).host}` : '';
   }
   get enabled() { return !!this.config; }
@@ -119,6 +122,16 @@ export class Cloud {
         await this.refresh(); return this.request(path,{method,body,authenticated,retry:false});
       }
       let code=result?.error_code || result?.code;
+      // A missing CAPTCHA is a rejected request, not a lost/ambiguous signup.
+      // Retry only this explicit Auth rejection, once, with a fresh proof. Never
+      // retry timeouts/network failures or loop on an invalid/consumed token.
+      const endpoint=path.split('?')[0];
+      const captchaEndpoint=['/auth/v1/signup','/auth/v1/recover','/auth/v1/resend'].includes(endpoint)||(endpoint==='/auth/v1/token'&&new URLSearchParams(path.split('?')[1]).get('grant_type')==='password');
+      if(code==='captcha_failed'&&method==='POST'&&!authenticated&&captchaEndpoint&&!body?.gotrue_meta_security?.captcha_token&&typeof this.captcha==='function'){
+        let token;try{token=await this.captcha();}catch(error){const cancelled=error?.code==='CAPTCHA_CANCELLED',failed=error?.code==='CAPTCHA_FAILED';throw new CloudError(captchaText(cancelled?'cancelled':failed?'rejected':'unavailable',language),cancelled?'captcha_cancelled':failed?'captcha_failed':'captcha_unavailable',response.status);}
+        if(typeof token!=='string'||!token||token.length>2048)throw new CloudError(captchaText('unavailable',language),'captcha_unavailable',response.status);
+        return this.request(path,{method,body:{...body,gotrue_meta_security:{captcha_token:token}},authenticated,retry,timeoutMs});
+      }
       // PostgreSQL custom errors use P0001; the stable message contains our code.
       if (result?.message?.startsWith('NEXO_')) code=result.message;
       if (authenticated && (response.status===401 || (response.status===403 && path==='/auth/v1/user'))) {this.persistSession(null);this.user=null;}

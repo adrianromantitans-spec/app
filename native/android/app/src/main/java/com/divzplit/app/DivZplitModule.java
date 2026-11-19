@@ -33,6 +33,7 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
  private final EncryptedState state;
  private final ExecutorService io=Executors.newSingleThreadExecutor();
  private Promise savePromise;private byte[] pendingExport;
+ private AuthCaptchaDialog authChallenge;
  DivZplitModule(ReactApplicationContext context){
   super(context);this.context=context;state=new EncryptedState(context);NativePush.channel(context);
   context.addActivityEventListener(new BaseActivityEventListener(){@Override public void onActivityResult(Activity activity,int request,int result,Intent data){
@@ -55,6 +56,10 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
  @ReactMethod public void persist(String json,Promise reply){io.execute(()->{try{new JSONObject(json);state.write(json);reply.resolve(true);}catch(Exception error){reply.reject("STORAGE","Could not save session");}});}
  @ReactMethod(isBlockingSynchronousMethod=true) public String randomBase64(int size){if(size<1||size>65536)throw new IllegalArgumentException();byte[] bytes=new byte[size];new SecureRandom().nextBytes(bytes);return Base64.encodeToString(bytes,Base64.NO_WRAP);}
  @ReactMethod public void sha256(String encoded,Promise reply){try{reply.resolve(Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(Base64.decode(encoded,Base64.NO_WRAP)),Base64.NO_WRAP));}catch(Exception error){reply.reject("CRYPTO","Could not create secure sign-in");}}
+ @ReactMethod public void authCaptcha(String language,Promise reply){
+  Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("CAPTCHA_FAILED","Open DivZplit first");return;}
+  activity.runOnUiThread(()->{if(authChallenge!=null){reply.reject("CAPTCHA_FAILED","Verification already open");return;}try{authChallenge=new AuthCaptchaDialog(activity,language,reply,()->authChallenge=null);}catch(Exception error){authChallenge=null;reply.reject("CAPTCHA_FAILED","Could not open verification");}});
+ }
  @ReactMethod public void external(String url,Promise reply){
   Uri uri=Uri.parse(url);if(!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null){reply.reject("URL","Invalid secure URL");return;}
   Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
@@ -133,5 +138,5 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
  @ReactMethod public void pushBind(String user,Promise reply){if(!DivZplitMessagingService.uuid(user)||!"granted".equals(permission())){reply.reject("PUSH","Invalid account");return;}NativePush.prefs(context).edit().putString("user",user).putBoolean("enabled",true).putBoolean("nativeSessionReady",true).apply();reply.resolve(true);}
  @ReactMethod public void pushClear(Promise reply){NativePush.prefs(context).edit().remove("user").putBoolean("enabled",false).putBoolean("nativeSessionReady",false).apply();((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE)).cancelAll();FirebaseMessaging.getInstance().setAutoInitEnabled(false);FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(task->{NativePush.prefs(context).edit().remove("token").apply();reply.resolve(true);});}
  @ReactMethod public void notificationSettings(Promise reply){Intent intent=Build.VERSION.SDK_INT>=26?new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.getPackageName()):new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+context.getPackageName()));intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);context.startActivity(intent);reply.resolve(true);}
- @Override public void invalidate(){if(savePromise!=null)savePromise.reject("CLOSED","Export interrupted");savePromise=null;pendingExport=null;io.shutdown();super.invalidate();}
+ @Override public void invalidate(){if(authChallenge!=null)new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{if(authChallenge!=null)authChallenge.cancel();});if(savePromise!=null)savePromise.reject("CLOSED","Export interrupted");savePromise=null;pendingExport=null;io.shutdown();super.invalidate();}
 }

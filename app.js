@@ -11,12 +11,13 @@ import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader
 import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=signup-locale-2';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=signup-locale-2';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=signup-locale-2';
-import {Cloud} from './cloud.js?v=google-broker-1';
+import {Cloud} from './cloud.js?v=auth-captcha-1';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=signup-locale-2';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=signup-locale-2';
 import {NotificationCentre} from './notifications.js?v=signup-locale-2';
 import {cloudConfig} from './config.js';
-import {protectedGoogleURL} from './oauth-protection.js?v=google-broker-1';
+import {protectedGoogleURL} from './oauth-protection.js?v=auth-captcha-1';
+import {browserAuthCaptcha} from './auth-captcha.js?v=auth-captcha-1';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=signup-locale-2';
 
 import {languageSelection} from './language.js?v=language-78';
@@ -29,7 +30,7 @@ const authReturnURL=new URL('./',import.meta.url).href;
 
 let cloud;
 let configError='';
-try {cloud=new Cloud(cloudConfig);} catch (error) {configError=error.message;cloud=new Cloud({});}
+try {cloud=new Cloud(cloudConfig,{captcha:()=>browserAuthCaptcha({siteKey:cloudConfig.oauthProtection?.siteKey,language})});} catch (error) {configError=error.message;cloud=new Cloud({});}
 const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>state.groups,closeModal,canOfferOnboarding:()=>!!accountUser&&!authLoading&&!remoteBusy&&!brandIntroActive&&!pendingInvite&&!modalRoot.firstElementChild,openGroup:async(id,kind)=>{
   if(!state.groups.some(g=>g.id===id))await loadSharedGroups();
   if(!state.groups.some(g=>g.id===id))throw new Error(tr('No tienes acceso a este grupo.'));
