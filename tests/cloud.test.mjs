@@ -355,3 +355,33 @@ test('an incomplete verification response cannot create a recovery session',asyn
   await assert.rejects(()=>c.verifyRecoveryCode('ana@example.test','123456'));assert.equal(c.recovering,false);assert.equal(c.session,null);
  }
 });
+
+test('a fresh guest launch makes no Auth or group request',async()=>{
+ let calls=0;const c=new Cloud(config,{storage:storage(),fetcher:async()=>{calls++;throw Error('Unexpected request');}});
+ assert.equal(await c.restore(),null);assert.equal(calls,0);assert.equal(c.user,null);
+});
+test('rejected cached Auth sessions return a clean signed-out launch and are not retried on reopening',async()=>{
+ for(const status of [401,403]){
+  let calls=0;const store=storage(),c=new Cloud(config,{storage:store,fetcher:async url=>{calls++;assert.ok(url.includes('/auth/v1/'));return response({error_code:'user_banned'},status);}});
+  c.persistSession(session());assert.equal(await c.restore(),null);assert.equal(c.session,null);assert.equal(c.user,null);assert.equal(store.getItem(c.storageKey),null);
+  const after=calls;assert.equal(await c.restore(),null);assert.equal(calls,after);
+ }
+ for(const status of [400,401,403]){
+  let calls=0;const c=new Cloud(config,{storage:storage(),fetcher:async url=>{calls++;assert.ok(url.includes('grant_type=refresh_token'));return response({error_code:'refresh_token_not_found'},status);}});
+  c.persistSession({...session(),expires_at:0});assert.equal(await c.restore(),null);assert.equal(c.session,null);assert.equal(calls,1);
+ }
+});
+test('temporary Auth failures keep saved credentials for retry and do not mention groups',async()=>{
+ for(const fail of ['network',500]){
+  const c=new Cloud(config,{storage:storage(),fetcher:async()=>{if(fail==='network')throw Error('Offline');return response({message:'private server details'},500);}});c.persistSession(session());
+  await assert.rejects(c.restore(),error=>!error.message.includes('grupo')&&!error.message.includes('private server'));
+  assert.ok(c.session);assert.ok(c.storage.getItem(c.storageKey));assert.equal(c.user,null);
+ }
+});
+test('Auth 403s are session errors but verification and real group permission errors retain their meanings',async()=>{
+ const c=new Cloud(config,{storage:storage(),fetcher:async()=>response({error_code:'user_banned'},403)});
+ await assert.rejects(c.signIn('alex@example.test','fixture-password'),error=>error.status===403&&error.message.includes('sesión')&&!error.message.includes('grupo'));
+ const member=authed(async()=>response({code:'42501'},403));await assert.rejects(member.listGroups(),error=>error.message==='No tienes acceso a este grupo.');assert.equal(member.user.id,actor);assert.ok(member.session);
+ const otp=new Cloud(config,{storage:storage(),fetcher:async()=>response({error_code:'otp_expired'},403)});
+ await assert.rejects(otp.verifyRecoveryCode('alex@example.test','123456'),error=>error.code==='otp_expired'&&error.message.includes('código'));
+});
