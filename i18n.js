@@ -1,4 +1,4 @@
-import {translations} from './translations.js?v=native-push-1';
+import {translations} from './translations.js?v=signup-code-1';
 
 export {detectLanguage} from './language.js?v=language-78';
 import {detectLanguage,languagePreferences,rememberLanguage,supportedLanguages} from './language.js?v=language-78';

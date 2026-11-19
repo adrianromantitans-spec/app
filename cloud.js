@@ -219,6 +219,23 @@ export class Cloud {
     try{this.storage?.removeItem(this.storageKey+':recovery-pkce');}catch{/* old links are no longer needed */}
     return this.user;
   }
+  async verifySignupCode(email,token) {
+    const pending=this.pendingSignup;
+    if(this.session||this.user||!pending||typeof email!=='string'||email.trim().toLowerCase()!==pending.email.toLowerCase())throw new CloudError(tr('Vuelve a crear tu cuenta para solicitar un código.'));
+    if(!/^\d{6,10}$/.test(token))throw new CloudError(tr('Introduce el código numérico del correo.'));
+    const result=await this.request('/auth/v1/verify',{method:'POST',body:{email:pending.email,token,type:'signup'},authenticated:false});
+    const session=this.sessionFrom(result),user=result?.user;
+    if(this.pendingSignup!==pending||this.session||this.user||!session||!user?.id||typeof user.email!=='string'||user.email.toLowerCase()!==pending.email.toLowerCase()||!user.email_confirmed_at)throw new CloudError(tr('No se ha podido verificar el código. Solicita uno nuevo.'));
+    this.persistSession(session);this.user=user;this.pendingSignup=null;
+    return user;
+  }
+  async resendSignupCode() {
+    const pending=this.pendingSignup;
+    if(this.session||this.user||!pending)throw new CloudError(tr('Vuelve a crear tu cuenta para solicitar un código.'));
+    if(Date.now()-pending.sentAt<60000)throw new CloudError(tr('Espera un minuto antes de reenviar el código.'),'email_cooldown',429);
+    await this.request('/auth/v1/resend',{method:'POST',body:{type:'signup',email:pending.email},authenticated:false,timeoutMs:45000});
+    if(this.pendingSignup===pending)pending.sentAt=Date.now();
+  }
   async updatePassword(password) {
     if(!this.recovering)throw new CloudError(tr('Verifica primero el código de recuperación.'));
     await this.request('/auth/v1/user',{method:'PUT',body:{password}});
@@ -276,10 +293,12 @@ export class Cloud {
     const legal=acknowledgement?legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,'email'):{};
     const result=await this.request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email,password,data:{display_name:name,notification_intro_pending:true,language,...legal}},authenticated:false,timeoutMs:45000});
     const session=this.sessionFrom(result);
+    this.pendingSignup=session?null:{email:email.trim(),sentAt:Date.now()};
     if (session) {this.persistSession(session);await this.loadUser();}
     return !!session;
   }
   async signOut() {
+    this.pendingSignup=null;
     try{this.temporaryStorage?.removeItem(this.storageKey+':recovery');}catch{/* session cleanup below must still run */}
     try {if (this.session) await this.request('/auth/v1/logout',{method:'POST'});}
     finally {this.persistSession(null);this.user=null;}

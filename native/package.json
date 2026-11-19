@@ -1,6 +1,6 @@
 {
   "name": "divzplit-native",
-  "version": "1.2.0-native.17",
+  "version": "1.2.0-native.18",
   "private": true,
   "scripts": {
     "start": "react-native start",

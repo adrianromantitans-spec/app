@@ -11,7 +11,7 @@ import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader
 import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=language-90';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=language-90';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=language-90';
-import {Cloud} from './cloud.js?v=account-delete-1';
+import {Cloud} from './cloud.js?v=signup-code-1';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=activity-102';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=activity-103';
 import {NotificationCentre} from './notifications.js?v=native-push-1';
@@ -45,6 +45,7 @@ function guestStage(){if(location.hash==='#registro')return 'signup';if(location
 let authMode=location.hash==='#registro'?'signup':'login';
 let authStage=guestStage();
 let recoveryEmail='';
+let signupEmail='';
 let brandIntroShown=false;
 let brandIntroActive=false;
 let markIntroSessionReady=()=>{};
@@ -228,7 +229,8 @@ function render() {
  root.toggleAttribute('aria-busy',authLoading);
  if(authLoading){if(!brandIntroShown)renderWelcome();return;}
  if(cloud.recovering){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');renderRecovery(true);return;}
- if(!accountUser&&!demoMode){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');if(authStage==='recover'){renderRecovery(false);return;}renderWelcome();return;}
+ if(!accountUser&&!demoMode){root.classList.remove('personal-shell');document.body.classList.remove('personal-app');if(authStage==='recover'){renderRecovery(false);return;}
+    if(authStage==='signup-code'){renderSignupCode();return;}renderWelcome();return;}
  root.classList.add('personal-shell');document.body.classList.add('personal-app');
  const helpFocus=page==='help'&&document.activeElement?.matches('[data-help-search]')?{start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd}:null;
  const section=currentSection(),title=workspaceLinks().find(([id])=>id===section)?.[2]||({groups:'Mis grupos',profile:'Cuenta',help:'Centro de ayuda',activity:'Gastos y pagos'}[page])||'Inicio';
@@ -937,9 +939,10 @@ async function onAppChange(event) {
   if(el.matches('[data-group-select]')){state.activeGroup=el.value;await save();render();if(page==='activity'||page==='home'){await loadActivity();render();}}
 }
 document.addEventListener('submit',withSubmitFeedback(async event=>{
-  const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','recovery-code-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);if(event.submitter?.name==='recoveryAction')data.set('recoveryAction',event.submitter.value);
+  const form=event.target;if(!form.closest('#modal-root')&&!['account-form','recovery-form','recovery-code-form','signup-code-form','password-form'].includes(form.id))return;event.preventDefault();if(remoteBusy||authLoading)return;const data=new FormData(form);if(event.submitter?.name==='recoveryAction')data.set('recoveryAction',event.submitter.value);if(event.submitter?.name==='signupAction')data.set('signupAction',event.submitter.value);
   if(await handleDeleteGroupForm(form,data))return;
   if(await handleRecoveryForm(form,data))return;
+  if(await handleSignupCodeForm(form,data))return;
   if(await handlePrivacyForm(form,data))return;
   if(await handleAccountForm(form,data))return;
   try {
@@ -1106,6 +1109,29 @@ async function viewReceipt(id) {
     const img=document.createElement('img');img.className='receipt-photo';img.alt=tr('Ticket de ')+e.title;img.src=url;img.referrerPolicy='no-referrer';img.onerror=()=>{if(container.isConnected)container.querySelector('.receipt-loading').textContent=tr('No se ha podido cargar la foto. Cierra esta ventana y vuelve a intentarlo.');};img.onload=()=>container.querySelector('.receipt-loading')?.remove();container.append(img);
   }catch(error){if(container.isConnected)container.querySelector('.receipt-loading').textContent=error.message;}
 }
+function renderSignupCode() {
+  const form=ui`<form id="signup-code-form"><p class="form-note">Si el correo puede registrarse, recibirás un código. Revisa también spam.</p><p class="form-note">${esc(signupEmail)}</p><label class="field">Código del correo<input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" minlength="6" maxlength="10" required></label><p class="form-error" role="alert"></p><p class="form-note" role="status"></p><button class="button primary full-width" type="submit">Verificar código</button><button class="text-button" type="submit" name="signupAction" value="resend" formnovalidate>Reenviar código</button><button class="text-button" type="button" data-action="signup">Cambiar correo</button></form>`;
+  root.innerHTML=welcomePage({stage:'signup',form,social:'',notice:'',signup:true,title:tr('Confirma tu correo'),description:tr('Introduce el código del correo para confirmar tu cuenta y entrar.')});
+  root.inert=brandIntroActive||!!modalRoot.firstElementChild;
+}
+async function handleSignupCodeForm(form,data) {
+  if(form.id!=='signup-code-form')return false;
+  remoteBusy=true;
+  const buttons=[...form.querySelectorAll('button')];buttons.forEach(button=>button.disabled=true);
+  form.querySelector('.form-error').textContent='';form.querySelector('[role=status]').textContent='';
+  try {
+    if(data.get('signupAction')==='resend'){
+      await cloud.resendSignupCode();form.querySelector('[role=status]').textContent=tr('Si el correo puede registrarse, hemos enviado otro código. Revisa también spam.');
+    }else{
+      await cloud.verifySignupCode(signupEmail,String(data.get('code')||'').trim());signupEmail='';
+      await connectAccount();closeModal();render();toast(tr('¡Ya estás dentro! Tus planes tienen su propio espacio.'));
+    }
+  }catch(error){
+    if(accountUser){setSync(tr('Sin conexión · Reintentar'));render();toast(error.message);}
+    else form.querySelector('.form-error').textContent=error.message;
+  }finally{remoteBusy=false;buttons.forEach(button=>button.disabled=false);}
+  return true;
+}
 function renderRecovery(reset) {
   const form=reset?ui`<form id="password-form"><label class="field">Nueva contraseña<input type="password" name="password" autocomplete="new-password" minlength="10" maxlength="128" required></label><label class="field">Repetir contraseña<input type="password" name="confirm" autocomplete="new-password" minlength="10" maxlength="128" required></label><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Guardar contraseña</button></form>`:recoveryEmail?ui`<form id="recovery-code-form"><p class="form-note">Si existe una cuenta con ${esc(recoveryEmail)}, recibirás un código. Revisa también spam.</p><label class="field">Código del correo<input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" minlength="6" maxlength="10" required></label><p class="form-note">Introduce el código aquí para elegir una contraseña nueva.</p><p class="form-error" role="alert"></p><p class="form-note" role="status"></p><button class="button primary full-width" type="submit">Verificar código</button><button class="text-button" type="submit" name="recoveryAction" value="resend" formnovalidate>Reenviar código</button><button class="text-button" type="button" data-action="recover">Cambiar correo</button></form>`:ui`<form id="recovery-form"><label class="field">Correo electrónico<input type="email" name="email" autocomplete="email" required maxlength="254"></label><p class="form-note">Te enviaremos un código para cambiar tu contraseña.</p><p class="form-error" role="alert"></p><button class="button primary full-width" type="submit">Enviar código</button></form>`;
   root.innerHTML=welcomePage({stage:'recover',form,social:'',notice:'',signup:false,title:reset?tr('Elige una contraseña'):tr('Recupera tu cuenta'),description:reset?tr('Una contraseña nueva para volver a tus planes.'):tr('Te ayudamos a volver a entrar.')});
@@ -1206,7 +1232,7 @@ async function handleAccountForm(form,data) {
       const name=data.get('name').trim();if (!name) throw new Error(tr('Escribe tu nombre.'));
       const signedIn=await cloud.signUp(email,password,name,authReturnURL,{accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')});
       if (!signedIn) {
-        openModal(tr('Revisa tu correo'),ui`<div class="privacy-note"><h3>Un paso más para empezar</h3><p>Si el correo puede registrarse, recibirás un enlace para confirmar tu cuenta. Revisa también la carpeta de spam. Si ya tienes cuenta, puedes entrar directamente.</p></div><button class="button primary full-width" data-action="login">Ya he confirmado: entrar</button>`);
+        signupEmail=email;authStage='signup-code';demoMode=false;closeModal();render();
         return true;
       }
     } else await cloud.signIn(email,password);
