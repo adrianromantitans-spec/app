@@ -88,3 +88,34 @@ and Gradle deprecation warnings are separate from this signup fix.
 
 Sources: [Supabase CAPTCHA](https://supabase.com/docs/guides/auth/auth-captcha),
 [Cloudflare mobile/WebView support](https://developers.cloudflare.com/turnstile/get-started/mobile-implementation/).
+
+## Follow-up: real Cloudflare async-loader incompatibility
+
+The .19 client could still fail before showing a challenge. Reproducing against
+the published page with the actual Cloudflare script exposed a second code defect:
+`loadTurnstile()` called `turnstile.ready()` after loading `api.js?render=explicit`
+with `async/defer`. The real API throws:
+
+```text
+[Cloudflare Turnstile] Remove async/defer from the Turnstile api.js script tag before using turnstile.ready()..
+```
+
+The loader now resolves on the script's `load` event after checking `api.render`,
+without calling `ready()`. The earlier fixture's permissive `ready()` implementation
+missed this incompatibility; regression fixtures now throw the same error if it is
+called. Entry/module versions are refreshed for email, Google and the hosted native
+challenge page. No key, Supabase security setting, session logic or native binary
+is changed by this follow-up.
+
+With only the corrected local module substituted on the live origin, the real
+Cloudflare script successfully created its challenge frame; the published original
+failed before creating that frame. The execution environment's proxy then blocked
+a downstream challenge connection (`ERR_TUNNEL_CONNECTION_FAILED`), so this verifies
+real widget initialization, not a completed proof, account creation or email delivery.
+No account/email was created or CAPTCHA security check bypassed during diagnosis.
+
+Deploy this follow-up through the existing website process. Android .19/code 25
+loads this corrected hosted page, so it does not need a new AAB for this loader fix.
+Close/reopen the challenge after deployment. If Android retains the previous page,
+allow the site's cache to revalidate or clear only the app's **cache**, not its data.
+Actual token verification and email signup still require a real-device test.

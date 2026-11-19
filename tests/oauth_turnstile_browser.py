@@ -18,7 +18,7 @@ with sync_playwright() as p:
    c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',body='export const cloudConfig='+json.dumps({'url':'https://nexo-test.supabase.co','publishableKey':'sb_publishable_fixture','oauthProtection':{'enabled':enabled,'siteKey':'0x4AAAAAAGIzOswUgGy61ea9'}})+';'))
    def script(r):
     calls['scripts']+=1
-    r.fulfill(content_type='text/javascript',body="""window.__widget={removed:0};window.turnstile={render(host,options){window.__widget.options=options;host.setAttribute('data-widget-ready','true');"""+("" if mode=='cancel' else "setTimeout(()=>options['expired-callback'](),0);" if mode=='expired' else "setTimeout(()=>options.callback('fictional-widget-token'),0);")+"return 'widget';},remove(){window.__widget.removed++;}};")
+    r.fulfill(content_type='text/javascript',body="""window.__widget={removed:0};window.turnstile={ready(){throw Error('Remove async/defer before using turnstile.ready()');},render(host,options){window.__widget.options=options;host.setAttribute('data-widget-ready','true');"""+("" if mode=='cancel' else "setTimeout(()=>options['expired-callback'](),0);" if mode=='expired' else "setTimeout(()=>options.callback('fictional-widget-token'),0);")+"return 'widget';},remove(){window.__widget.removed++;}};")
    c.route('https://challenges.cloudflare.com/turnstile/v0/api.js?**',script)
    def verify(r):
     calls['preflight']+=1;body=r.request.post_data_json;assert set(body)=={'token','codeChallenge','redirectTo'} and body['token']=='fictional-widget-token';assert body['redirectTo']==BASE.removesuffix('app/')

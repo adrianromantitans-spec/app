@@ -16,8 +16,8 @@ import {historyView,paymentRequestsView} from './activity-ui.js?v=signup-locale-
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=signup-locale-2';
 import {NotificationCentre} from './notifications.js?v=signup-locale-2';
 import {cloudConfig} from './config.js';
-import {protectedGoogleURL} from './oauth-protection.js?v=auth-captcha-1';
-import {browserAuthCaptcha} from './auth-captcha.js?v=auth-captcha-1';
+import {protectedGoogleURL} from './oauth-protection.js?v=turnstile-loader-2';
+import {browserAuthCaptcha} from './auth-captcha.js?v=turnstile-loader-2';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=signup-locale-2';
 
 import {languageSelection} from './language.js?v=language-78';

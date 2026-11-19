@@ -18,7 +18,7 @@ with sync_playwright() as p:
    c.add_init_script('try{localStorage.setItem("divzplit-language",'+json.dumps(lang)+')}catch{}')
    config={'url':'https://nexo-test.supabase.co','publishableKey':'sb_publishable_fixture','oauthProtection':{'enabled':False,'siteKey':'0x4AAAAAAGIzOswUgGy61ea9'},'googleBroker':{'enabled':mode!='legacy'}}
    c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',body='export const cloudConfig='+json.dumps(config)+';'))
-   c.route('https://challenges.cloudflare.com/turnstile/v0/api.js?**',lambda r:r.fulfill(content_type='text/javascript',body="window.turnstile={render(host,options){host.setAttribute('data-widget-ready','true');setTimeout(()=>options.callback('fictional-widget-token'),0);return 'fixture';},remove(){}};"))
+   c.route('https://challenges.cloudflare.com/turnstile/v0/api.js?**',lambda r:r.fulfill(content_type='text/javascript',body="window.turnstile={ready(){throw Error('Remove async/defer before using turnstile.ready()');},render(host,options){host.setAttribute('data-widget-ready','true');setTimeout(()=>options.callback('fictional-widget-token'),0);return 'fixture';},remove(){}};"))
    def begin(r):
     data=r.request.post_data_json;calls['begin'].append(data)
     assert data['token']=='fictional-widget-token' and data['redirectTo']==ROOT

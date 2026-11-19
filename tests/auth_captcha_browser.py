@@ -20,7 +20,7 @@ with sync_playwright() as p:
     c.add_init_script('try{localStorage.setItem("divzplit-language",'+json.dumps(lang)+')}catch{}')
     c.route('**/config.js',lambda r:r.fulfill(content_type='text/javascript',body='export const cloudConfig='+json.dumps({'url':'https://nexo-test.supabase.co','publishableKey':'sb_publishable_fixture','oauthProtection':{'enabled':False,'siteKey':'0x4AAAAAAGIzOswUgGy61ea9'}})+';'))
     def widget(r):
-     r.fulfill(content_type='text/javascript',body="window.turnstile={render(host,options){if(options.action!=='email_auth')throw Error('Wrong action');host.setAttribute('data-widget-ready','true');"+("" if mode=='cancel' else "setTimeout(()=>options.callback('fictional-captcha-token'),0);")+"return 'fixture';},remove(){}};")
+     r.fulfill(content_type='text/javascript',body="window.turnstile={ready(){throw Error('Remove async/defer before using turnstile.ready()');},render(host,options){if(options.action!=='email_auth')throw Error('Wrong action');host.setAttribute('data-widget-ready','true');"+("" if mode=='cancel' else "setTimeout(()=>options.callback('fictional-captcha-token'),0);")+"return 'fixture';},remove(){}};")
     c.route('https://challenges.cloudflare.com/turnstile/v0/api.js?**',widget)
     def signup(r):
      data=r.request.post_data_json;calls.append(data);assert 'fictional-captcha-token' not in r.request.url
@@ -45,7 +45,7 @@ with sync_playwright() as p:
     print('PASS',device,lang,mode,flush=True);c.close()
  # Hosted CAPTCHA page used inside the Android native dialog.
  for lang in ['es','en','ro']:
-  c=browser.new_context();c.route('https://challenges.cloudflare.com/turnstile/v0/api.js?**',lambda r:r.fulfill(content_type='text/javascript',body="window.turnstile={render(host,options){setTimeout(()=>options.callback('native-proof'),0);return 'fixture';},remove(){}};"))
+  c=browser.new_context();c.route('https://challenges.cloudflare.com/turnstile/v0/api.js?**',lambda r:r.fulfill(content_type='text/javascript',body="window.turnstile={ready(){throw Error('Remove async/defer before using turnstile.ready()');},render(host,options){setTimeout(()=>options.callback('native-proof'),0);return 'fixture';},remove(){}};"))
   page=c.new_page();page.goto(ROOT+'auth-challenge/#nonce='+('A'*43)+'&lang='+lang)
   expect(page.locator('#title')).to_have_text({'es':'Verifica que eres una persona','en':'Verify you are human','ro':'Confirmă că ești o persoană'}[lang])
   page.wait_for_function("() => window.divzplitCaptcha?.status === 'ready'")
