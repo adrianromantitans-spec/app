@@ -4,9 +4,35 @@
 --
 -- The auth user row is kept as an anonymized, banned key so shared ledgers
 -- (payments, shopping authorship, membership) stay valid. Sign-in, email,
--- name, sessions and push data are removed. Groups with no other member are
+-- name, active memberships, sessions and push data are removed. Receipt files
+-- remain pending until removed through the Storage API. Groups with no other member are
 -- deleted. Shared groups keep the person as "Cuenta eliminada".
 begin;
+
+-- Cached JWTs must not recover group access or create a new membership after deletion.
+create or replace function public.nexo_is_member(p_id uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+ select exists(select 1 from public.nexo_members m join auth.users u on u.id=m.user_id
+  where m.group_id=p_id and m.user_id=auth.uid()
+    and coalesce(to_jsonb(u)->'raw_app_meta_data'->>'deleted','false')<>'true');
+$$;
+revoke all on function public.nexo_is_member(uuid) from public,anon;
+grant execute on function public.nexo_is_member(uuid) to authenticated;
+
+create or replace function public.divzplit_reject_deleted_membership() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+ if exists(select 1 from auth.users u where u.id=new.user_id
+   and to_jsonb(u)->'raw_app_meta_data'->>'deleted'='true') then
+   raise exception 'NEXO_FORBIDDEN';
+ end if;
+ return new;
+end;
+$$;
+revoke all on function public.divzplit_reject_deleted_membership() from public,anon,authenticated;
+drop trigger if exists divzplit_reject_deleted_membership on public.nexo_members;
+create trigger divzplit_reject_deleted_membership before insert or update on public.nexo_members
+ for each row execute function public.divzplit_reject_deleted_membership();
 
 create or replace function public.divzplit_delete_account() returns jsonb
 language plpgsql security definer set search_path='' as $$
@@ -16,9 +42,9 @@ declare
   members jsonb;
   successor uuid;
   solo uuid[]:='{}';
-  gid uuid;
   shared_count integer:=0;
   removed_count integer:=0;
+  pending_cleanup integer:=0;
 begin
   if actor is null then raise exception 'NEXO_FORBIDDEN'; end if;
 
@@ -28,7 +54,9 @@ begin
     where exists(select 1 from public.nexo_members m where m.group_id=g.id and m.user_id=actor)
     for update
   loop
-    if not exists(select 1 from public.nexo_members m where m.group_id=rec.id and m.user_id<>actor) then
+    if not exists(select 1 from public.nexo_members m join auth.users u on u.id=m.user_id
+      where m.group_id=rec.id and m.user_id<>actor
+        and coalesce(to_jsonb(u)->'raw_app_meta_data'->>'deleted','false')<>'true') then
       solo:=solo||rec.id;
       continue;
     end if;
@@ -44,8 +72,9 @@ begin
       where id=rec.id;
     if rec.owner_id=actor then
       select m.user_id into successor
-      from public.nexo_members m
+      from public.nexo_members m join auth.users u on u.id=m.user_id
       where m.group_id=rec.id and m.user_id<>actor
+        and coalesce(to_jsonb(u)->'raw_app_meta_data'->>'deleted','false')<>'true'
       order by m.user_id
       limit 1;
       if successor is null then raise exception 'NEXO_DELETE_OWNER'; end if;
@@ -61,16 +90,20 @@ begin
   end if;
   delete from public.nexo_groups where id=any(solo);
   get diagnostics removed_count=row_count;
-  if to_regclass('storage.objects') is not null then
-    foreach gid in array solo loop
-      delete from storage.objects
-      where bucket_id='divzplit-receipts' and name like gid::text||'/%';
-    end loop;
-    if to_regclass('public.nexo_deleted_groups') is not null then
-      update public.nexo_deleted_groups set cleaned_at=clock_timestamp()
-      where owner_id=actor and id=any(solo) and cleaned_at is null;
-    end if;
+  -- Managed Storage rejects direct DELETE; metadata deletion would not remove
+  -- the underlying file either. Keep pending tombstones for Storage API cleanup.
+  if to_regclass('storage.objects') is not null and to_regclass('public.nexo_deleted_groups') is not null then
+    update public.nexo_deleted_groups d set cleaned_at=clock_timestamp()
+    where d.owner_id=actor and d.id=any(solo) and d.cleaned_at is null
+      and not exists(select 1 from storage.objects o where o.bucket_id='divzplit-receipts' and o.name like d.id::text||'/%');
   end if;
+  -- Pending requests are not confirmed payments; close them without editing the ledger.
+  if to_regclass('public.divzplit_payment_requests') is not null then
+    update public.divzplit_payment_requests set status='cancelled',resolved_at=clock_timestamp()
+    where status='pending' and (from_id=actor or to_id=actor);
+  end if;
+  -- Historical document members retain their ledger identifiers, not active access.
+  delete from public.nexo_members where user_id=actor;
 
   if to_regclass('public.divzplit_native_subscriptions') is not null then
     delete from public.divzplit_native_subscriptions where user_id=actor;
@@ -131,7 +164,10 @@ begin
     email_change_token_current=''
   where id=actor;
 
-  return jsonb_build_object('deleted',true,'shared_groups',shared_count,'removed_groups',removed_count);
+  if to_regclass('public.nexo_deleted_groups') is not null then
+    select count(*) into pending_cleanup from public.nexo_deleted_groups where owner_id=actor and cleaned_at is null;
+  end if;
+  return jsonb_build_object('deleted',true,'shared_groups',shared_count,'removed_groups',removed_count,'receipt_cleanup_pending_groups',pending_cleanup);
 end;
 $$;
 

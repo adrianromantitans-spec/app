@@ -47,3 +47,8 @@ test('account deletion calls the rpc and drops the local session',async()=>{
  const rejected=authed(async()=>response({deleted:false}));
  await assert.rejects(()=>rejected.deleteAccount(),/confirmar/);
 });
+
+test('account deletion permission failures retain the session and show account-specific context/code',async()=>{
+ const c=authed(async()=>new Response(JSON.stringify({code:'42501',message:'Direct deletion from storage tables is not allowed.'}),{status:403}));
+ await assert.rejects(()=>c.deleteAccount(),e=>e.status===403&&e.code==='42501'&&e.message.includes('support@divzplit.com')&&e.message.includes('42501')&&!e.message.includes('este grupo'));assert.equal(c.user.id,user.id);assert.ok(c.session);
+});

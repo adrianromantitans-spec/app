@@ -83,11 +83,14 @@ Review these implementation limits before release:
 - Descriptions, history payloads, receipts and other shared free text may still
   identify the person. Review them for a wider erasure request and justify any
   necessary retention; retaining balances does not justify every attachment.
-- The current SQL directly deletes `storage.objects` rows. Supabase requires its
-  Storage API to remove underlying files; deleting metadata alone is insufficient
-  and can orphan files. Implement and verify an authorized Storage API cleanup
-  workflow before claiming receipt-file erasure. Do not mark a cleanup complete
-  merely because the row disappeared.
+- The updated account-deletion SQL does not delete `storage.objects` directly:
+  managed Supabase can reject that statement and roll back the entire account
+  operation. Receipt files for removed solo groups remain queued in
+  `nexo_deleted_groups` with `cleaned_at` NULL; only prefixes with no objects are
+  marked complete. Use an authorized Storage API/dashboard cleanup workflow and
+  verify underlying file removal before claiming file erasure. The RPC reports
+  `receipt_cleanup_pending_groups`; it does not claim those files were erased.
+  See [the deployment/runbook](../ACCOUNT-DELETION-FIX.md).
 - Verify that existing access tokens lose the relevant access within the intended
   window after session revocation. Do not assume deleting refresh tokens instantly
   invalidates every previously issued JWT.
