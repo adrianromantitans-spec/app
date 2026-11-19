@@ -1,3 +1,4 @@
+import {invitationURL,invitationCopy,shareChannels,shareNames,shareColors,sharePaths,shareHref} from './invitation-share.js?v=social-invite-1';
 import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';
 import {startIntroTransition} from './intro-transition.js?v=start-64';
 import {helpCentreView,filterHelp} from './help.js?v=legal-review-20261116';
@@ -899,6 +900,7 @@ async function onAppClick(event) {
     case 'generate-invite':await generateInvite();break;
     case 'recover':recoveryEmail='';authStage='recover';demoMode=false;closeModal();render();break;
     case 'copy-invite':await copyInvite();break;
+    case 'share-invite':await shareInvitation(el.dataset.channel,el.dataset.shareGroup);break;
     case 'revoke-invites':await revokeInvites();break;
     case 'accept-invite':await acceptInvite();break;
     case 'dismiss-invite':clearInvite();render();break;
@@ -1271,9 +1273,24 @@ async function generateInvite() {
   remoteBusy=true;
   try {
     const result=await cloud.invite(group().id);
-    const url=new URL('./',location.href);url.search='';url.hash='invite='+result.token;
-    openModal(tr('Una invitación a buenos momentos'),ui`<label class="field">Enlace para tu grupo<input id="invite-link" readonly value="${esc(url.href)}" aria-label="Enlace de invitación"></label><p class="form-note">Válido hasta el ${esc(new Date(result.expires_at).toLocaleDateString(locale))}. Hasta 20 personas. Los enlaces anteriores ya no funcionan.</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">Cerrar</button><a class="button secondary whatsapp-share" href="https://wa.me/?text=${encodeURIComponent(tr('Únete a ')+group().name+tr(' en DivZplit para compartir los gastos: ')+url.href)}" target="_blank" rel="noopener noreferrer">WhatsApp</a><button class="button primary" data-action="copy-invite">Copiar enlace</button></div>`);
+    const url=new URL(invitationURL(result.token,location.origin));
+    openModal(tr('Una invitación a buenos momentos'),ui`<label class="field">Enlace para tu grupo<input id="invite-link" readonly value="${esc(url.href)}" aria-label="Enlace de invitación"></label><p class="form-note">Válido hasta el ${esc(new Date(result.expires_at).toLocaleDateString(locale))}. Hasta 20 personas. Los enlaces anteriores ya no funcionan.</p>${invitationShareButtons(group().id,invitationCopy(language,group().name,url.href),url.href)}<div class="modal-actions"><button class="button secondary" data-action="close-modal">Cerrar</button><button class="button primary" data-action="copy-invite">Copiar enlace</button></div>`);
   } finally {remoteBusy=false;}
+}
+function invitationShareButtons(groupId,message,url){
+ return '<div style="display:flex;flex-wrap:wrap;gap:12px;margin:16px 0">'+shareChannels.map(channel=>{
+  const href=shareHref(channel,message,url),attrs=href?'href="'+esc(href)+'" target="_blank" rel="noopener noreferrer"':'type="button" data-action="share-invite" data-channel="'+channel+'" data-share-group="'+esc(groupId)+'"';
+  const tag=href?'a':'button';return '<'+tag+' class="button secondary" '+attrs+' aria-label="'+shareNames[channel]+'" title="'+shareNames[channel]+'" style="width:52px;height:52px;min-width:52px;padding:12px;border-radius:50%"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="'+shareColors[channel]+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+sharePaths[channel]+'"/></svg></'+tag+'>';
+ }).join('')+'</div>';
+}
+async function shareInvitation(channel,groupId){
+ if(!['instagram','snapchat'].includes(channel)||group()?.id!==groupId||!canManage())return;
+ const url=document.querySelector('#invite-link')?.value;if(!url)return;
+ const message=invitationCopy(language,group().name,url);let copied=false;
+ try{await navigator.clipboard.writeText(message);copied=true;}catch{/* Sharing remains available when clipboard access is denied. */}
+ if(copied)toast(tr('Mensaje copiado. Si la app no acepta texto, pégalo en un chat.'));
+ if(navigator.share){try{await navigator.share({title:'DivZplit',text:message});}catch(error){if(error.name!=='AbortError'&&!copied)toast(tr('No se ha podido compartir. Copia el enlace de invitación.'));}}
+ else if(!copied)toast(tr('No se ha podido compartir. Copia el enlace de invitación.'));
 }
 async function copyInvite() {
   const input=document.querySelector('#invite-link');if(!input)return;

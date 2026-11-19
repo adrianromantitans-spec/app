@@ -3,6 +3,8 @@ import {nativeCopy} from './collaboration.mjs';
 import {featureCopy} from './features.mjs';
 
 export const nativeCopyExtra={
+ "Mensaje copiado. Si la app no acepta texto, pégalo en un chat.":{en:"Message copied. If the app does not accept text, paste it into a chat.",ro:"Mesaj copiat. Dacă aplicația nu acceptă text, lipește-l într-un chat."},
+ "No se ha podido compartir. Copia el enlace de invitación.":{en:"Could not share. Copy the invitation link instead.",ro:"Nu s-a putut distribui. Copiază linkul de invitație."},
  "Moneda original":{en:"Original currency",ro:"Moneda originală"},
  "No se ha podido abrir WhatsApp. Copia el enlace de invitación.":{en:"Could not open WhatsApp. Copy the invitation link instead.",ro:"WhatsApp nu a putut fi deschis. Copiază linkul de invitație."},
 

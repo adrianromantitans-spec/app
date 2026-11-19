@@ -73,6 +73,19 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
    new CustomTabsIntent.Builder().build().launchUrl(activity,Uri.parse("https://wa.me/?text="+Uri.encode(message)));reply.resolve("browser");
   }catch(Exception error){reply.reject("SHARE","Could not open WhatsApp. Copy the invitation link instead.");}});
  }
+ @ReactMethod public void shareInvitation(String channel,String message,Promise reply){
+  if(message==null||message.trim().isEmpty()||message.length()>4000||!("telegram".equals(channel)||"instagram".equals(channel)||"snapchat".equals(channel))){reply.reject("SHARE","Invalid invitation message");return;}
+  Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
+  activity.runOnUiThread(()->{try{
+   Intent send=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,message);
+   String[] packages="telegram".equals(channel)?new String[]{"org.telegram.messenger","org.thunderdog.challegram"}:new String[]{"instagram".equals(channel)?"com.instagram.android":"com.snapchat.android"};
+   boolean manualPaste=!"telegram".equals(channel);
+   if(manualPaste)((ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("DivZplit",message));
+   for(String target:packages){try{activity.startActivity(new Intent(send).setPackage(target));reply.resolve(manualPaste?"clipboard-app":"app");return;}catch(android.content.ActivityNotFoundException missing){/* Unsupported text target: use Android's chooser. */}}
+   ((ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("DivZplit",message));
+   activity.startActivity(Intent.createChooser(send,null));reply.resolve("chooser");
+  }catch(Exception error){reply.reject("SHARE","No se ha podido compartir. Copia el enlace de invitación.");}});
+ }
  @ReactMethod public void pickChoice(String title,ReadableArray values,ReadableArray labels,int selected,Promise reply){
   Activity activity=context.getCurrentActivity();if(activity==null){reply.resolve(null);return;}
   try{if(values.size()<1||values.size()>200||values.size()!=labels.size())throw new IllegalArgumentException();String[] items=new String[labels.size()],ids=new String[values.size()];for(int i=0;i<items.length;i++){items[i]=labels.getString(i);ids[i]=values.getString(i);if(items[i]==null||items[i].length()>200||ids[i]==null||ids[i].length()>160)throw new IllegalArgumentException();}

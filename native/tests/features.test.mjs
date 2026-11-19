@@ -130,7 +130,7 @@ test('an in-flight group refresh cannot expose a same-account recovery session',
 test('invite generation is explicit, owner-only and returns the canonical link without copying',async()=>{
  const {c,cloud,g}=fixture();let calls=0,copied=0;c.native.copy=async()=>copied++;cloud.invite=async id=>{assert.equal(id,g.id);calls++;return {token:'a'.repeat(64),expires_at:'2099-01-01T00:00:00Z'};};
  g.remote.ownerId='someone-else';await assert.rejects(c.createInvite(g.id),/creó el grupo/);assert.equal(calls,0);
- g.remote.ownerId='owner';const result=await c.createInvite(g.id);assert.deepEqual(result,{groupId:g.id,url:'https://divzplit.com/app/#invite='+'a'.repeat(64),expiresAt:'2099-01-01T00:00:00Z'});assert.equal(calls,1);assert.equal(copied,0);
+ g.remote.ownerId='owner';const result=await c.createInvite(g.id);assert.deepEqual(result,{groupId:g.id,url:'https://divzplit.com/share/#invite='+'a'.repeat(64),expiresAt:'2099-01-01T00:00:00Z'});assert.equal(calls,1);assert.equal(copied,0);
 });
 test('malformed or expired invitation replies are rejected before exposing a link',async()=>{
  const {c,cloud,g}=fixture();for(const result of [{token:'bad',expires_at:'2099-01-01T00:00:00Z'},{token:'a'.repeat(64),expires_at:'2000-01-01T00:00:00Z'}]){cloud.invite=async()=>result;await assert.rejects(c.createInvite(g.id),/crear el enlace/);assert.equal(c.state.busy,false);assert.equal(c.group.id,g.id);}
