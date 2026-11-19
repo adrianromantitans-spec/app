@@ -9,6 +9,7 @@ const day=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth
 export class NativeController{
  constructor({cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools}){
   Object.assign(this,{cloud,model,home,settlement,i18n,native,platform,extras,receipt,photos,planning,fxTools,activityTools,helpTools});this.listeners=new Set();this.handled=new Set();this.pendingNotice=null;this.receiptUploads=new Map();
+  if(!cloud.captcha)cloud.captcha=()=>{if(typeof native.authCaptcha!=='function')throw Error('CAPTCHA unavailable');return native.authCaptcha(this.i18n.language||'en');};
   this.state={ready:false,busy:false,user:null,...groupLoadState,groups:[],groupId:null,page:'home',error:'',notice:'',notices:[],history:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[],pushEnabled:false,pushReady:false,pushPermission:'default',...structuredClone(featureState)};
  }
  snapshot=()=>this.state;
