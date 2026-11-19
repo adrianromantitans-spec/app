@@ -1,5 +1,5 @@
 import {cloudConfig} from '../config.js';
-import {protectedGoogleURL,protectionCopy} from '../oauth-protection.js?v=google-broker-1';
+import {protectedGoogleURL,protectionCopy} from '../oauth-protection.js?v=turnstile-loader-2';
 const params=new URLSearchParams(location.hash.slice(1));history.replaceState(null,'',location.pathname+location.search);const language=['es','en','ro'].includes(params.get('lang'))?params.get('lang'):'en';
 const copy={es:['Continuar con Google','Reintentar','Cancelar'],en:['Continue with Google','Retry','Cancel'],ro:['Continuă cu Google','Încearcă din nou','Anulează']}[language];
 document.documentElement.lang=language;document.querySelector('#title').textContent=copy[0];document.querySelector('#retry').textContent=copy[1];document.querySelector('#cancel').textContent=copy[2];document.querySelector('#cancel').hidden=false;

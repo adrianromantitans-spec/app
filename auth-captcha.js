@@ -1,4 +1,4 @@
-import {turnstileToken} from './oauth-protection.js?v=auth-captcha-1';
+import {turnstileToken} from './oauth-protection.js?v=turnstile-loader-2';
 import {captchaText} from './auth-captcha-copy.js';
 // Supabase validates this token itself. Do not consume it in a second Siteverify call.
 export async function browserAuthCaptcha({siteKey,language='en'}){

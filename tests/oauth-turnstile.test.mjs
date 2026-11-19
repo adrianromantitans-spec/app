@@ -62,8 +62,12 @@ test('widget cleanup covers success, expired/error callbacks and cancellation wh
  const controller=new AbortController();let render=0,complete;const pending=turnstileToken({host:host(),signal:controller.signal,load:()=>new Promise(resolve=>{complete=resolve;})});await new Promise(r=>setImmediate(r));controller.abort();await assert.rejects(pending,e=>e.name==='AbortError');complete({render(){render++;},remove(){}});await new Promise(r=>setImmediate(r));assert.equal(render,0);
 });
 
-test('the widget loader requests the fixed official script and waits for its ready callback',async()=>{
- let script,ready;const window={},document={createElement:()=>({remove(){}}),head:{append(value){script=value;}}};
+test('async explicit widget loading resolves on script load without calling incompatible ready()',async()=>{
+ let script,calls=0;const window={},document={createElement:()=>({remove(){}}),head:{append(value){script=value;}}};
  const loaded=loadTurnstile({document,window});assert.equal(script.src,'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit');assert.equal(script.referrerPolicy,'no-referrer');
- window.turnstile={render(){},ready:callback=>{ready=callback;}};script.onload();assert.equal(typeof ready,'function');let done=false;loaded.then(()=>done=true);await new Promise(r=>setImmediate(r));assert.equal(done,false);ready();assert.equal(await loaded,window.turnstile);
+ assert.equal(script.async,true);assert.equal(script.defer,true);
+ window.turnstile={render(){},ready(){calls++;throw Error('[Cloudflare Turnstile] Remove async/defer from the Turnstile api.js script tag before using turnstile.ready()..');}};
+ let done=false;loaded.then(()=>done=true);await new Promise(r=>setImmediate(r));assert.equal(done,false);
+ script.onload();assert.equal(await loaded,window.turnstile);assert.equal(calls,0);
+ assert.equal(await loadTurnstile({document,window}),window.turnstile);assert.equal(calls,0);
 });

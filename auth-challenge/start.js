@@ -1,5 +1,5 @@
 import {cloudConfig} from '../config.js';
-import {turnstileToken} from '../oauth-protection.js?v=auth-captcha-1';
+import {turnstileToken} from '../oauth-protection.js?v=turnstile-loader-2';
 import {captchaText} from '../auth-captcha-copy.js';
 const params=new URLSearchParams(location.hash.slice(1));history.replaceState(null,'',location.pathname);
 const nonce=params.get('nonce'),language=['es','en','ro'].includes(params.get('lang'))?params.get('lang'):'en';

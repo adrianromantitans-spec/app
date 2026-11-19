@@ -14,7 +14,9 @@ export function loadTurnstile({document=globalThis.document,window=globalThis.wi
  loading=new Promise((resolve,reject)=>{
   const script=document.createElement('script');script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';script.async=true;script.defer=true;script.referrerPolicy='no-referrer';
   const timer=setTimeout(()=>{script.remove();reject(Error('Widget unavailable'));},15000);
-  script.onload=()=>{const api=window.turnstile;if(!api?.render){clearTimeout(timer);script.remove();reject(Error('Widget unavailable'));return;}const ready=()=>{clearTimeout(timer);resolve(api);};try{if(typeof api.ready==='function')api.ready(ready);else ready();}catch{clearTimeout(timer);script.remove();reject(Error('Widget unavailable'));}};
+  // With async/defer + render=explicit, script.onload is the readiness signal.
+  // Cloudflare's real API throws if ready() is called in this loading mode.
+  script.onload=()=>{const api=window.turnstile;clearTimeout(timer);if(!api?.render){script.remove();reject(Error('Widget unavailable'));return;}resolve(api);};
   script.onerror=()=>{clearTimeout(timer);script.remove();reject(Error('Widget unavailable'));};document.head.append(script);
  }).catch(error=>{loading=null;throw error;});
  return loading;
