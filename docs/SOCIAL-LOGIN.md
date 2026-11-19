@@ -1,5 +1,7 @@
 # Inicio de sesión con Google y Apple
 
+Para el análisis actual de Google, Turnstile, sus límites de vinculación con OAuth y la política opcional **sin activar**, consulta [OAUTH-ANTIBOT.md](OAUTH-ANTIBOT.md). La comprobación previa de CAPTCHA no sustituye una restricción del registro en el servidor.
+
 La web de producción es `https://divzplit.com/`. Los botones y el flujo OAuth
 con PKCE ya están implementados; falta configurar los proveedores externos.
 

@@ -17,3 +17,8 @@
 /* Touch browsers can retain :hover after a tap; reserve it for a mouse. */
 @media(hover:hover) and (pointer:fine){.account-row:hover{background:#eee6f666}}
 .account-row:active{background:#eee6f666}
+
+/* Managed challenge appears only when Google preflight is explicitly enabled. */
+.oauth-verification:empty { display:none; }
+.oauth-verification { margin-top:12px; }
+.oauth-turnstile { display:flex;justify-content:center; }

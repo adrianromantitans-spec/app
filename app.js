@@ -16,9 +16,11 @@ import {historyView,paymentRequestsView} from './activity-ui.js?v=signup-locale-
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=signup-locale-2';
 import {NotificationCentre} from './notifications.js?v=signup-locale-2';
 import {cloudConfig} from './config.js';
+import {protectedGoogleURL} from './oauth-protection.js?v=oauth-preflight-1';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=signup-locale-2';
 
 import {languageSelection} from './language.js?v=language-78';
+const oauthProtection=cloudConfig.oauthProtection;
 const languageLabels={es:'Español',en:'English',ro:'Română'};
 let selectedLanguage=languageSelection();
 initializeLanguage();
@@ -39,6 +41,7 @@ const notifications=new NotificationCentre({cloud,openModal,toast,groups:()=>sta
 }});
 let accountUser=null;
 let remoteBusy=false;
+let oauthChallengeAbort=null;
 let authLoading=cloud.enabled;
 let syncMessage='';
 function guestStage(){if(location.hash==='#registro')return 'signup';if(location.hash==='#acceso'||location.hash==='#eliminar-cuenta')return 'login';return 'welcome';}
@@ -536,6 +539,7 @@ window.visualViewport?.addEventListener('resize',syncModalViewport);
 window.visualViewport?.addEventListener('scroll',syncModalViewport);
 window.addEventListener('resize',syncModalViewport);
 function openModal(title, content, subtitle='',kind='') {
+  oauthChallengeAbort?.abort();oauthChallengeAbort=null;
   document.body.classList.remove('workspace-menu-open');
   if (!modalRoot.contains(document.activeElement)) modalOpener = document.activeElement;
   root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');
@@ -546,7 +550,7 @@ function openModal(title, content, subtitle='',kind='') {
   root.inert = true;
   setTimeout(()=>modalRoot.querySelector('input, select, textarea, button')?.focus(),30);
 }
-function closeModal() {document.body.classList.remove('workspace-menu-open');root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','false');root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=brandIntroActive;modalOpener?.focus();}
+function closeModal() {oauthChallengeAbort?.abort();oauthChallengeAbort=null;document.body.classList.remove('workspace-menu-open');root.querySelector('.mobile-menu-trigger')?.setAttribute('aria-expanded','false');root.querySelector('.nav-add')?.setAttribute('aria-expanded','false');const previewForm=modalRoot.querySelector('#expense-form');cancelReceiptReader(previewForm);if(previewForm?.receiptPreviewURL)URL.revokeObjectURL(previewForm.receiptPreviewURL);modalRoot.innerHTML='';document.body.classList.remove('modal-open');root.inert=brandIntroActive;modalOpener?.focus();}
 const actions = label => ui`<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancelar</button><button class="button primary" type="submit">${label}${icon('arrow')}</button></div>`;
 const memberOptions = ({selfFirst=false,selected=null,ownName=false}={}) => {
   const members=selfFirst?[...group().members.filter(m=>m.id==='you'),...group().members.filter(m=>m.id!=='you')]:group().members;
@@ -704,7 +708,7 @@ function applyLanguage(selection){
 }
 function oauthConsentModal(provider){
  if(!['google','apple'].includes(provider))return;
- openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}${actions(tr('Continuar'))}</form>`,'','oauth-consent-dialog');
+ openModal(ui`Continuar con ${provider==='google'?'Google':'Apple'}`,ui`<form id="oauth-consent-form" data-provider="${provider}">${legalFields()}<div class="oauth-verification" data-oauth-verification></div>${actions(tr('Continuar'))}</form>`,'','oauth-consent-dialog');
 }
 function minimumAgeModal(){
  openModal(tr('Registro a partir de 16 años'),ui`<p>Debes tener al menos 16 años para registrarte.</p><button class="button primary full-width" data-action="close-modal">Entendido</button>${legalLinks()}`);
@@ -743,7 +747,7 @@ async function handlePrivacyForm(form,data){
  if(form.id==='oauth-consent-form'){
   if(data.get('ageBand')==='under_16'){minimumAgeModal();return true;}
   try{const acknowledgement={accepted:data.get('acceptTerms')==='on',ageBand:data.get('ageBand')};legalMetadata(acknowledgement.accepted,acknowledgement.ageBand,form.dataset.provider);await beginOAuth(form.dataset.provider,acknowledgement);}
-  catch(error){form.querySelector('.form-error').textContent=error.message;}
+  catch(error){if(error.name!=='AbortError')form.querySelector('.form-error').textContent=error.message;}
   return true;
  }
  return false;
@@ -764,6 +768,7 @@ async function onAppClick(event) {
   const el=event.target.closest('button, a');
   if(!el)return;
   if(brandIntroActive && el.matches('.auth-header .brand')){event.preventDefault();finishBrandIntro();return;}
+  if(oauthChallengeAbort&&el.dataset.action==='close-modal'&&modalRoot.contains(el)){event.preventDefault();closeModal();return;}
   if(remoteBusy || authLoading){event.preventDefault();showBusyInPlace(root,tr('Espera un momento; estamos conectando con tus grupos.'),()=>remoteBusy||authLoading);return;}
   if(el.matches('a[href="#"],a[data-action]'))event.preventDefault();
   if(el.dataset.activityMode){
@@ -1212,13 +1217,21 @@ async function refreshProviders() {
   document.querySelectorAll('.social-providers').forEach(el=>el.innerHTML=socialButtons({providers,error:providerError,enabled:cloud.enabled}));
 }
 async function beginOAuth(provider,acknowledgement) {
-  remoteBusy=true;
+  remoteBusy=true;let record;
+  const controller=new AbortController();oauthChallengeAbort=controller;
   try {
     const latest=await cloud.providers();providers=latest;
     if(!latest[provider]) {await refreshProviders();throw new Error(ui`${provider==='google'?'Google':'Apple'} todavía no está disponible. Puedes usar tu correo.`);}
-    const url=await cloud.oauthURL(provider,authReturnURL,acknowledgement);
+    if(controller.signal.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError'});
+    let url=await cloud.oauthURL(provider,authReturnURL,acknowledgement);
+    record=cloud.temporaryStorage.getItem(cloud.storageKey+':oauth');
+    if(provider==='google')url=await protectedGoogleURL({cloud,authorizeURL:url,settings:oauthProtection,host:modalRoot.querySelector('[data-oauth-verification]'),language,signal:controller.signal});
+    if(controller.signal.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError'});
     location.assign(url);
-  } finally {remoteBusy=false;}
+  }catch(error){
+    if(record&&cloud.temporaryStorage.getItem(cloud.storageKey+':oauth')===record)cloud.temporaryStorage.removeItem(cloud.storageKey+':oauth');
+    throw error;
+  }finally{if(oauthChallengeAbort===controller)oauthChallengeAbort=null;remoteBusy=false;}
 }
 async function handleAccountForm(form,data) {
   if (form.id!=='account-form') return false;
