@@ -11,7 +11,7 @@ import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader
 import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=signup-locale-2';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=signup-locale-2';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=signup-locale-2';
-import {Cloud} from './cloud.js?v=signup-locale-2';
+import {Cloud} from './cloud.js?v=guest-restore-1';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=signup-locale-2';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=signup-locale-2';
 import {NotificationCentre} from './notifications.js?v=signup-locale-2';

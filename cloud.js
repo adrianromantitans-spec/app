@@ -30,7 +30,7 @@ const deletionPermissionMessage=()=>({
 
 function browserStorage(name) {try {return globalThis[name];} catch {return null;}}
 
-function messageFor(error, status) {
+function messageFor(error, status, auth=false) {
   const code = error?.error_code || error?.code;
   if(code==='NEXO_SHOPPING_REMINDER_WAIT')return tr('Espera 15 minutos entre recordatorios de compra del grupo.');
   if(code==='NEXO_SHOPPING_EMPTY')return tr('No quedan productos pendientes por comprar.');
@@ -56,7 +56,7 @@ function messageFor(error, status) {
   if (code === 'NEXO_OWNER') return tr('Solo quien creó el grupo puede modificar sus detalles o gestionar invitaciones.');
   if (code === 'NEXO_DELETE_OWNER') return tr('No se ha podido pasar la administración del grupo. Escribe a soporte antes de eliminar la cuenta.');
   if (code === 'otp_expired' || code === 'otp_disabled' || code === 'invalid_otp') return tr('El código no es válido o ha caducado. Solicita uno nuevo.');
-  if (code === 'NEXO_FORBIDDEN' || status === 403) return tr('No tienes acceso a este grupo.');
+  if (code === 'NEXO_FORBIDDEN' || (status === 403 && !auth)) return tr('No tienes acceso a este grupo.');
   if (code === 'email_address_not_authorized') return tr('El servicio de correo todavía no permite enviar confirmaciones a esta dirección. Hace falta configurar el envío de correos de la aplicación.');
   if (code === 'email_address_invalid') return tr('Revisa tu dirección de correo electrónico.');
   if (code === 'weak_password') return tr('Elige una contraseña más segura, con al menos 10 caracteres, mayúsculas, minúsculas y números.');
@@ -65,7 +65,7 @@ function messageFor(error, status) {
   if (code === 'email_not_confirmed') return tr('Confirma tu correo antes de entrar. Revisa también la carpeta de spam.');
   if (code === 'invalid_credentials') return tr('El correo o la contraseña no son correctos.');
   if (status === 429 || code === 'over_email_send_rate_limit') return tr('Demasiados intentos. Espera un poco antes de volver a intentarlo.');
-  if (status === 401) return tr('Tu sesión ha caducado. Vuelve a entrar en tu cuenta.');
+  if (status === 401 || (status === 403 && auth)) return tr('Tu sesión ha caducado. Vuelve a entrar en tu cuenta.');
   if (code === '23514' || code === '22023') return tr('Revisa los datos. El servidor no ha podido aceptar el cambio.');
   return tr('No se ha podido completar la operación. Comprueba la conexión e inténtalo de nuevo.');
 }
@@ -108,7 +108,7 @@ export class Cloud {
     try { response=await this.fetcher(this.config.url+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal,referrerPolicy:'no-referrer',cache:'no-store'}); }
     catch (error) {
       if(path.startsWith('/auth/v1/signup')) throw new CloudError((timedOut || error?.name==='TimeoutError')?tr('El registro está tardando demasiado. No podemos confirmar si se ha creado la cuenta. Revisa tu correo antes de volver a intentarlo.'):tr('No se ha podido conectar con el servicio de registro. Comprueba tu conexión o prueba con otra red. Si ya recibiste el correo de confirmación, úsalo antes de repetir el registro.'),(timedOut || error?.name==='TimeoutError')?'signup_timeout':'signup_network');
-      throw new CloudError(tr('No hay conexión con tus grupos. No se ha confirmado ningún cambio.'));
+      throw new CloudError(tr(path.startsWith('/auth/v1/')?'No se ha podido completar la operación. Comprueba la conexión e inténtalo de nuevo.':'No hay conexión con tus grupos. No se ha confirmado ningún cambio.'));
     }
     finally {clearTimeout(timer);}
     let result; try {result=await response.json();} catch {result=null;}
@@ -119,9 +119,9 @@ export class Cloud {
       let code=result?.error_code || result?.code;
       // PostgreSQL custom errors use P0001; the stable message contains our code.
       if (result?.message?.startsWith('NEXO_')) code=result.message;
-      if (response.status===401 && authenticated) {this.persistSession(null);this.user=null;}
+      if (authenticated && (response.status===401 || (response.status===403 && path==='/auth/v1/user'))) {this.persistSession(null);this.user=null;}
       if(path==='/rest/v1/rpc/divzplit_delete_account'&&response.status===403)throw new CloudError(deletionPermissionMessage()+(/^[A-Za-z0-9_]{1,64}$/.test(code||'')?' ('+code+')':''),code,response.status);
-      throw new CloudError(messageFor({...result,code},response.status),code,response.status);
+      throw new CloudError(messageFor({...result,code},response.status,path.startsWith('/auth/v1/')),code,response.status);
     }
     return result;
   }
@@ -134,7 +134,15 @@ export class Cloud {
     this.user=null;
     try {this.session=JSON.parse(this.storage.getItem(this.storageKey) || 'null');} catch {this.session=null;}
     if (!this.session?.refresh_token || !this.session?.access_token) {this.persistSession(null);return null;}
-    return this.loadUser();
+    try {return await this.loadUser();}
+    catch(error) {
+      // A rejected saved session is an expected signed-out launch, not a group
+      // permission failure. Keep credentials on transient/network errors so a
+      // later retry can restore the account rather than losing its session.
+      const rejected=error.status===401||error.status===403||(error.status===400&&(!this.session||['bad_jwt','session_not_found','user_not_found'].includes(error.code)));
+      if(rejected&&!this.user){this.persistSession(null);return null;}
+      throw error;
+    }
   }
   async acceptCallback(hash) {
     const params=new URLSearchParams(hash.replace(/^#/,''));
@@ -278,7 +286,7 @@ export class Cloud {
         const session=this.sessionFrom(result);
         if (!session) throw new CloudError(tr('Vuelve a entrar en tu cuenta.'),'session',401);
         this.persistSession(session);
-      } catch (error) {if (error.status===400 || error.status===401) {this.persistSession(null);this.user=null;}throw error;}
+      } catch (error) {if (error.status===400 || error.status===401 || error.status===403) {this.persistSession(null);this.user=null;}throw error;}
       finally {this.refreshing=null;}
     })();
     return this.refreshing;
