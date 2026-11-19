@@ -11,12 +11,12 @@ import {receiptTools,clearReceiptAutofill,cancelReceiptReader,resetReceiptReader
 import {tr,ui,locale,language,languageName,initializeLanguage,setLanguage} from './i18n.js?v=signup-locale-2';
 import {nextOccurrence,materializeRecurring,prepareReceipt} from './extras.js?v=signup-locale-2';
 import {money as formatMoney,currencies,currencyDigits,currencyScale,currencyStep, currencyOf,currencyUnit,canChangeCurrency,checkCurrencyChange, uid, totalSpent, balances, settlements, addExpense, updateExpense, validateExpense, expenseShares, decimalUnits, vote, seed, expenseCategories, categoryEmoji, inferExpenseCategory} from './model.js?v=signup-locale-2';
-import {Cloud} from './cloud.js?v=guest-restore-1';
+import {Cloud} from './cloud.js?v=google-broker-1';
 import {historyView,paymentRequestsView} from './activity-ui.js?v=signup-locale-2';
 import {activityText,activitySummary,activityChartView,activityTimelineView,fitActivityAmount} from './activity-overview.js?v=signup-locale-2';
 import {NotificationCentre} from './notifications.js?v=signup-locale-2';
 import {cloudConfig} from './config.js';
-import {protectedGoogleURL} from './oauth-protection.js?v=oauth-preflight-1';
+import {protectedGoogleURL} from './oauth-protection.js?v=google-broker-1';
 import {welcomePage,socialButtons,brandWordmark} from './auth-ui.js?v=signup-locale-2';
 
 import {languageSelection} from './language.js?v=language-78';
@@ -1225,7 +1225,11 @@ async function beginOAuth(provider,acknowledgement) {
     if(controller.signal.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError'});
     let url=await cloud.oauthURL(provider,authReturnURL,acknowledgement);
     record=cloud.temporaryStorage.getItem(cloud.storageKey+':oauth');
-    if(provider==='google')url=await protectedGoogleURL({cloud,authorizeURL:url,settings:oauthProtection,host:modalRoot.querySelector('[data-oauth-verification]'),language,signal:controller.signal});
+    if(provider==='google'){
+      const broker=cloud.googleBrokerEnabled;
+      if(broker){cloud.markGoogleBroker();record=cloud.temporaryStorage.getItem(cloud.storageKey+':oauth');}
+      url=await protectedGoogleURL({cloud,authorizeURL:url,settings:broker?{...oauthProtection,enabled:true}:oauthProtection,host:modalRoot.querySelector('[data-oauth-verification]'),language,signal:controller.signal,broker,onBrokerFlow:id=>{cloud.bindGoogleBrokerFlow(id);record=cloud.temporaryStorage.getItem(cloud.storageKey+':oauth');}});
+    }
     if(controller.signal.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError'});
     location.assign(url);
   }catch(error){
@@ -1365,13 +1369,14 @@ async function startAccount() {
     else inviteError=tr('El enlace de invitación no está completo. Pide a tu amigo que lo copie de nuevo.');
   }
   const cleanURL=new URL(location.href);
-  const queryCallback=['code','error','error_description','error_code','legacy_auth_return'].some(key=>cleanURL.searchParams.has(key));
-  if(queryCallback) for(const key of ['code','error','error_description','error_code','legacy_auth_return'])cleanURL.searchParams.delete(key);
+  const queryCallback=['broker_code','broker_error','broker_flow','code','error','error_description','error_code','legacy_auth_return'].some(key=>cleanURL.searchParams.has(key));
+  if(queryCallback) for(const key of ['broker_code','broker_error','broker_flow','code','error','error_description','error_code','legacy_auth_return'])cleanURL.searchParams.delete(key);
   if(params.has('invite')||params.has('access_token')||params.has('error'))cleanURL.hash='';
   if(queryCallback||cleanURL.hash!==location.hash)history.replaceState(null,'',cleanURL.pathname+cleanURL.search+cleanURL.hash);
   try {
     if (cloud.enabled) {
-      const oauthComplete=await cloud.finishOAuth(callbackSearch,new URL('./',location.href).href,{allowLegacyRoot:new URLSearchParams(callbackSearch).get('legacy_auth_return')==='1'});
+      const callbackOptions={allowLegacyRoot:new URLSearchParams(callbackSearch).get('legacy_auth_return')==='1'};
+      const oauthComplete=await cloud.finishGoogleBroker(callbackSearch,new URL('./',location.href).href,callbackOptions)||await cloud.finishOAuth(callbackSearch,new URL('./',location.href).href,callbackOptions);
       returnedFromEmail=await cloud.acceptCallback(hash);
       if(!oauthComplete)await cloud.restore();
       if (cloud.user&&!cloud.recovering) await connectAccount();

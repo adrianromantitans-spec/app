@@ -25,6 +25,7 @@ export class NativeController{
   let url;try{url=new URL(value);}catch{return false;}
   if(url.origin!==ROOT.slice(0,-1)||!['/','/app/','/share/'].includes(url.pathname)||this.handled.has(value))return false;
   this.handled.add(value);
+  if(url.searchParams.has('broker_code')||url.searchParams.has('broker_error'))await this.cloud.finishGoogleBroker(url.search,ROOT);
   if(url.searchParams.has('code')||url.searchParams.has('error')){
    const record=this.platform.temporaryStorage.getItem(this.cloud.storageKey+':oauth');
    if(record||this.platform.storage.getItem?.(this.cloud.storageKey+':recovery-pkce')){await this.cloud.finishOAuth(url.search,ROOT);if(this.cloud.recovering){this.update({recovering:true,user:null});await this.platform.flush();return true;}}
@@ -40,7 +41,7 @@ export class NativeController{
  async register({email,password,name,accepted,ageBand}){return this.run(async()=>{if(password.length<10||password.length>128||!name.trim()||name.trim().length>40)throw new Error(this.t('Escribe tu nombre y una contraseña de al menos 10 caracteres.'));const signedIn=await this.cloud.signUp(email.trim(),password,name.trim(),ROOT,{accepted,ageBand});await this.platform.flush();if(signedIn)await this.refresh();else this.update({notice:''});return signedIn;});}
  async confirmSignup(email,code){return this.run(async()=>{await this.cloud.verifySignupCode(email,code.trim());await this.platform.flush();this.update({notice:''});await this.refresh();});}
  async resendSignup(){return this.run(async()=>{await this.cloud.resendSignupCode();this.update({notice:this.t('Si el correo puede registrarse, hemos enviado otro código. Revisa también spam.')});});}
- async oauth(provider,acknowledgement){return this.run(async()=>{const providers=await this.cloud.providers();if(!providers[provider])throw new Error(this.t('Esta forma de acceso no está disponible.'));const url=await this.cloud.oauthURL(provider,ROOT,acknowledgement);await this.platform.flush();await this.native.external(url);});}
+ async oauth(provider,acknowledgement){return this.run(async()=>{const providers=await this.cloud.providers();if(!providers[provider])throw new Error(this.t('Esta forma de acceso no está disponible.'));let url=await this.cloud.oauthURL(provider,ROOT,acknowledgement);if(provider==='google'&&this.cloud.googleBrokerEnabled){this.cloud.markGoogleBroker();url=await this.cloud.prepareGoogleBroker(this.i18n.language||'en');}await this.platform.flush();if(provider==='google'&&this.cloud.googleBrokerEnabled){if(!this.native.googleBroker)throw new Error(this.t('Esta forma de acceso no está disponible.'));await this.native.googleBroker(url);}else await this.native.external(url);});}
  async recover(email){return this.run(async()=>{await this.cloud.recoverPassword(email.trim(),ROOT);await this.platform.flush();this.update({notice:this.t('Revisa tu correo')});});}
  async recoveryCode(email,code,password){return this.run(async()=>{await this.cloud.verifyRecoveryCode(email.trim(),code.trim());await this.cloud.updatePassword(password);await this.platform.flush();await this.refresh();});}
  async refresh(){

@@ -1,4 +1,12 @@
-# Google OAuth abuse protection: implementation and activation plan
+# Google OAuth preflight: original design and findings
+
+**Current implementation and activation guide: [Trusted Google registration broker](GOOGLE-BROKER.md).**
+The broker is now implemented with server-owned Google OAuth, one-use verifier/flow
+binding and guards for both user creation and identity enrollment. It remains
+inactive pending manual configuration and staging acceptance. The material below
+describes the original preflight and its limitations; use the broker guide for
+current deployment, native support and rollback instructions.
+
 
 Status: implementation only; nothing deployed or activated. Browser preflight is **disabled** in public `config.js`. No Auth Hook is registered by `supabase/config.toml`; SQL initially sets policy mode to `observe`. The public Site Key is configured; the Secret Key has not been requested, received, or committed.
 
@@ -8,7 +16,7 @@ This repository serves browser ES modules through `server.mjs`/GitHub Pages. The
 
 `cloud.js` is a small Supabase REST client. Google starts at `/auth/v1/authorize` with a locally generated PKCE S256 challenge; the verifier and legal consent stay in tab storage. The provider callback remains `https://xvtqmmpufvmyuokpmjvf.supabase.co/auth/v1/callback`. DivZplit's allowed return remains `https://divzplit.com/`; `landing-route.js` forwards the callback to `/app/`, where the verifier is exchanged and `/auth/v1/user` confirms identity. The existing root/legacy bridge checks remain intact. Pending group invitations are not auto-accepted by signin.
 
-Legacy Android TWA uses the same browser flow. Current React Native Android opens the existing provider in an external browser and returns through App Links. This change does not import a DOM widget into native code or require an AAB. Existing native clients continue to use the original Google provider. A future native preflight would require a separately tested external-browser integration.
+Legacy Android TWA uses the same browser flow. Current React Native Android opens the existing provider in an external browser and returns through App Links. The preflight itself does not import a DOM widget into native code. The new [broker implementation](GOOGLE-BROKER.md) adds a prepared external-browser flow for updated native clients. Existing enrolled Google identities retain legacy login; new enrollment requires the updated client after enforcement.
 
 A read-only query of the public Auth settings during investigation showed Google and email enabled, anonymous users and Apple disabled, email confirmation enabled and new signups allowed. Private CAPTCHA/Hook settings and secrets are not exposed by that endpoint and have not been inspected or changed. `supabase/config.toml` does not establish the full production dashboard configuration.
 
@@ -26,7 +34,7 @@ The optional Postgres hook `public.divzplit_before_user_created` can be manually
 
 This is a deliberate signup pause, not transparent CAPTCHA protection. Approved new users need a trusted administrator-created/invited account and a tested identity-linking path. Do not present the existing unprotected email signup as a secure way around this policy. The hook leaves email/Apple policies unchanged; it is not a global signup firewall. For an emergency global registration pause, Supabase's **Allow new users to sign up** setting can be disabled manually, but that broader product restriction is not performed here.
 
-If frictionless new Google signup with compulsory Turnstile is required, use a trusted OAuth broker: it must own Google state/nonce/PKCE and callback processing, verify Google's issuer/audience/signature/subject, bind the challenge to a server-created flow, and hold a short-lived random authorization in private storage. User creation must occur exclusively through that trusted server path; a registered Auth hook would atomically consume a server-authenticated authorization bound to flow, verified provider subject and intended user ID, rejecting missing/expired/reused/mismatched authorizations. Direct Supabase provider creation must remain denied. A browser flag, user metadata or unverified email must never substitute for that server proof. This requires a reviewed broker/admin-creation contract and Google/client/callback changes, not just another frontend flag; it is a proposed architecture, **not implemented or activated** by this PR.
+If frictionless new Google signup with compulsory Turnstile is required, use a trusted OAuth broker: it must own Google state/nonce/PKCE and callback processing, verify Google's issuer/audience/signature/subject, bind the challenge to a server-created flow, and hold a short-lived random authorization in private storage. User creation must occur exclusively through that trusted server path; a registered Auth hook would atomically consume a server-authenticated authorization bound to flow, verified provider subject and intended user ID, rejecting missing/expired/reused/mismatched authorizations. Direct Supabase provider creation must remain denied. A browser flag, user metadata or unverified email must never substitute for that server proof. This requires a reviewed broker/admin-creation contract and Google/client/callback changes, not just another frontend flag; the [broker implementation](GOOGLE-BROKER.md) now supplies that contract using trusted Admin creation and a one-use identity-enrollment guard. It is implemented but **not deployed or activated**.
 
 ## What is implemented
 

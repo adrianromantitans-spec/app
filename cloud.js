@@ -32,6 +32,7 @@ function browserStorage(name) {try {return globalThis[name];} catch {return null
 
 function messageFor(error, status, auth=false) {
   const code = error?.error_code || error?.code;
+  if(typeof code==='string'&&code.startsWith('broker_'))return tr('No se ha podido completar el acceso con Google o Apple. Vuelve a intentarlo.');
   if(code==='NEXO_SHOPPING_REMINDER_WAIT')return tr('Espera 15 minutos entre recordatorios de compra del grupo.');
   if(code==='NEXO_SHOPPING_EMPTY')return tr('No quedan productos pendientes por comprar.');
   if(code==='NEXO_SHOPPING_CHANGED')return tr('La compra ha cambiado. Actualiza la lista y revisa tu selección.');
@@ -88,6 +89,7 @@ export class Cloud {
     this.config=validateConfig(config); this.fetcher=fetcher.bind(globalThis); this.storage=storage;
     this.temporaryStorage=temporaryStorage;
     this.session=null; this.user=null; this.refreshing=null;
+    this.googleBrokerEnabled=config?.googleBroker?.enabled===true;
     this.storageKey=this.config ? `nexo-session-v1:${new URL(this.config.url).host}` : '';
   }
   get enabled() { return !!this.config; }
@@ -206,6 +208,46 @@ export class Cloud {
       try {this.user=await this.request('/auth/v1/user',{method:'PUT',body:{data:{display_name:name.trim().slice(0,40)}}});}
       catch(error) {if(!this.session)throw error; /* The optional name must not block a valid sign-in. */}
     }
+    return true;
+  }
+  markGoogleBroker() {
+    let record;try{record=JSON.parse(this.temporaryStorage?.getItem(this.storageKey+':oauth')||'null');}catch{}
+    if(record?.provider!=='google')throw new CloudError(tr('Esta forma de acceso no está disponible.'));
+    record.broker=true;this.temporaryStorage.setItem(this.storageKey+':oauth',JSON.stringify(record));
+  }
+  bindGoogleBrokerFlow(flowId){
+    const key=this.storageKey+':oauth';let record;try{record=JSON.parse(this.temporaryStorage.getItem(key)||'null');}catch{}
+    if(!record?.broker||record.provider!=='google'||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(flowId||''))throw new CloudError(tr('Esta forma de acceso no está disponible.'));
+    record.brokerFlow=flowId;this.temporaryStorage.setItem(key,JSON.stringify(record));
+  }
+  async prepareGoogleBroker(language='en'){
+    const record=JSON.parse(this.temporaryStorage.getItem(this.storageKey+':oauth')||'null');
+    if(!record?.broker||record.provider!=='google')throw new CloudError(tr('Esta forma de acceso no está disponible.'));
+    const result=await this.request('/functions/v1/google-broker/prepare',{method:'POST',authenticated:false,body:{verifier:record.verifier,redirectTo:record.redirect}});
+    if(!/^[A-Za-z0-9_-]{43}$/.test(result?.launchTicket||''))throw new CloudError(tr('No se ha podido abrir la sesión. Vuelve a intentarlo.'));
+    this.bindGoogleBrokerFlow(result.flowId);
+    const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(record.verifier)));
+    const challenge=btoa(String.fromCharCode(...hash)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const url=new URL('google-login/',record.redirect);url.hash=new URLSearchParams({ticket:result.launchTicket,challenge,flow:result.flowId,lang:['es','en','ro'].includes(language)?language:'en'}).toString();return url.href;
+  }
+  async finishGoogleBroker(search,redirect,{allowLegacyRoot=false}={}) {
+    const params=new URLSearchParams(search);if(!params.has('broker_code')&&!params.has('broker_error'))return false;
+    let record;try{record=JSON.parse(this.temporaryStorage?.getItem(this.storageKey+':oauth')||'null');}catch{}
+    if(!record?.broker||record.provider!=='google'||!record.verifier||!Number.isFinite(record.createdAt)||Date.now()-record.createdAt>15*60*1000||record.createdAt>Date.now()+60000)throw new CloudError(tr('Este enlace de acceso ha caducado o se abrió en otro navegador. Solicita un nuevo enlace o vuelve a continuar con Google o Apple.'));
+    let compatible=record.redirect===redirect;
+    if(!compatible&&allowLegacyRoot){try{const old=new URL(record.redirect),current=new URL(redirect);compatible=old.origin===current.origin&&!old.search&&!old.hash&&new URL('app/',old).href===current.href;}catch{}}
+    if(!compatible||!/^[A-Za-z0-9_-]{43,128}$/.test(record.verifier))throw new CloudError(tr('El enlace de vuelta a DivZplit debe ser seguro.'));
+    if(!record.brokerFlow||params.get('broker_flow')!==record.brokerFlow)throw new CloudError(tr('Este enlace de acceso ha caducado o se abrió en otro navegador. Solicita un nuevo enlace o vuelve a continuar con Google o Apple.'));
+    this.temporaryStorage.removeItem(this.storageKey+':oauth');
+    if(params.get('broker_error')==='cancelled')throw new CloudError(tr('Has cancelado el acceso. Puedes volver a intentarlo o entrar con tu correo.'));
+    if(params.has('broker_error')||!/^[A-Za-z0-9_-]{43}$/.test(params.get('broker_code')||''))throw new CloudError(tr('No se ha podido completar el acceso con Google o Apple. Vuelve a intentarlo.'));
+    const result=await this.request('/functions/v1/google-broker/complete',{method:'POST',authenticated:false,timeoutMs:45000,body:{code:params.get('broker_code'),verifier:record.verifier,redirectTo:record.redirect,flowId:record.brokerFlow}});
+    const session=this.sessionFrom(result);if(!session||!result.user?.id)throw new CloudError(tr('No se ha podido abrir la sesión. Vuelve a intentarlo.'));
+    this.persistSession(session);await this.loadUser();
+    if(this.user.id!==result.user.id){this.persistSession(null);this.user=null;throw new CloudError(tr('No se ha podido abrir la sesión. Vuelve a intentarlo.'));}
+    if(record.legal){const accepted=legalMetadata(true,record.legal.declared_age_band,'google');accepted.terms_accepted_at=record.legal.terms_accepted_at;this.user=await this.request('/auth/v1/user',{method:'PUT',body:{data:{...accepted,language}}});}
+    const metadata=this.user.user_metadata||{},name=metadata.full_name||metadata.name;
+    if(!metadata.display_name&&typeof name==='string'&&name.trim()){try{this.user=await this.request('/auth/v1/user',{method:'PUT',body:{data:{display_name:name.trim().slice(0,40)}}});}catch(error){if(!this.session)throw error;}}
     return true;
   }
   get recovering() {try{return !!this.user&&this.temporaryStorage?.getItem(this.storageKey+':recovery')===this.user.id;}catch{return false;}}
