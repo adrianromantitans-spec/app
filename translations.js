@@ -318,6 +318,8 @@ export const translations = {
   "No te pierdas las novedades": {"en": "Stay in the loop", "ro": "Nu rata noutățile"},
   "Recibe avisos cuando tu grupo añada gastos, cree votaciones o te asigne tareas.": {"en": "Get notified when your group adds expenses, creates polls or assigns you tasks.", "ro": "Primește notificări când grupul adaugă cheltuieli, creează sondaje sau îți atribuie sarcini."},
   "En iPhone, añade DivZplit a la pantalla de inicio para recibir avisos con la app cerrada.": {"en": "On iPhone, add DivZplit to your Home Screen to receive notifications when the app is closed.", "ro": "Pe iPhone, adaugă DivZplit pe ecranul principal pentru a primi notificări când aplicația este închisă."},
+  "Mensaje copiado. Si la app no acepta texto, pégalo en un chat.":{"en":"Message copied. If the app does not accept text, paste it into a chat.","ro":"Mesaj copiat. Dacă aplicația nu acceptă text, lipește-l într-un chat."},
+  "No se ha podido compartir. Copia el enlace de invitación.":{"en":"Could not share. Copy the invitation link instead.","ro":"Nu s-a putut distribui. Copiază linkul de invitație."},
   "Ahora no": {"en": "Not now", "ro": "Nu acum"},
   "Ver cómo activarlas": {"en": "See how to enable them", "ro": "Vezi cum le poți activa"},
 

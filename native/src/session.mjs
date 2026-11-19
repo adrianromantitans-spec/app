@@ -23,7 +23,7 @@ export class NativeController{
  async start(url){try{if(url)await this.handleURL(url,false);if(!this.cloud.user)await this.cloud.restore();if(this.cloud.user)await this.refresh();}catch(error){this.update({error:error.message});}finally{this.update({ready:true,user:this.cloud.recovering?null:this.cloud.user,recovering:!!this.cloud.recovering});}}
  async handleURL(value,refresh=true){
   let url;try{url=new URL(value);}catch{return false;}
-  if(url.origin!==ROOT.slice(0,-1)||!['/','/app/'].includes(url.pathname)||this.handled.has(value))return false;
+  if(url.origin!==ROOT.slice(0,-1)||!['/','/app/','/share/'].includes(url.pathname)||this.handled.has(value))return false;
   this.handled.add(value);
   if(url.searchParams.has('code')||url.searchParams.has('error')){
    const record=this.platform.temporaryStorage.getItem(this.cloud.storageKey+':oauth');
