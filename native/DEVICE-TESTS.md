@@ -1,6 +1,6 @@
 # DivZplit native Android acceptance
 
-Use the `1.2.0-native.4` / code 10 AAB only in a restricted test track. Confirm that its code is higher than all releases already in Play. The candidate keeps `com.divzplit.app` and the existing signing identity, so uploading it into the existing track will offer an update to that track's eligible testers. An AAB cannot be installed by tapping it: upload it to Play's test track and install from its tester link. Do not roll out to production before these checks.
+Use the current signed candidate listed in `native-config.json` only in a restricted test track. Confirm that its code is higher than all releases already in Play. The candidate keeps `com.divzplit.app` and the existing signing identity, so uploading it into the existing track will offer an update to that track's eligible testers. An AAB cannot be installed by tapping it: upload it to Play's test track and install from its tester link. Do not roll out to production before these checks.
 
 The implementation gaps listed in PRs #11–13 now have native flows. The checklist below verifies them on hardware; it is not a list of work the user must implement. No new Firebase project, Supabase migration, signing key or website deployment is required for this source update. Existing backend capabilities used by the web app must remain enabled. No physical device is connected to the build environment.
 
@@ -103,3 +103,10 @@ Only after acceptance should the tested native release replace the published wra
 - Tap WhatsApp with regular WhatsApp installed, Business only and neither installed. Verify recipient/compose or secure-browser fallback, correct group/link, Unicode names, cancellation/back and no automatic sending. Copy remains available. Real intent routing requires an Android phone.
 - Open settlements/FX with a pair and a multi-member group, pending transfers and zero balances. Check simplify counts, full currency names, EUR/non-EUR/cross-currency cases, converted plus original amount, direction of the shown rate, dates/source, refresh/error/retry, expiry/minimum unit and original reset. Conversion must never edit expenses/balances. Confirm a test payment only after checking the existing confirmation flow; changed/expired quotes must be rejected.
 - Repeat on a small phone/large font with ES/EN/RO and keyboard/system bars. Long names, links and the final controls must remain reachable by scrolling. Losing the group/account during a request must not expose an old invite or quote.
+
+
+## Code 23 — inset clearance and idle refresh
+
+- Update without clearing data. At the end of Home, Account and other vertical lists, confirm the last action/row is above the expanded dock with gesture and three-button navigation, large bottom insets, rotation and larger system text. Horizontal/auth/modal scrollers retain their existing spacing.
+- Scroll/drag/coast across a periodic-refresh boundary; automatic reads should wait for a later idle poll. Pull-to-refresh remains explicit. Check foreground/resume, busy operations, opening and modal screens; verify groups eventually refresh after scrolling stops.
+- Repeat the complete physical checklist above. PARITY-AUDIT.md records automated results and why real 60/120 Hz/frame-time, IME/fontScale/provider acceptance is still required.

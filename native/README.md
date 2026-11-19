@@ -131,3 +131,6 @@ Candidate `1.2.0-native.12` / code `18` restores the mobile-web group selector's
 The Android bridge adds user-triggered WhatsApp text sharing (WhatsApp, then WhatsApp Business, then a secure wa.me fallback). It opens a recipient/compose flow and never sends automatically. No SDK, manifest permission or new backend setup is required.
 
 Settlements/currency presentation now follows the mobile web summary, transfer cards, original-currency reset, localized target selector, converted/original amounts and cross-rate/date/source detail. Existing quote validation, integer conversion, pending reservations and payment confirmation remain authoritative and unchanged. Reload/failed/stale-currency reads are handled in the view; losing the active group closes safely.
+
+
+Current 19 November audit: `1.2.0-native.17` / code 23. See [PARITY-AUDIT.md](PARITY-AUDIT.md) for fixes, the completed automated matrix and remaining real-device performance/provider gates. No claim of perfect frame pacing on every Android device is made.
