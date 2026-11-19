@@ -1,4 +1,4 @@
-import {tr,ui,language} from './i18n.js?v=language-90';
+import {tr,ui,language} from './i18n.js?v=signup-locale-2';
 export const TERMS_VERSION='2026-11-16.1';
 export const PRIVACY_VERSION='2026-11-16.1';
 export const SUPPORT_EMAIL='support@divzplit.com';

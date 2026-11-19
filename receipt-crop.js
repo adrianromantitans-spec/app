@@ -1,5 +1,5 @@
 import {prepareOCRImage} from './receipt-image.js?v=landing-51';
-import {tr,ui} from './i18n.js?v=language-90';
+import {tr,ui} from './i18n.js?v=signup-locale-2';
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 export function closeReceiptCrop(form) {
   form.receiptEditorAttempt=null;
