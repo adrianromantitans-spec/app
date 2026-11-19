@@ -1,5 +1,12 @@
 // UI copy only. User content and persisted enum values are never translated.
 export const translations = {
+  "Confirma tu correo": {"en": "Confirm your email", "ro": "Confirmă adresa de e-mail"},
+  "Introduce el código del correo para confirmar tu cuenta y entrar.": {"en": "Enter the email code to confirm your account and sign in.", "ro": "Introdu codul din e-mail pentru a confirma contul și a te conecta."},
+  "Si el correo puede registrarse, recibirás un código. Revisa también spam.": {"en": "If this email can be registered, you will receive a code. Check spam too.", "ro": "Dacă adresa poate fi înregistrată, vei primi un cod. Verifică și dosarul spam."},
+  "Si el correo puede registrarse, hemos enviado otro código. Revisa también spam.": {"en": "If this email can be registered, we have sent another code. Check spam too.", "ro": "Dacă adresa poate fi înregistrată, am trimis un alt cod. Verifică și dosarul spam."},
+  "Vuelve a crear tu cuenta para solicitar un código.": {"en": "Start registration again to request a code.", "ro": "Reia înregistrarea pentru a solicita un cod."},
+  "Espera un minuto antes de reenviar el código.": {"en": "Wait one minute before resending the code.", "ro": "Așteaptă un minut înainte de a retrimite codul."},
+
   "Planes": {"en": "Plans", "ro": "Planuri"},
   "Votar": {"en": "Vote", "ro": "Votează"},
   "Elegir foto del ticket": {"en": "Choose receipt photo", "ro": "Alege fotografia bonului"},

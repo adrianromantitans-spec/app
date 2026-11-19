@@ -247,3 +247,17 @@ test('confirmed checkout updates its group without switching back from a newly s
  const pending=c.saveExpense(fields,null,'expense',{groupId:group.id,checkout:['milk']});c.update({groupId:'other',shopping:[],shoppingGroupId:null});finish();await pending;
  assert.equal(c.state.groupId,'other');assert.equal(c.state.groups.find(g=>g.id===group.id).expenses.length,1);assert.deepEqual(c.state.shopping,[]);
 });
+
+test('native registration waits for confirmation and verification refreshes the signed-in account',async()=>{
+ const {c,cloud}=fixture();cloud.user=null;c.update({user:null});let registered,verified,refreshes=0;
+ cloud.signUp=async(...args)=>{registered=args;return false;};
+ cloud.verifySignupCode=async(...args)=>{verified=args;cloud.user={id:'confirmed-user'};};
+ c.refresh=async()=>refreshes++;
+ assert.equal(await c.register({email:' alex@example.test ',password:'fixture-password',name:' Alex ',accepted:true,ageBand:'16_or_over'}),false);
+ assert.equal(registered[0],'alex@example.test');assert.deepEqual(registered[4],{accepted:true,ageBand:'16_or_over'});assert.equal(refreshes,0);assert.equal(c.state.user,null);
+ await c.confirmSignup('alex@example.test',' 123456 ');assert.deepEqual(verified,['alex@example.test','123456']);assert.equal(refreshes,1);assert.equal(c.state.user.id,'confirmed-user');assert.equal(c.state.notice,'');
+});
+test('a failed signup code keeps the native app signed out and permits retry',async()=>{
+ const {c,cloud}=fixture();cloud.user=null;c.update({user:null});let reads=0;cloud.verifySignupCode=async()=>{throw new Error('Expired code');};c.refresh=async()=>reads++;
+ await assert.rejects(c.confirmSignup('alex@example.test','123456'),/Expired/);assert.equal(c.state.user,null);assert.equal(c.state.busy,false);assert.equal(reads,0);
+});

@@ -54,7 +54,7 @@
                       {{ if eq .Data.language "ro" }}Confirmă adresa de e-mail{{ else if eq .Data.language "es" }}Confirma tu email{{ else }}Confirm your email{{ end }}
                     </h2>
                     <p style="margin:0;font-size:14px;line-height:23px;color:#666b7d;">
-                      {{ if eq .Data.language "ro" }}Bun venit la <strong style="color:#202239;">DivZplit</strong>! Ești la un clic distanță de organizarea cheltuielilor cu prietenii, colegii de apartament și grupurile tale, simplu și transparent.{{ else if eq .Data.language "es" }}¡Bienvenido a <strong style="color:#202239;">DivZplit</strong>! Estás a un clic de organizar tus gastos con amigos, compañeros de piso y grupos, de forma sencilla y transparente.{{ else }}Welcome to <strong style="color:#202239;">DivZplit</strong>! You’re one click away from organizing expenses with friends, housemates and groups, simply and transparently.{{ end }}
+                      {{ if eq .Data.language "ro" }}Bun venit la <strong style="color:#202239;">DivZplit</strong>! Cu acest cod poți începe să organizezi cheltuielile cu prietenii, colegii de apartament și grupurile tale, simplu și transparent.{{ else if eq .Data.language "es" }}¡Bienvenido a <strong style="color:#202239;">DivZplit</strong>! Con este código puedes empezar a organizar tus gastos con amigos, compañeros de piso y grupos, de forma sencilla y transparente.{{ else }}Welcome to <strong style="color:#202239;">DivZplit</strong>! Use this code to start organizing expenses with friends, housemates and groups, simply and transparently.{{ end }}
                     </p>
                   </td>
                 </tr>
@@ -63,29 +63,13 @@
           </tr>
 
           <tr>
-            <td style="padding:30px 42px 0 70px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center" bgcolor="#7654e8" style="background-color:#7654e8;border-radius:9px;">
-                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:15px 24px;font-size:15px;line-height:20px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:9px;">
-                      {{ if eq .Data.language "ro" }}Confirmă contul &rarr;{{ else if eq .Data.language "es" }}Confirmar mi cuenta &rarr;{{ else }}Confirm my account &rarr;{{ end }}
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:13px 0 0;font-size:12px;line-height:20px;color:#888c9b;">
-                {{ if eq .Data.language "ro" }}Un clic și contul tău este gata.{{ else if eq .Data.language "es" }}Un clic y tu cuenta estará lista.{{ else }}One click and your account is ready.{{ end }}
+            <td style="padding:26px 42px;">
+              <p style="margin:0 0 14px;font-size:14px;line-height:23px;color:#666b7d;">
+                {{ if eq .Data.language "ro" }}Revino la DivZplit și introdu acest cod pentru a confirma contul și a te conecta:{{ else if eq .Data.language "es" }}Vuelve a DivZplit e introduce este código para confirmar tu cuenta y entrar:{{ else }}Return to DivZplit and enter this code to confirm your account and sign in:{{ end }}
               </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:25px 42px 0 70px;">
-              <p style="margin:0 0 6px;font-size:12px;line-height:19px;color:#888c9b;">
-                {{ if eq .Data.language "ro" }}Dacă butonul nu funcționează, copiază acest link în browser:{{ else if eq .Data.language "es" }}Si el botón no funciona, copia este enlace en tu navegador:{{ else }}If the button doesn’t work, copy this link into your browser:{{ end }}
-              </p>
-              <p style="margin:0;font-size:12px;line-height:19px;word-break:break-all;">
-                <a href="{{ .ConfirmationURL }}" style="color:#6344cd;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              <div style="padding:20px 8px;text-align:center;background-color:#f0eaff;border:1px solid #e2d8fa;border-radius:12px;font-size:28px;line-height:38px;font-weight:800;letter-spacing:5px;color:#6344cd;">{{ .Token }}</div>
+              <p style="margin:14px 0 0;font-size:12px;line-height:20px;color:#888c9b;">
+                {{ if eq .Data.language "ro" }}Nu distribui acest cod. Dacă expiră, solicită un cod nou în DivZplit.{{ else if eq .Data.language "es" }}No compartas este código. Si caduca, solicita uno nuevo en DivZplit.{{ else }}Do not share this code. If it expires, request a new one in DivZplit.{{ end }}
               </p>
             </td>
           </tr>
