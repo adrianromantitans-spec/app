@@ -1,6 +1,6 @@
-import {expenseShares,money,currencyOf,currencyDigits,currencyScale} from './model.js?v=language-90';
-import {language,locale,tr} from './i18n.js?v=language-90';
-import {activityEventLabel} from './activity-ui.js?v=activity-102';
+import {expenseShares,money,currencyOf,currencyDigits,currencyScale} from './model.js?v=signup-locale-2';
+import {language,locale,tr} from './i18n.js?v=signup-locale-2';
+import {activityEventLabel} from './activity-ui.js?v=signup-locale-2';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // New Activity copy reads the shared live language selection, like the landing's own copy.
 const copy={

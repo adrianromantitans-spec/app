@@ -1,5 +1,5 @@
-import {language} from './i18n.js?v=language-90';
-import {SUPPORT_EMAIL} from './legal.js?v=legal-review-20261116';
+import {language} from './i18n.js?v=signup-locale-2';
+import {SUPPORT_EMAIL} from './legal.js?v=signup-locale-2';
 const copy={
  es:{title:'Centro de ayuda',back:'Volver a Cuenta',intro:'Respuestas para compartir gastos sin complicaciones.',search:'Buscar en la ayuda',placeholder:'Pagos, monedas, notificaciones…',count:'respuestas',countOne:'respuesta',empty:'No encontramos una respuesta para esa búsqueda.',clear:'Borrar búsqueda',contactTitle:'¿Necesitas más ayuda?',contactText:'Indica el grupo o la acción, qué esperabas y qué ocurrió. No envíes contraseñas ni datos completos de tarjetas.',contact:'Contactar con soporte'},
  en:{title:'Help centre',back:'Back to Account',intro:'Answers to make sharing expenses easier.',search:'Search help',placeholder:'Payments, currencies, notifications…',count:'answers',countOne:'answer',empty:'We could not find an answer for that search.',clear:'Clear search',contactTitle:'Need more help?',contactText:'Include the group or action, what you expected and what happened. Do not send passwords or full card details.',contact:'Contact support'},
