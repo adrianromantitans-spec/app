@@ -1,4 +1,4 @@
-import {invitationURL,invitationCopy,shareChannels,shareNames,shareColors,sharePaths,shareHref} from './invitation-share.js?v=social-invite-1';
+import {invitationURL,invitationCopy,shareChannels,shareNames,shareColors,sharePaths,shareBackgrounds,shareUnderlays,shareHref} from './invitation-share.js?v=brand-icons-1';
 import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';
 import {startIntroTransition} from './intro-transition.js?v=start-64';
 import {helpCentreView,filterHelp} from './help.js?v=legal-review-20261116';
@@ -1280,7 +1280,10 @@ async function generateInvite() {
 function invitationShareButtons(groupId,message,url){
  return '<div style="display:flex;flex-wrap:wrap;gap:12px;margin:16px 0">'+shareChannels.map(channel=>{
   const href=shareHref(channel,message,url),attrs=href?'href="'+esc(href)+'" target="_blank" rel="noopener noreferrer"':'type="button" data-action="share-invite" data-channel="'+channel+'" data-share-group="'+esc(groupId)+'"';
-  const tag=href?'a':'button';return '<'+tag+' class="button secondary" '+attrs+' aria-label="'+shareNames[channel]+'" title="'+shareNames[channel]+'" style="width:52px;height:52px;min-width:52px;padding:12px;border-radius:50%"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="'+shareColors[channel]+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+sharePaths[channel]+'"/></svg></'+tag+'>';
+  const gradient=channel==='instagram'?'<defs><linearGradient id="web-share-instagram" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="16" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".25" stop-color="#FA7E1E"/><stop offset=".5" stop-color="#D62976"/><stop offset=".75" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs>':'';
+  const underlay=shareUnderlays[channel]?'<path d="'+shareUnderlays[channel]+'" fill="#FFF"/>':'';
+  const tag=href?'a':'button';return '<'+tag+' class="button secondary" '+attrs+' aria-label="'+shareNames[channel]+'" title="'+shareNames[channel]+'" style="width:52px;height:52px;min-width:52px;padding:12px;border-radius:50%;background:'+(shareBackgrounds[channel]||'#FFF')+'"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 16 16">'+gradient+underlay+'<path d="'+sharePaths[channel]+'" fill="'+(channel==='instagram'?'url(#web-share-instagram)':shareColors[channel])+'"/></svg></'+tag+'>';
+
  }).join('')+'</div>';
 }
 async function shareInvitation(channel,groupId){
