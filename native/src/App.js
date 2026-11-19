@@ -41,11 +41,14 @@ function Application({controller:c,reduced}){
  useEffect(()=>{if(state.ready&&!state.user)finishIntro();},[state.ready,state.user,finishIntro]);
  useEffect(()=>{Linking.getInitialURL().then(url=>c.start(url));const link=Linking.addEventListener('url',event=>call(()=>c.handleURL(event.url)));const app=AppState.addEventListener('change',status=>{if(status==='active'&&c.cloud.user)call(async()=>{await c.refresh();if(c.state.page==='shopping')await c.shopping();if(['activity','settlements'].includes(c.state.page))await c.activity();if(c.state.page==='notifications')await c.inbox();});else if(status==='background')c.platform.flush().catch(()=>{});});return()=>{link.remove();app.remove();};},[c]);
  useEffect(()=>{const back=BackHandler.addEventListener('hardwareBackPress',()=>{if(showIntro){finishIntro();return true;}if(sheet){if(!state.busy)setSheet(null);return true;}if(state.page!=='home'){c.navigate('home');return true;}return false;});return()=>back.remove();},[showIntro,sheet,state.page,state.busy]);
- useEffect(()=>{const timer=setInterval(()=>{if(AppState.currentState!=='active'||!c.cloud.user||c.cloud.recovering||c.state.busy||sheet)return;call(async()=>{await c.refresh();if(c.state.page==='shopping')await c.shopping();if(['activity','settlements'].includes(c.state.page))await c.activity();if(c.state.page==='notifications')await c.inbox();});},30000);return()=>clearInterval(timer);},[c,sheet]);
+
  useEffect(()=>{if(sheet&&(!state.user||sheet.groupId&&!state.groups.some(g=>g.id===sheet.groupId)))setSheet(null);},[state.user,state.groups,sheet]);
  const previousPage=useRef(state.page),entryDirection=navigationDirection(previousPage.current,state.page);
  useEffect(()=>{previousPage.current=state.page;},[state.page]);
  const dock=useDockMotion({enabled:!!state.user&&state.ready&&!showIntro&&!sheet,reduced,page:state.page});
+ const refreshMotion=useRef({opening:showIntro,events:dock.events});
+ useEffect(()=>{refreshMotion.current={opening:showIntro,events:dock.events};},[showIntro,dock.events]);
+ useEffect(()=>{const timer=setInterval(()=>{if(AppState.currentState!=='active'||!c.cloud.user||c.cloud.recovering||c.state.busy||sheet||refreshMotion.current.opening||refreshMotion.current.events.isInteracting())return;call(async()=>{await c.refresh();if(c.state.page==='shopping')await c.shopping();if(['activity','settlements'].includes(c.state.page))await c.activity();if(c.state.page==='notifications')await c.inbox();});},30000);return()=>clearInterval(timer);},[c,sheet]);
  const g=c.group,money=(amount)=>c.model.money(amount,g?.currency||'EUR');
  const openExpense=id=>{if(!g){setSheet({kind:'group'});return;}setSheet({kind:id?'expenseDetail':'expense',groupId:g.id,expense:g.expenses.find(e=>e.id===id)||null});};
  const navigate=page=>{if(page==='settlements'&&g){call(async()=>{await c.loadFx(null);if(c.group?.id!==g.id)return;setSheet({kind:'settlements',groupId:g.id});await c.activity();});}else call(()=>c.navigate(page));};

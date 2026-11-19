@@ -5,6 +5,7 @@ export function createDockScroll({onCompact,schedule=setTimeout,cancel=clearTime
  const idle=()=>{clear();timer=schedule(()=>{timer=null;if(!disposed&&!dragging&&!momentum)onCompact(false);},idleMs);};
  const yOf=event=>Math.max(0,Number(event?.nativeEvent?.contentOffset?.y)||0);
  return {
+  isInteracting(){return !disposed&&(dragging||momentum);},
   onScrollBeginDrag(event){if(disposed)return;clear();dragging=true;lastY=yOf(event);},
   onScroll(event){if(disposed||!dragging&&!momentum)return;const y=yOf(event),distance=lastY===null?0:Math.abs(y-lastY);lastY=y;if(distance>=.5)onCompact(true);},
   onScrollEndDrag(){if(disposed)return;dragging=false;idle();},

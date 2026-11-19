@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url),{Value,Props,Animation,babel,preset}=require('./helpers/native-animated.cjs');
+const require=createRequire(import.meta.url),{Value,Props,Animation,babel,preset,flattenStyle}=require('./helpers/native-animated.cjs');
 const noop=()=>{};
 function renderDock(reduced){
  const effects=[],animations=[],graphs=[],collapse=new Value(0),element=(type,props,...children)=>({type,props:{...props,children:children.length?children:props?.children}});
@@ -25,7 +25,7 @@ test('dock reduced motion positions the selector without starting a native sprin
 
 test('tracked native lists forward every user scroll phase and keep modal/horizontal scroll isolated',()=>{
  const phases=['onScroll','onScrollBeginDrag','onScrollEndDrag','onMomentumScrollBegin','onMomentumScrollEnd'],calls=[];let events=Object.fromEntries(phases.map(name=>[name,e=>calls.push(['dock',name,e])]));
- const react={createContext:()=>({}),useContext:()=>events,forwardRef:fn=>fn,createElement:(type,props)=>({type,props})},mod={exports:{}},localRequire=name=>name.startsWith('@babel/runtime/')?require(name):name==='react'?react:name==='react/jsx-runtime'?{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}:name==='react-native'?{FlatList:'FlatList',ScrollView:'ScrollView'}:null;
+ const react={createContext:()=>({}),useContext:()=>events,forwardRef:fn=>fn,createElement:(type,props)=>({type,props})},mod={exports:{}},localRequire=name=>name.startsWith('@babel/runtime/')?require(name):name==='react'?react:name==='react/jsx-runtime'?{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}:name==='react-native'?{FlatList:'FlatList',ScrollView:'ScrollView',StyleSheet:{flatten:flattenStyle}}:name==='react-native-safe-area-context'?{useSafeAreaInsets:()=>({bottom:0})}:null;
  const source=readFileSync(new URL('../src/DockScroll.js',import.meta.url),'utf8');new Function('require','module','exports',babel.transformSync(source,{filename:'DockScroll.js',babelrc:false,configFile:false,presets:[preset]}).code)(localRequire,mod,mod.exports);
  const input=Object.fromEntries(phases.map(name=>[name,e=>calls.push(['owner',name,e])])),event={nativeEvent:{contentOffset:{y:50}}},ref={current:null};
  const list=mod.exports.TrackedFlatList(input,ref);for(const phase of phases)list.props[phase](event);assert.equal(calls.length,10);for(let i=0;i<phases.length;i++){assert.deepEqual(calls[i*2],['dock',phases[i],event]);assert.deepEqual(calls[i*2+1],['owner',phases[i],event]);}assert.equal(list.props.ref,ref);assert.equal(list.props.scrollEventThrottle,16);
