@@ -256,6 +256,7 @@
 .personal-shell .personal-home>.home-greeting{display:none}
 .personal-shell .personal-home .home-balance.is-credit .balance-status{background:#c7f3dc;color:#12553c;padding:5px 9px;border-radius:10px}
 .personal-shell .personal-home .home-balance.is-owed .balance-status{background:#ffe1e6;color:#a2213c;padding:5px 9px;border-radius:10px}
+.personal-shell .personal-home .home-balance.is-settled .balance-status{background:#eee3ff;color:#513278;padding:5px 9px;border-radius:10px}
 .personal-shell .personal-home .home-balance.is-owed .balance-status-sign{font-size:0}
 .personal-shell .personal-home .home-balance.is-owed .balance-status-sign:after{content:'↓';font-size:17px;font-weight:800}
 @media(max-width:760px){
