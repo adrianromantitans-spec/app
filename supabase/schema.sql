@@ -33,7 +33,9 @@ grant select on public.nexo_groups, public.nexo_members to authenticated;
 
 create or replace function public.nexo_is_member(p_id uuid) returns boolean
 language sql stable security definer set search_path = '' as $$
-  select exists(select 1 from public.nexo_members where group_id=p_id and user_id=auth.uid());
+  select exists(select 1 from public.nexo_members m join auth.users u on u.id=m.user_id
+    where m.group_id=p_id and m.user_id=auth.uid()
+      and coalesce(to_jsonb(u)->'raw_app_meta_data'->>'deleted','false')<>'true');
 $$;
 drop policy if exists nexo_group_read on public.nexo_groups;
 create policy nexo_group_read on public.nexo_groups for select to authenticated

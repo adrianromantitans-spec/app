@@ -21,6 +21,13 @@ export class CloudError extends Error {
   constructor(message, code='network', status=0) { super(message); this.code=code; this.status=status; }
 }
 
+// Resolve this new account error without depending on an older cached translation catalog.
+const deletionPermissionMessage=()=>({
+ es:'El servidor ha bloqueado el borrado de la cuenta. Escribe a support@divzplit.com para revisar los permisos.',
+ en:'The server blocked account deletion. Contact support@divzplit.com to review the permissions.',
+ ro:'Serverul a blocat ștergerea contului. Contactează support@divzplit.com pentru verificarea permisiunilor.'
+}[language]||'The server blocked account deletion. Contact support@divzplit.com to review the permissions.');
+
 function browserStorage(name) {try {return globalThis[name];} catch {return null;}}
 
 function messageFor(error, status) {
@@ -113,6 +120,7 @@ export class Cloud {
       // PostgreSQL custom errors use P0001; the stable message contains our code.
       if (result?.message?.startsWith('NEXO_')) code=result.message;
       if (response.status===401 && authenticated) {this.persistSession(null);this.user=null;}
+      if(path==='/rest/v1/rpc/divzplit_delete_account'&&response.status===403)throw new CloudError(deletionPermissionMessage()+(/^[A-Za-z0-9_]{1,64}$/.test(code||'')?' ('+code+')':''),code,response.status);
       throw new CloudError(messageFor({...result,code},response.status),code,response.status);
     }
     return result;

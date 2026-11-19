@@ -73,3 +73,14 @@ Las verificaciones anteriores de base de datos y producción son históricas,
 no una comprobación nueva de este borrador. Las comprobaciones locales actuales
 se detallan en la entrega de revisión. Esto no sustituye verificar la configuración
 de producción ni una revisión jurídica.
+
+
+## Corrección del bloqueo de borrado — 19 de noviembre de 2026
+
+La versión actual de `supabase/account-deletion.sql` corrige el DELETE directo
+sobre Storage que puede provocar HTTP 403 y revertir toda la operación. Para
+instalar esta corrección sí hay que volver a ejecutar ese archivo actualizado;
+no hay que reinstalar todas las migraciones. La afirmación histórica anterior
+sobre funciones ya instaladas no significa que esa versión nueva esté desplegada.
+Consulta [ACCOUNT-DELETION-FIX.md](ACCOUNT-DELETION-FIX.md) y el diagnóstico de
+solo lectura. Este cambio de repositorio no ha ejecutado borrados ni SQL en producción.
