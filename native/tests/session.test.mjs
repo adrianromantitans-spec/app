@@ -261,3 +261,12 @@ test('a failed signup code keeps the native app signed out and permits retry',as
  const {c,cloud}=fixture();cloud.user=null;c.update({user:null});let reads=0;cloud.verifySignupCode=async()=>{throw new Error('Expired code');};c.refresh=async()=>reads++;
  await assert.rejects(c.confirmSignup('alex@example.test','123456'),/Expired/);assert.equal(c.state.user,null);assert.equal(c.state.busy,false);assert.equal(reads,0);
 });
+
+test('native broker entry sends only a challenge hash and locale to an explicit browser method',async()=>{
+ const {c,cloud}=fixture();let marked=0,opened;cloud.googleBrokerEnabled=true;cloud.providers=async()=>({google:true});cloud.oauthURL=async()=> 'https://fixture.supabase.co/auth/v1/authorize?'+new URLSearchParams({provider:'google',redirect_to:'https://divzplit.com/',code_challenge:'A'.repeat(43),code_challenge_method:'s256'});cloud.markGoogleBroker=()=>marked++;cloud.prepareGoogleBroker=async language=>'https://divzplit.com/google-login/#'+new URLSearchParams({challenge:'A'.repeat(43),ticket:'B'.repeat(43),flow:'11111111-1111-4111-8111-111111111111',lang:language});c.native.googleBroker=async value=>{opened=new URL(value);};c.native.external=async()=>{throw Error('Must not dispatch own-domain App Link');};c.i18n.language='ro';
+ await c.oauth('google',{accepted:true,ageBand:'16_or_over'});assert.equal(marked,1);assert.equal(opened.pathname,'/google-login/');const fragment=new URLSearchParams(opened.hash.slice(1));assert.equal(fragment.get('challenge'),'A'.repeat(43));assert.equal(fragment.get('lang'),'ro');assert.deepEqual([...fragment.keys()],['challenge','ticket','flow','lang']);assert.equal(opened.search,'');
+});
+test('native broker callback remains on the existing root App Link and uses the bound shared exchange',async()=>{
+ const {c,cloud}=fixture();let received;cloud.finishGoogleBroker=async(search,redirect)=>{received={search,redirect};};
+ assert.equal(await c.handleURL('https://divzplit.com/?broker_code='+'A'.repeat(43),false),true);assert.equal(received.redirect,'https://divzplit.com/');assert.ok(received.search.includes('broker_code='));
+});

@@ -16,6 +16,7 @@ import android.os.Build;
 import android.provider.Settings;
 import android.util.Base64;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.browser.customtabs.CustomTabsClient;
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -58,6 +59,11 @@ public final class DivZplitModule extends ReactContextBaseJavaModule {
   Uri uri=Uri.parse(url);if(!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null){reply.reject("URL","Invalid secure URL");return;}
   Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
   activity.runOnUiThread(()->{try{new CustomTabsIntent.Builder().build().launchUrl(activity,uri);reply.resolve(true);}catch(Exception error){reply.reject("BROWSER","No secure browser available");}});
+ }
+ @ReactMethod public void googleBroker(String url,Promise reply){
+  Uri uri=Uri.parse(url);if(!"https".equals(uri.getScheme())||!"divzplit.com".equals(uri.getHost())||uri.getUserInfo()!=null||!"/google-login/".equals(uri.getPath())){reply.reject("URL","Invalid secure URL");return;}
+  Activity activity=context.getCurrentActivity();if(activity==null){reply.reject("ACTIVITY","Open DivZplit first");return;}
+  activity.runOnUiThread(()->{try{String browser=CustomTabsClient.getPackageName(context,null);if(browser==null||browser.equals(context.getPackageName()))throw new IllegalStateException();CustomTabsIntent tab=new CustomTabsIntent.Builder().build();tab.intent.setPackage(browser);tab.launchUrl(activity,uri);reply.resolve(true);}catch(Exception error){reply.reject("BROWSER","No secure browser available");}});
  }
  @ReactMethod public void shareWhatsApp(String message,Promise reply){
   if(message==null||message.trim().isEmpty()||message.length()>4000){reply.reject("SHARE","Invalid invitation message");return;}

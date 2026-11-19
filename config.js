@@ -5,5 +5,7 @@ export const cloudConfig = {
   publishableKey: 'sb_publishable_M3FoBLgEf8lVqAHVRY4bnw_1rscB6lC',
   // Optional browser/TWA preflight; activate only after staging the backend.
   // Does not enforce OAuth signup restrictions. Secret Key: Supabase secrets only.
-  oauthProtection: {enabled:false,siteKey:'0x4AAAAAAGIzOswUgGy61ea9'}
+  oauthProtection: {enabled:false,siteKey:'0x4AAAAAAGIzOswUgGy61ea9'},
+  // Route Google through the trusted broker only after its staging acceptance.
+  googleBroker: {enabled:false}
 };

@@ -14,3 +14,7 @@ content_path = "./supabase/templates/reset-password.html"
 # This does not enable the frontend check, CAPTCHA settings or an Auth Hook.
 [functions.oauth-turnstile]
 verify_jwt = false
+
+# Trusted broker stays disabled without its server flag and database enforcement.
+[functions.google-broker]
+verify_jwt = false

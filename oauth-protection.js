@@ -37,8 +37,8 @@ export async function turnstileToken({host,siteKey,challenge,language,signal,loa
   }catch(error){finish(error);}
  });
 }
-export async function protectedGoogleURL({cloud,authorizeURL,settings,host,language='en',signal,token=turnstileToken,fetcher=globalThis.fetch}){
- if(settings?.enabled!==true)return authorizeURL;
+export async function protectedGoogleURL({cloud,authorizeURL,settings,host,language='en',signal,token=turnstileToken,fetcher=globalThis.fetch,broker=false,onBrokerFlow,launchTicket}){
+ if(settings?.enabled!==true&&!broker)return authorizeURL;
  if(!/^0x[0-9A-Za-z_-]{10,80}$/.test(settings.siteKey||'')||!host)throw Error(text('retry',language));
  const url=new URL(authorizeURL),redirectTo=url.searchParams.get('redirect_to'),challenge=url.searchParams.get('code_challenge');
  if(url.origin!==cloud.config.url||url.pathname!=='/auth/v1/authorize'||url.searchParams.get('provider')!=='google'||url.searchParams.get('code_challenge_method')!=='s256'||!/^[-_A-Za-z0-9]{43}$/.test(challenge||''))throw Error(text('retry',language));
@@ -47,12 +47,18 @@ export async function protectedGoogleURL({cloud,authorizeURL,settings,host,langu
   const challengeToken=await token({host:widget,siteKey:settings.siteKey,challenge,language,signal});if(signal?.aborted)throw abortError();
   const timeout=new AbortController(),cancel=()=>timeout.abort(),timer=setTimeout(()=>timeout.abort(),15000);signal?.addEventListener('abort',cancel,{once:true});
   let response;
-  try{response=await fetcher(cloud.config.url+'/functions/v1/oauth-turnstile',{method:'POST',headers:{'Content-Type':'application/json',apikey:cloud.config.publishableKey},body:JSON.stringify({token:challengeToken,codeChallenge:challenge,redirectTo}),signal:timeout.signal,redirect:'error',referrerPolicy:'no-referrer',cache:'no-store'});}
+  try{response=await fetcher(cloud.config.url+(broker?'/functions/v1/google-broker/begin':'/functions/v1/oauth-turnstile'),{method:'POST',headers:{'Content-Type':'application/json',apikey:cloud.config.publishableKey},body:JSON.stringify({token:challengeToken,codeChallenge:challenge,redirectTo,...(launchTicket?{launchTicket}:{})}),signal:timeout.signal,redirect:'error',referrerPolicy:'no-referrer',cache:'no-store'});}
   finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
   if(signal?.aborted)throw abortError();if(response.status===429)throw Object.assign(Error(text('wait',language)),{limited:true});
   if(!response.ok)throw Error('Verification rejected');const result=await response.json();
-  // The backend may only return the exact original provider/PKCE/redirect URL.
-  if(result?.authorizeUrl!==authorizeURL)throw Error('Unexpected authorization URL');return result.authorizeUrl;
+  // Legacy preflight returns the exact URL; broker returns a fixed Google endpoint.
+  if(broker){if(!validBrokerStartURL(result?.authorizeUrl,cloud.config.url)||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(result.flowId||'')||typeof onBrokerFlow!=='function')throw Error('Unexpected broker URL');onBrokerFlow(result.flowId);}
+  else if(result?.authorizeUrl!==authorizeURL)throw Error('Unexpected authorization URL');return result.authorizeUrl;
  }catch(error){if(signal?.aborted)throw abortError();if(error.limited)throw error;throw Error(text('retry',language));}
  finally{host.replaceChildren();}
+}
+
+export function validBrokerStartURL(value,supabaseURL){
+ try{const url=new URL(value);const p=url.searchParams,allowed=['client_id','redirect_uri','response_type','scope','state','nonce','code_challenge','code_challenge_method','access_type','prompt'];return url.origin==='https://accounts.google.com'&&url.pathname==='/o/oauth2/v2/auth'&&[...p.keys()].every(k=>allowed.includes(k)&&p.getAll(k).length===1)&&p.get('redirect_uri')===supabaseURL+'/functions/v1/google-broker/callback'&&p.get('response_type')==='code'&&p.get('scope')==='openid email profile'&&p.get('code_challenge_method')==='S256'&&p.get('access_type')==='online'&&p.get('prompt')==='select_account'&&/^[A-Za-z0-9_-]{43}$/.test(p.get('state')||'')&&/^[0-9a-f]{64}$/.test(p.get('nonce')||'')&&/^[A-Za-z0-9_-]{43}$/.test(p.get('code_challenge')||'')&&typeof p.get('client_id')==='string'&&p.get('client_id').endsWith('.apps.googleusercontent.com')&&!url.hash&&!url.username&&!url.password;}
+ catch{return false;}
 }
