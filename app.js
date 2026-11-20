@@ -1,6 +1,6 @@
 import {invitationURL,invitationCopy,shareChannels,shareNames,shareColors,sharePaths,shareBackgrounds,shareUnderlays,shareHref} from './invitation-share.js?v=brand-icons-1';
 import {loadingSkeleton,beginContentRefresh,showBusyInPlace,withSubmitFeedback,withClickFeedback} from './loading-ui.js?v=loading-92';
-import {startIntroTransition} from './intro-transition.js?v=start-64';
+import {startIntroTransition} from './intro-transition.js?v=auth-flight-3';
 import {helpCentreView,filterHelp} from './help.js?v=signup-locale-2';
 import {legalFields,legalLinks,legalMetadata} from './legal.js?v=signup-locale-2';
 import {settlementPlan} from './settlement-plan.js?v=signup-locale-2';
