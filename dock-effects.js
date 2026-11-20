@@ -2,6 +2,10 @@
 const root=document.querySelector('#app');
 const mobile=matchMedia('(max-width:760px)');
 const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
+// iPhone/iPad WebKit must not translate the full page: transformed content can
+// extend the visual viewport and makes fixed/composited layers jump on navigation.
+const iosWeb=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+ (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const properties=['--dock-width','--dock-left','--dock-height','--dock-fade','--dock-plus-down','--dock-clip'];
 let view=null,gesture=null,frame=0,previousTime=0,idleTimer=0,intentUntil=0,ignoreScrollUntil=0,blockedClick=null;
 let keyboardNavigation=false,viewportWidth=document.documentElement.clientWidth;
@@ -154,7 +158,11 @@ function animateDockNavigation(previous){
  const spring=indicator.animate(frames,{duration:600,easing:'linear'});
  const cleanup=()=>{indicator.remove();selected.classList.remove('dock-transitioning');};
  spring.onfinish=cleanup;spring.oncancel=cleanup;
- if(selected.dataset.route!==previous.route)root.querySelector('#main')?.animate([{opacity:0,transform:`translateX(${direction*24}px)`},{opacity:1,transform:'translateX(0)'}],{duration:180,easing:'cubic-bezier(.22,1,.36,1)'});
+ if(selected.dataset.route!==previous.route){
+  const frames=iosWeb?[{opacity:0},{opacity:1}]:
+   [{opacity:0,transform:`translateX(${direction*24}px)`},{opacity:1,transform:'translateX(0)'}];
+  root.querySelector('#main')?.animate(frames,{duration:180,easing:'cubic-bezier(.22,1,.36,1)'});
+ }
 }
 
 let pendingDockNavigation=null;
