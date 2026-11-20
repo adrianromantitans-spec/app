@@ -205,7 +205,7 @@ export class NativeController{
   this.update({pushReady:status.enabled===true,pushEnabled:false,pushPermission:state.permission});
   if(state.userId&&state.userId!==user.id){await this.native.pushClear();return;}
   if(status.enabled&&state.enabled&&state.permission==='granted'){
-   const token=await this.native.pushToken();await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});
+   const token=await this.native.pushToken();await this.registerNativePush(token,user.id);
    if(this.cloud.user?.id===user.id){await this.native.pushBind(user.id);this.update({pushEnabled:true});}
   }
  }
@@ -216,6 +216,14 @@ export class NativeController{
   return this.cloud.user?.id===actor&&!this.cloud.recovering&&this.state.user?.id===actor&&this.state.pushReady&&!this.state.pushEnabled&&!seen()&&!push.enabled&&['default','granted'].includes(push.permission);
  }
  markPushOfferSeen(actor=this.cloud.user?.id){if(!actor||this.cloud.recovering||this.cloud.user?.id!==actor||this.state.user?.id!==actor)return false;this.platform.storage.setItem('native-push-offer-seen:'+actor,'1');this.platform.flush().catch(()=>{});return true;}
+ registerNativePush(token,actor,eligible=()=>true){
+  const current=()=>!!actor&&this.cloud.user?.id===actor&&this.state.user?.id===actor&&!this.cloud.recovering;
+  const pending=(this.pushRegistration||Promise.resolve()).catch(()=>{}).then(async()=>{
+   if(!current()||!await eligible()||!current())return false;
+   await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});
+   return current();
+  });this.pushRegistration=pending;return pending;
+ }
  async enablePush(){return this.run(async()=>{
   const actor=this.cloud.user?.id,current=()=>!!actor&&this.cloud.user?.id===actor&&this.state.user?.id===actor&&!this.cloud.recovering;
   if(!current()||!this.state.pushReady)return false;
@@ -223,14 +231,29 @@ export class NativeController{
   const permission=await this.native.pushPermission();if(!current())return false;
   this.update({pushPermission:permission});if(permission!=='granted')return false;
   const token=await this.native.pushToken();if(!current()){await this.native.pushClear();return false;}
-  await this.cloud.rpc('divzplit_register_native_push',{p_token:token,p_language:this.i18n.language});
+  await this.registerNativePush(token,actor);
   if(!current()){await this.native.pushClear();return false;}
   await this.native.pushBind(actor);if(!current()){await this.native.pushClear();return false;}
   this.update({pushEnabled:true});return true;
  });}
  async disablePush({markOfferSeen=true}={}){if(markOfferSeen)this.markPushOfferSeen();const state=await this.native.pushState();await this.native.pushClear();if(state.token)await this.cloud.rpc('divzplit_remove_native_push',{p_token:state.token}).catch(()=>{});this.update({pushEnabled:false});}
  async logout(){return this.run(async()=>{await this.disablePush({markOfferSeen:false});await this.cloud.signOut();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[]});});}
- language(value){this.i18n.setLanguage(value);this.update({});return this.platform.flush();}
+ language(value){
+  this.i18n.setLanguage(value);this.update({});const saved=this.platform.flush(),actor=this.cloud.user?.id;
+  // Keep UI/persistence immediate. All device registrations share one queue,
+  // so a slower previous selection/refresh cannot overwrite the latest locale.
+  this.pushLanguageSync=(async()=>{
+   await saved;
+   const current=()=>!!actor&&this.cloud.user?.id===actor&&this.state.user?.id===actor&&!this.cloud.recovering&&this.state.pushReady;
+   if(!current())return;const push=await this.native.pushState();
+   if(!current()||!push.enabled||push.permission!=='granted'||push.userId!==actor||typeof push.token!=='string'||!push.token)return;
+   await this.registerNativePush(push.token,actor,async()=>{
+    const latest=await this.native.pushState();
+    return current()&&latest.enabled&&latest.permission==='granted'&&latest.userId===actor&&latest.token===push.token;
+   });
+  })().catch(()=>{/* The next normal device sync retries; language selection stays usable offline. */});
+  return saved;
+ }
  async export(){return this.run(async()=>{const data=await this.cloud.personalExport();await this.native.exportJSON(JSON.stringify(data,null,2),'divzplit-cuenta.json');});}
  async deleteAccount(confirmation){return this.run(async()=>{if(confirmation.trim().toLowerCase()!==this.cloud.user.email.toLowerCase())throw new Error(this.t('Escribe el correo de esta cuenta para confirmar.'));await this.disablePush({markOfferSeen:false});await this.cloud.deleteAccount();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),shopping:[],shoppingGroupId:null,paymentRequests:[],user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[]});});}
 }

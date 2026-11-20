@@ -31,7 +31,7 @@ public final class DivZplitMessagingService extends FirebaseMessagingService {
         PendingIntent tap = PendingIntent.getActivity(this, notice.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         try {
             manager.notify(notice.hashCode(), new NotificationCompat.Builder(this, NativePush.CHANNEL)
-                    .setSmallIcon(R.drawable.ic_notification_icon).setContentTitle("DivZplit").setContentText(body)
+                    .setSmallIcon(R.drawable.ic_notification_icon).setContentText(body)
                     .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setContentIntent(tap).setAutoCancel(true).build());
         } catch (SecurityException ignored) { /* Permission can be revoked between the check and notify. */ }
     }
