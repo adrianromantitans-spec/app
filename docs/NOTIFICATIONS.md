@@ -99,6 +99,32 @@ La invitación no interrumpe formularios, recuperación de cuenta ni invitacione
 Se recuerda por cuenta/dispositivo y se registra como presentada en los metadatos
 de la cuenta. No requiere ejecutar SQL adicional.
 
+### Android React Native: invitación por cuenta
+
+La versión **1.2.0-native.20 / código 26** corrige la marca de invitación nativa:
+antes `native-push-offer-seen` era global y también se escribía al cerrar sesión o
+borrar una cuenta. Al crear otra cuenta en la misma instalación, se omitía el aviso.
+Ahora la marca es `native-push-offer-seen:<id de cuenta>` en el almacenamiento privado
+del dispositivo. El cierre/borrado sigue limpiando la vinculación push, pero no
+cuenta como haber visto o rechazado la invitación. Desactivarla explícitamente sí
+conserva la decisión para esa cuenta. Las respuestas tardías no pueden marcar otra
+cuenta ni abrir una invitación obsoleta.
+
+La marca global anterior no se atribuye a una cuenta por suposición: una cuenta sin
+marca propia puede recibir una invitación una vez tras actualizar. Se respetan el
+permiso del sistema denegado, el servicio no disponible, un dispositivo ya activado,
+la recuperación, el segundo plano, la animación inicial y otras ventanas abiertas.
+No se obtiene token FCM ni se solicita permiso antes de pulsar Activar. Android 13+
+muestra el diálogo del sistema si corresponde; versiones anteriores no tienen ese
+permiso en tiempo de ejecución, pero sí la invitación y consentimiento de DivZplit.
+
+Las pruebas incluyen confirmación por código con cero grupos, borrar/recrear con el
+mismo correo, dos cuentas, persistencia, cierre de sesión antes del aviso y el hook
+real de presentación. Pasan las 132 pruebas nativas y la suite compartida/web.
+El cambio necesita instalar el AAB actualizado; no cambia SQL, Firebase, plantillas,
+diseño, animaciones ni comportamiento web/iPhone. Para comprobar permiso y entrega
+FCM reales hacen falta Android físico y el backend ya configurado.
+
 ## Borrar todos los avisos
 
 La campanita incluye **Borrar todo**, con confirmación. Borra todos los avisos de

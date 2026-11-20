@@ -7,8 +7,9 @@ export function useNotificationOffer(c,state,opening,sheet,setSheet){
  useEffect(()=>{const listener=AppState.addEventListener('change',value=>setActive(value==='active'));return()=>listener.remove();},[]);
  useEffect(()=>{
   if(!active||opening||sheet||!state.ready||!state.user||state.busy||!state.pushReady||state.pushEnabled)return;
+  const actor=state.user.id;
   let live=true;
-  c.shouldOfferPush().then(offer=>{if(live&&offer){c.markPushOfferSeen();setSheet({kind:'deviceNotifications',offer:true});}}).catch(()=>{});
+  c.shouldOfferPush().then(offer=>{if(live&&offer&&c.markPushOfferSeen(actor))setSheet({kind:'deviceNotifications',offer:true});}).catch(()=>{});
   return()=>{live=false;};
  },[c,active,opening,sheet,state.ready,state.user?.id,state.busy,state.pushReady,state.pushEnabled,setSheet]);
 }

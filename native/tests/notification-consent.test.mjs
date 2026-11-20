@@ -37,3 +37,28 @@ test('account changes at each permission/registration stage never enable a stale
 test('registration failure stays disabled and allows explicit retry without repeating automatic offer',async()=>{
  const {c,cloud}=fixture();cloud.rpc=async()=>{throw Error('Offline');};await assert.rejects(c.enablePush(),/Offline/);assert.equal(c.state.pushEnabled,false);assert.equal(c.state.busy,false);assert.equal(await c.shouldOfferPush(),false);cloud.rpc=async()=>true;assert.equal(await c.enablePush(),true);
 });
+test('a new account does not inherit another account or legacy installation dismissal',async()=>{
+ const {c,cloud,values}=fixture();values.set('native-push-offer-seen','1');assert.equal(await c.shouldOfferPush(),true);
+ assert.equal(c.markPushOfferSeen(),true);assert.equal(values.get('native-push-offer-seen:owner'),'1');assert.equal(await c.shouldOfferPush(),false);
+ cloud.user={id:'new-account'};c.update({user:cloud.user});assert.equal(await c.shouldOfferPush(),true);
+ assert.equal(c.markPushOfferSeen('owner'),false);assert.equal(await c.shouldOfferPush(),true);
+ c.markPushOfferSeen();assert.equal(await c.shouldOfferPush(),false);
+ cloud.user={id:'owner'};c.update({user:cloud.user});assert.equal(await c.shouldOfferPush(),false);
+});
+test('logging out before an offer does not record a notification decision',async()=>{
+ const {c,cloud,values,calls}=fixture();cloud.signOut=async()=>{cloud.user=null;};await c.logout();
+ assert.equal(values.get('native-push-offer-seen:owner'),undefined);assert.ok(calls.some(x=>x[0]==='clear'));
+ cloud.user={id:'owner'};c.update({user:cloud.user,pushReady:true});assert.equal(await c.shouldOfferPush(),true);
+});
+test('deleting then recreating an account with the same email offers notification consent again',async()=>{
+ const {c,cloud,values}=fixture();values.set('native-push-offer-seen','1');cloud.user={id:'owner',email:'owner@example.test'};c.update({user:cloud.user});cloud.deleteAccount=async()=>{cloud.user=null;};
+ await c.deleteAccount('owner@example.test');assert.equal(values.get('native-push-offer-seen:owner'),undefined);
+ cloud.user={id:'recreated-account',email:'owner@example.test'};c.update({user:cloud.user,pushReady:true});assert.equal(await c.shouldOfferPush(),true);
+});
+test('confirming a fresh email account with no groups makes consent available after refresh',async()=>{
+ const {c,cloud,platform,values,calls}=fixture();cloud.user=null;c.update({user:null,pushReady:false});values.set('native-push-offer-seen','1');
+ platform.temporaryStorage={getItem:()=>null};cloud.listGroups=async()=>[];cloud.verifySignupCode=async()=>{cloud.user={id:'signup-user',email:'new@example.test'};};
+ await c.confirmSignup('new@example.test','123456');
+ assert.equal(c.state.ready,true);assert.equal(c.state.busy,false);assert.equal(c.state.user.id,'signup-user');assert.equal(c.state.groups.length,0);assert.equal(c.state.pushReady,true);
+ assert.equal(await c.shouldOfferPush(),true);assert.ok(!calls.some(x=>['permission','token','bind'].includes(x[0])),'Account creation must offer consent, not silently request permission/register');
+});
