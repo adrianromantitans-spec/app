@@ -210,12 +210,12 @@ export class NativeController{
   }
  }
  async shouldOfferPush(){
-  const actor=this.cloud.user?.id,seen=()=>this.platform.storage.getItem('native-push-offer-seen')==='1';
+  const actor=this.cloud.user?.id,seen=()=>this.platform.storage.getItem('native-push-offer-seen:'+actor)==='1';
   if(!actor||this.cloud.recovering||this.state.user?.id!==actor||!this.state.ready||!this.state.pushReady||this.state.pushEnabled||seen())return false;
   const push=await this.native.pushState();
   return this.cloud.user?.id===actor&&!this.cloud.recovering&&this.state.user?.id===actor&&this.state.pushReady&&!this.state.pushEnabled&&!seen()&&!push.enabled&&['default','granted'].includes(push.permission);
  }
- markPushOfferSeen(){this.platform.storage.setItem('native-push-offer-seen','1');this.platform.flush().catch(()=>{});}
+ markPushOfferSeen(actor=this.cloud.user?.id){if(!actor||this.cloud.recovering||this.cloud.user?.id!==actor||this.state.user?.id!==actor)return false;this.platform.storage.setItem('native-push-offer-seen:'+actor,'1');this.platform.flush().catch(()=>{});return true;}
  async enablePush(){return this.run(async()=>{
   const actor=this.cloud.user?.id,current=()=>!!actor&&this.cloud.user?.id===actor&&this.state.user?.id===actor&&!this.cloud.recovering;
   if(!current()||!this.state.pushReady)return false;
@@ -228,11 +228,11 @@ export class NativeController{
   await this.native.pushBind(actor);if(!current()){await this.native.pushClear();return false;}
   this.update({pushEnabled:true});return true;
  });}
- async disablePush(){this.markPushOfferSeen();const state=await this.native.pushState();await this.native.pushClear();if(state.token)await this.cloud.rpc('divzplit_remove_native_push',{p_token:state.token}).catch(()=>{});this.update({pushEnabled:false});}
- async logout(){return this.run(async()=>{await this.disablePush();await this.cloud.signOut();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[]});});}
+ async disablePush({markOfferSeen=true}={}){if(markOfferSeen)this.markPushOfferSeen();const state=await this.native.pushState();await this.native.pushClear();if(state.token)await this.cloud.rpc('divzplit_remove_native_push',{p_token:state.token}).catch(()=>{});this.update({pushEnabled:false});}
+ async logout(){return this.run(async()=>{await this.disablePush({markOfferSeen:false});await this.cloud.signOut();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[],shopping:[],shoppingGroupId:null,shoppingLoading:false,shoppingError:'',paymentRequests:[]});});}
  language(value){this.i18n.setLanguage(value);this.update({});return this.platform.flush();}
  async export(){return this.run(async()=>{const data=await this.cloud.personalExport();await this.native.exportJSON(JSON.stringify(data,null,2),'divzplit-cuenta.json');});}
- async deleteAccount(confirmation){return this.run(async()=>{if(confirmation.trim().toLowerCase()!==this.cloud.user.email.toLowerCase())throw new Error(this.t('Escribe el correo de esta cuenta para confirmar.'));await this.disablePush();await this.cloud.deleteAccount();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),shopping:[],shoppingGroupId:null,paymentRequests:[],user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[]});});}
+ async deleteAccount(confirmation){return this.run(async()=>{if(confirmation.trim().toLowerCase()!==this.cloud.user.email.toLowerCase())throw new Error(this.t('Escribe el correo de esta cuenta para confirmar.'));await this.disablePush({markOfferSeen:false});await this.cloud.deleteAccount();await this.platform.flush();this.receiptUploads.clear();this.update({...structuredClone(featureState),shopping:[],shoppingGroupId:null,paymentRequests:[],user:null,...groupLoadState,groups:[],groupId:null,page:'home',history:[],notices:[]});});}
 }
 
 Object.assign(NativeController.prototype,featureMethods);
