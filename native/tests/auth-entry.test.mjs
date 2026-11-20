@@ -2,19 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
+import {nativeText} from '../src/localization.mjs';
 const require=createRequire(import.meta.url),{Value,babel,preset,flattenStyle}=require('./helpers/native-animated.cjs');
 const noop=()=>{},element=(type,props,...children)=>({type,props:{...props,children:children.length?children:props?.children}});
 function load({mode='welcome',provider='google',reduced=false,ready=true,user=null,broken=false,measured=false,values={}}={}){
  let index=0;const writes=[];const state={ready,user,page:'home',groups:[],busy:false},effects=[];
  const react={createElement:element,useCallback:f=>f,useRef:v=>({current:v}),useEffect:f=>effects.push(f),useSyncExternalStore:()=>state,useState:v=>{const i=index++;return [Object.hasOwn(values,i)?values[i]:i===0?mode:i===8?provider:i===9?{google:true,apple:true}:i===10&&measured?780:v,value=>writes.push({index:i,value})];}};
+ react.__esModule=true;react.default=react;
  const platform=new Proxy({Animated:{Value},StyleSheet:{create:v=>v,flatten:flattenStyle,absoluteFill:{}},Platform:{OS:'android'},useWindowDimensions:()=>({width:393,height:852})},{get:(o,k)=>o[k]||k});
  const stub=new Proxy({__esModule:true,default:'Mock'},{get:(o,k)=>o[k]||k});
- const localRequire=name=>name.startsWith('@babel/runtime/')?require(name):name==='react'?react:name==='react/jsx-runtime'?{jsx:element,jsxs:element}:name==='react-native'?platform:name==='react-native-safe-area-context'?{useSafeAreaInsets:()=>({bottom:24})}:name==='./NotificationConsent'?(()=>{const m={exports:{}},code=babel.transformSync(readFileSync(new URL('../src/NotificationConsent.js',import.meta.url),'utf8'),{filename:'NotificationConsent.js',babelrc:false,configFile:false,presets:[preset]}).code;new Function('require','module','exports',code)(localRequire,m,m.exports);return m.exports;})():name==='./Dock'?{__esModule:true,default:'Dock',useDockMotion:()=>({events:{}})}:name.endsWith('.mjs')?require('../src/'+name.slice(2)):name==='./ReferenceScreens'?new Proxy({__esModule:true,welcomePicture:()=>({uri:'fixture'})},{get:(o,k)=>o[k]||k}):name==='./Opening'?{__esModule:true,default:'Opening'}:name==='./Sheet'?{__esModule:true,default:'Sheet'}:stub;
+ const localRequire=name=>name.startsWith('@babel/runtime/')?require(name):name==='react'?react:name==='react/jsx-runtime'?{jsx:(type,props)=>element(type,props),jsxs:(type,props)=>element(type,props)}:name==='react-native'?platform:name==='react-native-safe-area-context'?{useSafeAreaInsets:()=>({bottom:24})}:name==='./NotificationConsent'?(()=>{const m={exports:{}},code=babel.transformSync(readFileSync(new URL('../src/NotificationConsent.js',import.meta.url),'utf8'),{filename:'NotificationConsent.js',babelrc:false,configFile:false,presets:[preset]}).code;new Function('require','module','exports',code)(localRequire,m,m.exports);return m.exports;})():name==='./Dock'?{__esModule:true,default:'Dock',useDockMotion:()=>({events:{}})}:name.endsWith('.mjs')?require('../src/'+name.slice(2)):name==='./ReferenceScreens'?new Proxy({__esModule:true,welcomePicture:()=>({uri:'fixture'})},{get:(o,k)=>o[k]||k}):name==='./Opening'?{__esModule:true,default:'Opening'}:name==='./Sheet'?{__esModule:true,default:'Sheet'}:stub;
  let source=readFileSync(new URL('../src/App.js',import.meta.url),'utf8');if(broken)source=source.replace('function Auth({c,intro,onMeasure,reduced})','function Auth({c,intro,onMeasure})');
  const mod={exports:{}},compiled=babel.transformSync(source,{filename:'App.js',babelrc:false,configFile:false,presets:[preset]}).code;
  new Function('require','module','exports',compiled+'\nexports.AuthForTest=Auth;exports.ApplicationForTest=Application;')(localRequire,mod,mod.exports);
  const c={state,subscribe:noop,snapshot:()=>state,t:v=>v,group:null,model:{},cloud:{},i18n:{language:'en'}};
- return {c,writes,auth:()=>mod.exports.AuthForTest({c,intro:false,onMeasure:noop,reduced}),application:()=>{index=0;react.useState=v=>[v,noop];return mod.exports.ApplicationForTest({controller:c,reduced});}};
+ return {c,writes,auth:()=>mod.exports.AuthForTest({c,intro:false,onMeasure:noop,reduced}),application:({sheet=null}={})=>{index=0;let slot=0;react.useState=v=>[slot++===2?sheet:v,noop];return mod.exports.ApplicationForTest({controller:c,reduced});}};
 }
 function nodes(tree){const result=[];function visit(n){if(!n||typeof n!=='object')return;result.push(n);for(const c of Array.isArray(n.props?.children)?n.props.children:[n.props?.children])Array.isArray(c)?c.forEach(visit):visit(c);}visit(tree);return result;}
 test('reproduces the shipped Google icon ReferenceError when the auth motion prop is missing',()=>{assert.throws(()=>load({broken:true}).auth(),/reduced is not defined/);});
@@ -43,4 +45,11 @@ test('native signup clears the password and shows a code form with a fixed pendi
  const code=load({mode:'signupCode',provider:null,values:{1:'alex@example.test',7:'123456'}});let verified;code.c.confirmSignup=async(...args)=>{verified=args;};code.c.resendSignup=async()=>{};
  const tree=nodes(code.auth()),fields=tree.filter(n=>n.props?.autoComplete);assert.equal(fields.length,1);assert.equal(fields[0].props.autoComplete,'one-time-code');assert.equal(fields[0].props.maxLength,10);
  const verify=tree.find(n=>n.props?.onPress&&JSON.stringify(n.props?.children).includes('Verificar código'));assert.ok(verify);await verify.props.onPress();assert.deepEqual(verified,['alex@example.test','123456']);
+});
+test('the actual account language picker translates Automatic and preserves language autonyms',()=>{
+ for(const [language,automatic] of [['es','Automático'],['en','Automatic'],['ro','Automat']]){
+  const f=load({user:{id:'viewer'},reduced:true});f.c.i18n.language=language;f.c.t=text=>nativeText(text,language);
+  const buttons=nodes(f.application({sheet:{kind:'language'}})).filter(n=>typeof n.type==='function'&&n.type.name==='Button');
+  assert.deepEqual(buttons.map(n=>n.props.children),[automatic,'Español','English','Română']);
+ }
 });

@@ -125,6 +125,34 @@ El cambio necesita instalar el AAB actualizado; no cambia SQL, Firebase, plantil
 diseño, animaciones ni comportamiento web/iPhone. Para comprobar permiso y entrega
 FCM reales hacen falta Android físico y el backend ya configurado.
 
+### Presentación e idioma de los avisos Android
+
+La versión **1.2.0-native.21 / código 27** deja que la cabecera normal de Android
+muestre «DivZplit» y elimina el título adicional repetido del contenido. Conserva
+el cuerpo y su versión expandida, el icono, el canal y el enlace al aviso. No usa
+plantillas personalizadas ni oculta controles del sistema. Los avisos ya publicados
+por versiones anteriores no se redibujan: comprobar con un aviso nuevo tras actualizar.
+
+Cambiar el idioma de la app actualiza también la suscripción de este dispositivo,
+sin esperar al siguiente refresco. Las altas/actualizaciones nativas comparten una
+cola: una petición lenta de un idioma anterior no puede terminar sobrescribiendo
+el último idioma seleccionado. Se comprueban cuenta, vinculación y consentimiento;
+no se solicitan permisos, tokens nuevos ni altas de dispositivos desactivados por
+cambiar idioma. La interfaz y la preferencia local siguen disponibles sin conexión;
+el siguiente sync normal reintenta actualizar la suscripción.
+
+El despachador ya obtiene `language` de la suscripción al reclamar cada aviso y
+genera ES/EN/RO para gastos, compras, tareas, votaciones, pagos y recordatorios. No
+requiere desplegar funciones ni SQL nuevos. «Automático» en el selector de Cuenta
+usa ahora el catálogo: Automatic en inglés y Automat en rumano; las opciones de
+idioma conservan sus nombres propios. Automático envía el idioma resuelto del
+teléfono, no el valor `auto`, al servicio de notificaciones.
+
+Las pruebas cubren el selector real renderizado, 21 textos/casos de envío nativo,
+ES/EN/RO/automático, cambios rápidos, refrescos concurrentes, modo sin conexión,
+cambio de cuenta y dispositivos desactivados. Instalar el nuevo AAB para comprobar
+la presentación real de Android; el cambio no modifica la web/iPhone.
+
 ## Borrar todos los avisos
 
 La campanita incluye **Borrar todo**, con confirmación. Borra todos los avisos de

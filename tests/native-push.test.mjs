@@ -5,6 +5,18 @@ import {createNativeDispatcher,validToken} from '../supabase/functions/native-pu
 import {createFcmSender} from '../supabase/functions/native-push-dispatch/fcm.mjs';
 const account='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
 const token='fictional_native_token_123456789';
+test('native notifications use each device language for all event categories and reminders',async()=>{
+ const expected={
+  es:['Hay productos nuevos en la lista de la compra.','Hay novedades en los gastos de tu grupo.','Tienes una nueva votación en tu grupo.','Tienes una nueva tarea asignada.','Hay novedades sobre un pago de tu grupo.','Quedan productos por comprar en tu grupo.','Tienes un recordatorio de tu grupo.'],
+  en:['There are new products on the shopping list.','There are expense updates in your group.','There is a new poll in your group.','You have a new task assigned.','There is a payment update in your group.','There are still products to buy in your group.','You have a reminder from your group.'],
+  ro:['Sunt produse noi în lista de cumpărături.','Sunt noutăți despre cheltuielile grupului.','Ai un sondaj nou în grup.','Ai o sarcină nouă atribuită.','Sunt noutăți despre o plată din grup.','Mai sunt produse de cumpărat în grup.','Ai un memento din grupul tău.']
+ };
+ const kinds=['shopping.added','expenses.added','polls.created','tasks.assigned','payments.requested','shopping.reminder','tasks.reminder'];
+ for(const language of ['es','en','ro']){
+  const sent=[];const dispatch=createNativeDispatcher({secret:'s'.repeat(40),rpc:async name=>name==='divzplit_claim_native_push'?kinds.map((kind,i)=>({id:String(i),lease:'fixture',notification_id:account,user_id:other,kind,language,token})):true,send:async(t,payload)=>sent.push(payload.body)});
+  const response=await dispatch(new Request('https://fixture.invalid/',{method:'POST',headers:{'x-dispatch-key':'s'.repeat(40)}}));assert.equal(response.status,200);assert.deepEqual(sent,expected[language]);assert.ok(sent.every(body=>!body.includes('DivZplit')));
+ }
+});
 function setup(permission='granted'){
  const calls=[];
  globalThis.document={querySelector:()=>null};
