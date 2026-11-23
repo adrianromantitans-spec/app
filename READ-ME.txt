@@ -1,0 +1,9 @@
+DivZplit - English desktop layout previews
+
+Four PNG previews: Home, Activity with spending chart, Groups and Tasks. All are landscape 16:9, 2560 x 1440 pixels, under 8 MB.
+
+These are static desktop viewport previews rendered from the native React Native interface code using React Native Web with fictional English example data. They are NOT screenshots of an installed desktop build, an Android emulator, ChromeOS or Google Play Games for PC. Every image is visibly labelled DESKTOP LAYOUT PREVIEW / EXAMPLE DATA.
+
+Reference version: 1.2.0-native.21, code 27. These previews do not establish desktop distribution eligibility or support. No desktop distribution setting was changed. Host fonts, controls and rendering can differ from the installed app.
+
+Use these for visual planning. For final Google Play computer screenshot fields, replace them with verified captures on the supported computer runtime. No app source or production service was changed.

@@ -1,0 +1,48 @@
+{
+  "kind": "Desktop viewport previews rendered from native React Native code via React Native Web; not actual installed desktop app captures",
+  "reference": "1.2.0-native.21, version code 27",
+  "scope": "No installed desktop runtime or Google Play Games for PC test was performed; rendering may differ on device",
+  "data": "fictional, local, English",
+  "files": [
+    {
+      "file": "01-desktop-home-preview.png",
+      "dimensions": [
+        2560,
+        1440
+      ],
+      "route": "home",
+      "bytes": 368878,
+      "sha256": "0e5644d3cc2b4df88ad3bd9038f0873488773b22a9eaef6ae9cbdd157e838d4f"
+    },
+    {
+      "file": "02-desktop-activity-preview.png",
+      "dimensions": [
+        2560,
+        1440
+      ],
+      "route": "activity",
+      "bytes": 166548,
+      "sha256": "f53d674f171bae83bc6165f40a9c17eac24e6a034e63bd04fa1ca3a729e2d64c"
+    },
+    {
+      "file": "03-desktop-groups-preview.png",
+      "dimensions": [
+        2560,
+        1440
+      ],
+      "route": "groups",
+      "bytes": 1891978,
+      "sha256": "27e8f9aea151d45640d50cd91353fd49e162d75bfc5f18d04654ad8579313270"
+    },
+    {
+      "file": "04-desktop-tasks-preview.png",
+      "dimensions": [
+        2560,
+        1440
+      ],
+      "route": "tasks",
+      "bytes": 138439,
+      "sha256": "9b8abef06f68e66c38dbf49ecd715b019dc8ea1d97eda5540ccc0a6b50f14938"
+    }
+  ]
+}
