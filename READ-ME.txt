@@ -1,0 +1,11 @@
+DivZplit - English interface previews
+
+Six PNG images, 1080 x 1920 pixels, each under 8 MB.
+
+These are reconstructed previews of the React Native app interface using React Native Web. They are NOT screenshots captured from an installed Android APK/AAB or an Android emulator. Every image carries the visible label INTERFACE PREVIEW / EXAMPLE DATA.
+
+The native interface and shared rendering/model source match the source used for version 1.2.0-native.21, Android version code 27 (source f039290ce4a6bfb4282ca0068519f0d0314713f2). Local fictional groups, people, expenses, lists, tasks and polls are used. No real account, private data or live service requests were used. Host platform fonts, emoji, controls and rendering may differ from Android.
+
+Use these files to review the listing's visual direction. For the final Google Play screenshot fields, replace them with verified captures from the installed Android build. Do not describe these previews as real AAB screenshots.
+
+No app source, Android release, Google Play listing or production data was changed.
