@@ -1,0 +1,9 @@
+DivZplit - English foldable layout previews
+
+Three PNG previews: unfolded 1:1 (1536 x 1536), unfolded 4:3 (1536 x 1152), outer folded 10:16 (960 x 1536). All are under 8 MB.
+
+These are static viewport previews rendered from the native React Native interface code using React Native Web, with fictional English example data. They are NOT screenshots captured on an installed Android app, an Android emulator or a physical foldable. Every image is visibly labelled FOLDABLE LAYOUT PREVIEW / EXAMPLE DATA.
+
+They show the reference version 1.2.0-native.21, code 27 at these viewport sizes. They do not demonstrate real hinge, posture changes, native pickers, or folding behavior. Host rendering, font and emoji differences may remain.
+
+Use these for visual planning. For final foldable screenshot fields, replace them with verified captures from the Android build on real or emulated foldable hardware. No application source or production service was changed.

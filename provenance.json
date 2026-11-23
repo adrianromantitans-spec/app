@@ -1,0 +1,38 @@
+{
+  "kind": "Static viewport previews rendered from native React Native code via React Native Web; not actual Android/foldable captures",
+  "reference": "1.2.0-native.21, version code 27",
+  "scope": "No physical folding, hinge, Android runtime or posture test was performed; rendering may differ on device",
+  "data": "fictional, local, English",
+  "files": [
+    {
+      "file": "01-unfolded-square-1x1-activity-preview.png",
+      "dimensions": [
+        1536,
+        1536
+      ],
+      "route": "activity",
+      "bytes": 169636,
+      "sha256": "c53ff6d96b87bc9a469216f1454475235b7ecad7b3031432e39710f39e2a71d3"
+    },
+    {
+      "file": "02-unfolded-landscape-4x3-home-preview.png",
+      "dimensions": [
+        1536,
+        1152
+      ],
+      "route": "home",
+      "bytes": 258912,
+      "sha256": "afac4f924216108975cbf44a75977a148bbd1a61f99599bec9b3f6bd9c25143c"
+    },
+    {
+      "file": "03-folded-outer-10x16-home-preview.png",
+      "dimensions": [
+        960,
+        1536
+      ],
+      "route": "home",
+      "bytes": 292482,
+      "sha256": "8768379642250fe528ea5ce7c250060ca310122a62e3099b75a709b6ae7722e4"
+    }
+  ]
+}
