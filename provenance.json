@@ -1,0 +1,48 @@
+{
+  "kind": "Tablet viewport previews rendered from native React Native code via React Native Web; not actual Android tablet captures",
+  "reference": "1.2.0-native.21, version code 27",
+  "scope": "No Android tablet runtime or physical device test was performed; rendering may differ on device",
+  "data": "fictional, local, English",
+  "files": [
+    {
+      "file": "01-tablet10-landscape-home-preview.png",
+      "dimensions": [
+        2560,
+        1440
+      ],
+      "route": "home",
+      "bytes": 406809,
+      "sha256": "b95b7e4d221a70bfac18a8aff55c3f8c0d6a5e6f0f7b892d5a921e5fedd3d06a"
+    },
+    {
+      "file": "02-tablet10-portrait-activity-preview.png",
+      "dimensions": [
+        1440,
+        2560
+      ],
+      "route": "activity",
+      "bytes": 240533,
+      "sha256": "bc0ad6b89dcad5b22a7b1c94eafaa788755adf3a5c09e914521c1c969054237b"
+    },
+    {
+      "file": "03-tablet10-portrait-groups-preview.png",
+      "dimensions": [
+        1440,
+        2560
+      ],
+      "route": "groups",
+      "bytes": 2417023,
+      "sha256": "0ec67f69e33104d77f087ff3dcf4134fcaeebbe7f2610226644f646e199aab09"
+    },
+    {
+      "file": "04-tablet10-portrait-tasks-preview.png",
+      "dimensions": [
+        1440,
+        2560
+      ],
+      "route": "tasks",
+      "bytes": 160115,
+      "sha256": "8ff015b45222c57bc94ae51df16fb301b84496c6b4809d51c3705a261ee4faee"
+    }
+  ]
+}

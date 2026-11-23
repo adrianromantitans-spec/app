@@ -1,0 +1,9 @@
+DivZplit - English 10-inch tablet interface previews
+
+Four PNG previews: Home in landscape 16:9 (2560 x 1440); Activity, Groups and Tasks in portrait 9:16 (1440 x 2560). All are under 8 MB.
+
+These are static tablet viewport previews rendered from the native React Native interface using React Native Web, with fictional English example data. They are NOT screenshots captured on an installed Android app, an Android tablet emulator or a physical tablet. Each image is visibly labelled TABLET LAYOUT PREVIEW / EXAMPLE DATA.
+
+Reference version: 1.2.0-native.21, code 27. These files do not establish behavior on an actual 10-inch tablet; physical size cannot be verified from a PNG alone. Host rendering, font and emoji differences may remain.
+
+Use these for visual planning. For final Google Play tablet screenshot fields, replace them with verified captures from the Android build on real or emulated tablet hardware. No app source or production service was changed.
