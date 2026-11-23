@@ -1,0 +1,15 @@
+DivZplit - English Google Play listing graphics
+
+App icon: app-icon-512.png. Existing DivZplit store icon, PNG, 512 x 512.
+Feature graphic: feature-graphic-en-1024x500.png. English, PNG, 1024 x 500.
+
+Feature copy:
+Shared expenses. Better together.
+Split costs. Organize plans.
+Keep everyone on the same page.
+Expenses / Tasks / Shopping lists / Polls
+
+No screenshots are included. Capture the installed Android app in English using fictional example data; recommended views are Home, Expenses, Shopping list and Tasks. Use 9:16 captures with at least 1080 x 1920 for promotional eligibility and keep each under 8 MB.
+Video is optional; leave blank if no suitable YouTube video exists. Tablet, foldable and other form factors need their own real captures if supplied.
+
+These assets do not modify the app or the main source branch. No publishing to Google Play was performed.

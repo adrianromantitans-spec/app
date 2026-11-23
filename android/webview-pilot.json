@@ -1,9 +1,0 @@
-{
-  "appVersionCode": 6,
-  "appVersionName": "1.1.0-webview.3",
-  "status": "experimental-not-for-production",
-  "productionBlockers": [
-    "Native push sender/SQL deployment, private server credentials and end-to-end delivery verification remain pending.",
-    "Real-device Google/Apple OAuth, verified App Links, process recreation, receipt/OCR and export tests are pending."
-  ]
-}

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="native_connection">Verifică conexiunea și încearcă din nou.</string>
-    <string name="native_retry">Încearcă din nou</string>
-    <string name="native_no_handler">Nu există o aplicație compatibilă</string>
-    <string name="native_export_error">Exportul nu a putut fi salvat</string>
-</resources>
